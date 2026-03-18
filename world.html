@@ -128,29 +128,31 @@
         /* VOTING SYSTEM STYLES */
         #voteBtn {
             position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
+            bottom: 30px;
+            left: 10px;
+            transform: none;
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
-            padding: 16px 44px;
+            padding: 14px 30px;
             border: none;
-            border-radius: 30px;
+            border-radius: 16px;
             box-shadow: 0 4px 20px rgba(238, 90, 36, 0.4);
             cursor: pointer;
             z-index: 200;
             font-family: "Hiragino Sans", sans-serif;
             animation: voteBtnPulse 2s ease-in-out infinite;
+            width: 200px;
+            text-align: center;
         }
 
         @keyframes voteBtnPulse {
             0%, 100% {
-                transform: translateX(-50%) scale(1);
+                transform: scale(1);
             }
             50% {
-                transform: translateX(-50%) scale(1.05);
+                transform: scale(1.05);
             }
         }
 
@@ -1019,7 +1021,7 @@
         </div>
     </div>
 
-    <div id="bottomButtons" style="position:fixed;bottom:20px;left:200px;z-index:200;display:flex;gap:10px;">
+    <div id="bottomButtons" style="position:fixed;bottom:90px;left:10px;z-index:200;display:flex;flex-direction:column;gap:8px;width:200px;">
         <button onclick="openRankPopup()"
             style="font-size:14px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:2px solid #e8a000;padding:10px 20px;border-radius:12px;cursor:pointer;font-family:'Hiragino Sans',sans-serif;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
             🏆 街ランク
@@ -1031,13 +1033,13 @@
     </div>
 
     <!-- ズームボタン -->
-    <div id="zoomControls" style="position:fixed;bottom:20px;right:250px;z-index:200;display:flex;flex-direction:column;gap:8px;">
+    <div id="zoomControls" style="position:fixed;top:200px;left:10px;z-index:200;display:flex;flex-direction:row;gap:6px;">
         <button onclick="zoomIn()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:28px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">＋</button>
         <button onclick="zoomOut()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:28px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">ー</button>
         <button onclick="zoomReset()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">🔍</button>
     </div>
 
-    <button id="fullscreenBtn" onclick="if(document.fullscreenElement){document.exitFullscreen()}else{document.documentElement.requestFullscreen().catch(()=>{})}" style="position:fixed;top:10px;right:10px;padding:6px 12px;border-radius:8px;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:12px;font-weight:bold;cursor:pointer;z-index:250;box-shadow:0 2px 8px rgba(0,0,0,0.2);color:#2d5016;font-family:sans-serif;">全画面</button>
+    <button id="fullscreenBtn" onclick="if(document.fullscreenElement){document.exitFullscreen()}else{document.documentElement.requestFullscreen().catch(()=>{})}" style="position:fixed;top:60px;left:10px;padding:6px 12px;border-radius:8px;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:12px;font-weight:bold;cursor:pointer;z-index:250;box-shadow:0 2px 8px rgba(0,0,0,0.2);color:#2d5016;font-family:sans-serif;">全画面</button>
 
     <!-- 街ランクポップアップ -->
     <div id="rankPopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;align-items:center;justify-content:center;">
