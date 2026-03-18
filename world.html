@@ -940,8 +940,12 @@
         <div class="welcome-content">
             <h1>仮想うらやす</h1>
             <h2>めいすいくんワールド</h2>
-            <p>ご当地めいすいくん総選挙</p>
-            <p style="font-size: 16px; margin-bottom: 30px;">キャラクターに投票して浦安の街を発展させよう！</p>
+            <p style="font-size:18px;margin:15px 0;">ご当地めいすいくん総選挙</p>
+            <div style="text-align:left;background:rgba(255,255,255,0.15);border-radius:12px;padding:15px 20px;margin:15px auto;max-width:360px;font-size:15px;line-height:2;">
+              ① キャラクターに投票しよう<br>
+              ② 投票で浦安の街が変わる！<br>
+              ③ クイズに挑戦して浦安を学ぼう
+            </div>
             <button id="startButton">スタート</button>
         </div>
     </div>
@@ -1007,6 +1011,8 @@
         <button onclick="zoomOut()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:28px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">ー</button>
         <button onclick="zoomReset()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">🔍</button>
     </div>
+
+    <button id="fullscreenBtn" onclick="document.documentElement.requestFullscreen().catch(()=>{})" style="position:fixed;top:10px;right:10px;width:40px;height:40px;border-radius:8px;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:20px;cursor:pointer;z-index:250;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,0.2);">⛶</button>
 
     <!-- 街ランクポップアップ -->
     <div id="rankPopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;align-items:center;justify-content:center;">
@@ -1464,8 +1470,9 @@
             `;
 
             // Calculate screen position from map coordinates
+            const titleBarH = window.innerWidth <= 768 ? 36 : 50;
             const screenX = (centerX - camera.x) * camera.zoom + W / 2;
-            const screenY = (centerY - camera.y) * camera.zoom + H / 2;
+            const screenY = (centerY - camera.y) * camera.zoom + H / 2 + titleBarH;
 
             // Mikoshi text that bounces
             const mikoshi = document.createElement('div');
@@ -3393,7 +3400,7 @@
             // Vote bonus scaling and glow
             const voteBonus = votes[char.type] || 0;
             const voteScale = 1 + Math.min(voteBonus * 0.02, 0.5); // Up to 50% bigger
-            const baseSize = 144;
+            const baseSize = 90;
             const size = baseSize * voteScale;
             const aspect = img.naturalWidth / img.naturalHeight;
             const w = size * aspect;
@@ -4054,14 +4061,14 @@
             // Show quiz after cutin(2.7s) + certificate(3s) + buffer
             setTimeout(() => {
                 showQuizModal(charType);
-            }, 7000);
+            }, 5500);
 
-            // Re-enable vote button after all animations (~9s)
+            // Re-enable vote button after all animations (~7s)
             setTimeout(() => {
                 window.voteInProgress = false;
                 document.getElementById('voteBtn').style.opacity = '1';
                 document.getElementById('voteBtn').style.pointerEvents = 'auto';
-            }, 9000);
+            }, 7000);
         }
         function updateVoteDisplay() {
             // Update vote counts in modal
@@ -4286,11 +4293,17 @@
                 const rankEmoji = rank === 1 ? '👑' : (rank === 2 ? '🥈' : (rank === 3 ? '🥉' : `${rank}位`));
                 const bgColor = rank === 1 ? '#ffd700' : (rank === 2 ? '#c0c0c0' : (rank === 3 ? '#cd7f32' : '#fff'));
                 const textColor = rank === 1 ? '#333' : '#555';
+                const pct = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(0) : 0;
 
-                const rankHtml = `<div style="display:flex;align-items:center;margin:6px 0;padding:6px;background:${bgColor};border-radius:4px;font-size:11px;font-weight:bold;">
-                    <div style="width:25px;text-align:center;color:${textColor};">${rankEmoji}</div>
-                    <div style="flex:1;color:${textColor};">${charNames[type]}</div>
-                    <div style="color:${textColor};">${count}票</div>
+                const rankHtml = `<div style="margin:6px 0;padding:6px;background:${bgColor};border-radius:4px;font-size:11px;font-weight:bold;">
+                    <div style="display:flex;align-items:center;">
+                        <div style="width:25px;text-align:center;color:${textColor};">${rankEmoji}</div>
+                        <div style="flex:1;color:${textColor};">${charNames[type]}</div>
+                        <div style="color:${textColor};">${count}票</div>
+                    </div>
+                    <div style="width:100%;height:4px;background:#eee;border-radius:2px;margin-top:3px;">
+                        <div style="width:${pct}%;height:100%;background:${colors[type]};border-radius:2px;"></div>
+                    </div>
                 </div>`;
                 html += rankHtml;
             });
@@ -4300,7 +4313,7 @@
 
             // Add voter turnout (1 vote ≈ 17 people, city population = 171322)
             const turnoutPercent = ((totalVotes * 17) / 171322 * 100).toFixed(1);
-            html += `<div style="font-size:10px;color:#666;margin-top:6px;text-align:center;">換算投票率: ${turnoutPercent}%</div>`;
+            html += `<div style="font-size:16px;font-weight:bold;color:#d32f2f;margin-top:8px;padding:8px;background:rgba(211,47,47,0.08);border-radius:8px;text-align:center;">📢 換算投票率: ${turnoutPercent}%<br><span style="font-size:10px;color:#666;">（1票 ≒ 17人分の声）</span></div>`;
 
             // Add current town rank (use getOverallRank which has color/star/rank fields)
             const rankInfo = getOverallRank();
