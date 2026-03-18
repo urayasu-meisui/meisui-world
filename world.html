@@ -25,6 +25,7 @@
             background: linear-gradient(180deg, #c8e6f5 0%, #e0f6ff 100%);
             cursor: grab;
             flex: 1;
+            touch-action: manipulation;
         }
 
         #canvas:active {
@@ -132,9 +133,9 @@
             transform: translateX(-50%);
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
-            font-size: 22px;
+            font-size: 24px;
             font-weight: bold;
-            padding: 15px 40px;
+            padding: 16px 44px;
             border: none;
             border-radius: 30px;
             box-shadow: 0 4px 20px rgba(238, 90, 36, 0.4);
@@ -568,14 +569,15 @@
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
             border: none;
-            padding: 15px 60px;
-            font-size: 24px;
+            padding: 18px 70px;
+            font-size: 28px;
             font-weight: bold;
             border-radius: 50px;
             cursor: pointer;
             box-shadow: 0 4px 20px rgba(238, 90, 36, 0.4);
             transition: all 0.3s;
             font-family: "Hiragino Sans", sans-serif;
+            animation: startButtonGlow 2s ease-in-out infinite;
         }
 
         #startButton:hover {
@@ -585,6 +587,15 @@
 
         #startButton:active {
             transform: scale(0.98);
+        }
+
+        @keyframes startButtonGlow {
+            0%, 100% {
+                box-shadow: 0 4px 20px rgba(238, 90, 36, 0.4);
+            }
+            50% {
+                box-shadow: 0 6px 30px rgba(238, 90, 36, 0.8);
+            }
         }
 
         /* Animated Clouds */
@@ -4021,6 +4032,10 @@
             };
             totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
             updateVoteDisplay();
+            // Check building unlocks when votes change (from any device)
+            if (typeof checkBuildingUnlock === 'function') {
+                checkBuildingUnlock(totalVotes - 1);
+            }
         });
 
         // Character metadata for voting modal
@@ -4062,6 +4077,9 @@
             // Firebase atomic increment (on('value') listener will update local votes)
             votesRef.child(charType).transaction(current => (current || 0) + 1).then(() => {
                 // Firebase listener will handle UI update
+                // Log vote timestamp for statistics
+                firebaseDb.ref('stats/lastVoteTime').set(Date.now());
+                firebaseDb.ref('stats/totalVoteCount').transaction(current => (current || 0) + 1);
             });
 
             // Optimistic local update for immediate UI feedback
@@ -4575,9 +4593,22 @@
             { q: "みちや はしを なおすのは？", a: "やく8%", choices: ["やく8%", "やく20%", "やく50%"], explanation: "なおしつづけることが だいじ", category: "ぜいきんのつかいみち" },
             { q: "しょうぼうしゃの おかねは？", a: "やく3%", choices: ["やく3%", "やく10%", "やく25%"], explanation: "24じかん 365にち まもっているよ", category: "ぜいきんのつかいみち" },
         ];
-        
+
+        // Track used quiz indices to avoid repeats
+        let usedQuizIndices = [];
+
         function getRandomQuiz() {
-            return quizzes[Math.floor(Math.random() * quizzes.length)];
+            // Reset if all questions used
+            if (usedQuizIndices.length >= quizzes.length) {
+                usedQuizIndices = [];
+            }
+            // Pick unused question
+            let idx;
+            do {
+                idx = Math.floor(Math.random() * quizzes.length);
+            } while (usedQuizIndices.includes(idx));
+            usedQuizIndices.push(idx);
+            return quizzes[idx];
         }
         
         function showQuizModal(charType) {
