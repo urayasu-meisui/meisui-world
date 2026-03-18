@@ -1225,6 +1225,14 @@
             // 道路・IC
             { x: 1146, y: 74, w: 60, h: 40, type: 'vote', name: '浦安IC', emoji: '🛣️' },
             { x: 803, y: 190, w: 50, h: 40, type: 'shop', name: '国道沿い商店', emoji: '🏪' },
+
+            // 投票所（6箇所）
+            { x: 633, y: 210, w: 40, h: 35, type: 'vote', name: '浦安市役所', emoji: '🗳️' },
+            { x: 675, y: 290, w: 40, h: 35, type: 'vote', name: '中央公民館', emoji: '🗳️' },
+            { x: 638, y: 221, w: 40, h: 35, type: 'vote', name: '市民プラザ', emoji: '🗳️' },
+            { x: 1018, y: 421, w: 40, h: 35, type: 'vote', name: '日の出公民館', emoji: '🗳️' },
+            { x: 992, y: 606, w: 40, h: 35, type: 'vote', name: '高洲公民館', emoji: '🗳️' },
+            { x: 860, y: 369, w: 40, h: 35, type: 'vote', name: '富岡公民館', emoji: '🗳️' },
         ];
 
         // Character walking routes - waypoints along actual roads on the map
@@ -1280,30 +1288,40 @@
                 {x: 1050, y: 500, name: '新町'},
             ],
 
-            // 屋形船めいすいくん (文化・伝統) — 旧市街〜川沿いルート
+            // 屋形船めいすいくん (文化・伝統) — 旧江戸川と海メインに変更
             asari: [
-                {x: 491, y: 105, name: '旧江戸川北'},
-                {x: 510, y: 250},                           // River path
+                {x: 491, y: 105, name: '旧江戸川北'},      // 旧江戸川 上流
+                {x: 500, y: 200},                            // 川沿い南下
+                {x: 510, y: 300},
                 {x: 517, y: 400},
-                {x: 517, y: 527, name: '旧江戸川南'},
-                {x: 550, y: 650},
-                {x: 629, y: 618, name: '舞浜駅'},
-                {x: 608, y: 400},
-                {x: 608, y: 200},
-                {x: 550, y: 150},
+                {x: 517, y: 527, name: '旧江戸川南'},        // 旧江戸川 下流
+                {x: 540, y: 650},
+                {x: 580, y: 770},                            // 海へ出る
+                {x: 700, y: 850},                            // 東京湾
+                {x: 900, y: 870, name: '東京湾沖'},
+                {x: 700, y: 830},                            // 戻る
+                {x: 560, y: 730},
+                {x: 510, y: 600},
+                {x: 500, y: 400},
+                {x: 491, y: 200},
             ],
 
-            // 漁師めいすいくん (産業振興) — 港・市場・商店街ルート
+            // 漁師めいすいくん (産業振興) — 境川メイン、サブで旧江戸川
             ryoushi: [
-                {x: 660, y: 200, name: '元町漁師町'},
+                {x: 675, y: 184, name: '境川上流'},          // 境川 北端
+                {x: 680, y: 250},                            // 川沿い南下
+                {x: 686, y: 316, name: '境川中流'},
+                {x: 695, y: 380},
+                {x: 702, y: 448, name: '境川下流'},
+                {x: 710, y: 520},
+                {x: 717, y: 580, name: '境川河口'},          // 河口
+                {x: 650, y: 500},                            // 西へ(旧江戸川方面)
+                {x: 580, y: 450},
+                {x: 517, y: 400, name: '旧江戸川'},          // 旧江戸川
+                {x: 530, y: 300},
+                {x: 550, y: 200},
                 {x: 608, y: 132, name: '浦安駅前'},
-                {x: 700, y: 180},
-                {x: 803, y: 190, name: '国道沿い商店'},
-                {x: 900, y: 300},
-                {x: 935, y: 364, name: '新浦安'},
-                {x: 850, y: 500, name: '中町商店街'},
-                {x: 750, y: 400},
-                {x: 700, y: 280, name: '市役所前'},
+                {x: 660, y: 200, name: '元町漁師町'},
             ],
         };
 
@@ -1465,6 +1483,44 @@
                 bekabune: '高洲から海を眺めるのが好き',
                 _default: '高洲エリアだよ'
             },
+            '浦安市役所': {
+                _default: '浦安市役所だよ。ここで投票できるよ🗳️'
+            },
+            '中央公民館': {
+                _default: '中央公民館。期日前投票もここでできるよ'
+            },
+            '市民プラザ': {
+                _default: '市民プラザwave101。みんなの交流の場だよ'
+            },
+            '日の出公民館': {
+                _default: '日の出公民館。新町の投票スポットだよ🗳️'
+            },
+            '高洲公民館': {
+                _default: '高洲公民館。エスレ高洲の中にあるよ'
+            },
+            '富岡公民館': {
+                _default: '富岡公民館。中町エリアの投票所だよ🗳️'
+            },
+            '境川上流': {
+                ryoushi: '境川の上流だ。昔はここでシジミがとれたんだ',
+                _default: '境川の上流だよ'
+            },
+            '境川中流': {
+                ryoushi: '境川沿いを歩くと気持ちいいなぁ',
+                _default: '境川の中流だよ'
+            },
+            '境川下流': {
+                ryoushi: '境川の水がきれいになるといいな',
+                _default: '境川の下流だよ'
+            },
+            '境川河口': {
+                ryoushi: '境川が東京湾に注ぐ場所だ。魚が集まるよ！',
+                _default: '境川の河口だよ'
+            },
+            '東京湾沖': {
+                asari: '屋形船で沖に出たよ！浦安が一望できる！',
+                _default: '東京湾の沖だよ'
+            },
         };
 
         // Character data
@@ -1474,7 +1530,7 @@
             { name: 'ビーナスめいちゃん', type: 'meisui_chan', x: 935, y: 364, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['選挙ってステキ💕', '観光で浦安を元気に！', 'みんなで作る未来'] },
             { name: '浦安の海めいすいくん', type: 'bekabune', x: 1093, y: 428, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['三番瀬を守ろう！', '海をきれいにするよ', 'お魚さん元気？'] },
             { name: '屋形船めいすいくん', type: 'asari', x: 491, y: 105, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
-            { name: '漁師めいすいくん', type: 'ryoushi', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
+            { name: '漁師めいすいくん', type: 'ryoushi', x: 675, y: 184, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
         ];
 
         // ============================================
@@ -1514,7 +1570,7 @@
                 animation: mikoshiBounce 0.5s ease infinite;
                 font-family: sans-serif;
             `;
-            mikoshi.innerHTML = '🏮 わっしょい！🏮<br><span style="font-size:16px;color:#ff6f00;">' + char1.type.replace('_', ' ') + ' × ' + char2.type.replace('_', ' ') + '</span>';
+            mikoshi.innerHTML = '🏮 まいだ！まいだ！🏮<br><span style="font-size:16px;color:#ff6f00;">' + char1.type.replace('_', ' ') + ' × ' + char2.type.replace('_', ' ') + '</span>';
             overlay.appendChild(mikoshi);
 
             // Spawn festival particles
@@ -1543,6 +1599,32 @@
                 overlay.style.opacity = '0';
                 setTimeout(() => overlay.remove(), 500);
             }, 3500);
+        }
+
+        // ============================================
+        // Simple Interaction Event (for 4 other events)
+        // ============================================
+        function showSimpleInteractionEvent(char1, char2, event) {
+            const centerX = (char1.x + char2.x) / 2;
+            const centerY = (char1.y + char2.y) / 2;
+            const titleBarH = window.innerWidth <= 768 ? 36 : 50;
+            const screenX = (centerX - camera.x) * camera.zoom + W / 2;
+            const screenY = (centerY - camera.y) * camera.zoom + H / 2 + titleBarH;
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:300;';
+
+            const text = document.createElement('div');
+            text.style.cssText = `position:absolute;left:${screenX-80}px;top:${Math.max(20,screenY-80)}px;width:160px;text-align:center;font-size:20px;font-weight:bold;color:#333;background:rgba(255,255,255,0.95);border-radius:12px;padding:10px;box-shadow:0 4px 15px rgba(0,0,0,0.2);animation:popScale 0.3s ease;font-family:sans-serif;`;
+            text.innerHTML = `<div style="font-size:28px;">${event.emoji}</div><div>${event.name}</div><div style="font-size:11px;color:#888;margin-top:4px;">${char1.name} × ${char2.name}</div>`;
+            overlay.appendChild(text);
+            document.body.appendChild(overlay);
+
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.5s';
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 500);
+            }, 2500);
         }
 
         // ============================================
@@ -1672,7 +1754,7 @@
                     const dy = char1.y - char2.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
-                    if (dist < 80 && !char1.interacting && !char2.interacting && !char1.celebrating && !char2.celebrating) {
+                    if (dist < 80 && !char1.interacting && !char2.interacting && !char1.celebrating && !char2.celebrating && Math.random() < 0.15) {
                         char1.interacting = true;
                         char2.interacting = true;
                         char1.interactionTimer = 4000;
@@ -1683,11 +1765,35 @@
                         char2.stateTimer = 0;
 
                         // Set mikoshi dialogue
-                        char1.currentThought = 'わっしょい！🏮';
-                        char2.currentThought = 'わっしょい！🏮';
+                        char1.currentThought = 'まいだ！まいだ！🏮';
+                        char2.currentThought = 'まいだ！まいだ！🏮';
 
                         // Create mikoshi event overlay
                         showMikoshiEvent(char1, char2);
+                    }
+                    else if (dist < 80 && !char1.interacting && !char2.interacting && !char1.celebrating && !char2.celebrating && Math.random() < 0.3) {
+                        // 30% chance of a different interaction event (from remaining 85%)
+                        const events = [
+                            { thought1: 'じゃんけん ぽん！✊', thought2: 'じゃんけん ぽん！✌️', name: 'じゃんけん大会', emoji: '✊✌️✋' },
+                            { thought1: 'ハイタッチ！🙌', thought2: 'イェーイ！🙌', name: 'ハイタッチ', emoji: '🙌' },
+                            { thought1: '一緒に踊ろう！💃', thought2: 'レッツダンス！🕺', name: '浦安盆踊り', emoji: '💃🕺' },
+                            { thought1: '写真撮ろう！📸', thought2: 'はいチーズ！📸', name: '記念撮影', emoji: '📸' },
+                        ];
+                        const event = events[Math.floor(Math.random() * events.length)];
+                        char1.interacting = true;
+                        char2.interacting = true;
+                        char1.interactionTimer = 3000;
+                        char2.interactionTimer = 3000;
+                        char1.state = 'idle';
+                        char2.state = 'idle';
+                        char1.stateTimer = 0;
+                        char2.stateTimer = 0;
+                        char1.currentThought = event.thought1;
+                        char2.currentThought = event.thought2;
+
+                        // Show event overlay (simpler than mikoshi)
+                        showSimpleInteractionEvent(char1, char2, event);
+                        playSound('event');
                     }
                 }
             }
@@ -3805,18 +3911,7 @@
             // CHANGE 6: Draw night time effects (stars, moon, building lights)
             drawNightEffects(ctx, now);
 
-            // Draw animated water overlay (shimmer effect)
-            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
-            ctx.lineWidth = 1.5;
-            for (let i = 0; i < 6; i++) {
-                ctx.beginPath();
-                for (let x = 0; x <= MAP_W; x += 15) {
-                    const y = 790 + i*20 + Math.sin(x*0.03 + now*0.001)*4 + Math.sin(x*0.07)*2;
-                    if (x === 0) ctx.moveTo(x, y);
-                    else ctx.lineTo(x, y);
-                }
-                ctx.stroke();
-            }
+            // Water shimmer removed (interfered with map image)
 
             // Draw characters (sort by y for depth)
             characters.sort((a, b) => a.y - b.y);
@@ -4199,7 +4294,7 @@
             // Create certificate overlay
             const cert = document.createElement('div');
             cert.className = 'voted-cert';
-            const certHTML = '<div class="cert-card"><div class="cert-border"><div class="cert-title">✨ 選挙済証 ✨</div><div class="cert-body"><p>あなたは</p><p class="cert-char">' + charName + '</p><p>に投票しました！</p><p class="cert-thanks">ありがとう！🗳️</p><p class="cert-total">現在の総投票数: ' + totalVotes + '票</p><p style="margin-top:10px;font-size:20px;color:#1565c0;font-weight:bold;">あなたの1票＝17人分の声！</p></div></div></div>';
+            const certHTML = '<div class="cert-card"><div class="cert-border"><div class="cert-title">✨ 選挙済証 ✨</div><div class="cert-body"><p>あなたは</p><p class="cert-char">' + charName + '</p><p>に投票しました！</p><p class="cert-thanks">ありがとう！🗳️</p><p class="cert-total">現在の総投票数: ' + totalVotes + '票</p></div></div></div>';
             cert.innerHTML = certHTML;
             document.body.appendChild(cert);
 
@@ -4419,7 +4514,7 @@
 
             // Add voter turnout (1 vote ≈ 17 people, city population = 171322)
             const turnoutPercent = ((totalVotes * 17) / 171322 * 100).toFixed(1);
-            html += `<div style="font-size:16px;font-weight:bold;color:#d32f2f;margin-top:8px;padding:8px;background:rgba(211,47,47,0.08);border-radius:8px;text-align:center;">📢 換算投票率: ${turnoutPercent}%<br><span style="font-size:10px;color:#666;">（1票 ≒ 17人分の声）</span></div>`;
+            html += `<div style="font-size:14px;font-weight:bold;color:#1565c0;margin-top:8px;padding:6px;background:rgba(21,101,192,0.08);border-radius:8px;text-align:center;">📊 換算投票率: ${turnoutPercent}%</div>`;
 
             // Add current town rank (use getOverallRank which has color/star/rank fields)
             const rankInfo = getOverallRank();
