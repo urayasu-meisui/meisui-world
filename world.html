@@ -3593,7 +3593,7 @@
             // Vote bonus scaling and glow
             const voteBonus = votes[char.type] || 0;
             const voteScale = 1 + Math.min(voteBonus * 0.02, 0.5); // Up to 50% bigger
-            const baseSize = 360;
+            const baseSize = 240;
             const size = baseSize * voteScale;
             const aspect = img.naturalWidth / img.naturalHeight;
             const w = size * aspect;
