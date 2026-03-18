@@ -1160,32 +1160,120 @@
 
         // Landmarks (x, y, width, height, type, name, emoji)
         const landmarks = [
-            { x: 300, y: 200, w: 80, h: 80, type: 'shrine', name: '清瀧神社', emoji: '⛩️' },
-            { x: 300, y: 250, w: 70, h: 70, type: 'station', name: '浦安駅', emoji: '🚉' },
-            { x: 150, y: 380, w: 60, h: 60, type: 'vote', name: '投票所1', emoji: '🗳️' },
-            { x: 320, y: 280, w: 60, h: 60, type: 'shop', name: 'コンビニ', emoji: '🏪' },
-            { x: 600, y: 150, w: 100, h: 80, type: 'city_hall', name: '市役所', emoji: '🏛️' },
-            { x: 650, y: 300, w: 70, h: 70, type: 'culture', name: '文化会館', emoji: '🎭' },
-            { x: 500, y: 400, w: 60, h: 60, type: 'vote', name: '投票所2', emoji: '🗳️' },
-            { x: 550, y: 550, w: 80, h: 80, type: 'park', name: '中央公園', emoji: '🌳' },
-            { x: 750, y: 450, w: 60, h: 60, type: 'library', name: '図書館', emoji: '📚' },
-            { x: 900, y: 450, w: 80, h: 80, type: 'station', name: '新浦安駅', emoji: '🚉' },
-            { x: 950, y: 150, w: 70, h: 70, type: 'park', name: '日の出公園', emoji: '🌅' },
-            { x: 1000, y: 350, w: 60, h: 60, type: 'vote', name: '投票所3', emoji: '🗳️' },
-            { x: 1150, y: 500, w: 90, h: 90, type: 'sports', name: '運動公園', emoji: '⚽' },
-            { x: 1250, y: 200, w: 60, h: 60, type: 'vote', name: '投票所4', emoji: '🗳️' },
-            { x: 1350, y: 400, w: 80, h: 80, type: 'station', name: '舞浜駅', emoji: '🚉' },
-            { x: 400, y: 600, w: 60, h: 60, type: 'school', name: '小学校', emoji: '🏫' },
+            // 駅・交通
+            { x: 608, y: 132, w: 60, h: 40, type: 'station', name: '浦安駅', emoji: '🚉' },
+            { x: 935, y: 364, w: 60, h: 40, type: 'station', name: '新浦安駅', emoji: '🚉' },
+            { x: 629, y: 618, w: 60, h: 40, type: 'station', name: '舞浜駅', emoji: '🚉' },
+
+            // 公園・自然
+            { x: 793, y: 412, w: 50, h: 40, type: 'park', name: '中央公園', emoji: '🌳' },
+            { x: 962, y: 612, w: 50, h: 40, type: 'park', name: '高洲中央公園', emoji: '🌿' },
+            { x: 1120, y: 560, w: 60, h: 40, type: 'park', name: '浦安市総合公園', emoji: '🏞️' },
+            { x: 1093, y: 428, w: 60, h: 40, type: 'culture', name: '三番瀬', emoji: '🐚' },
+
+            // 行政・文化
+            { x: 720, y: 280, w: 50, h: 40, type: 'city_hall', name: '市役所', emoji: '🏛️' },
+            { x: 660, y: 200, w: 50, h: 40, type: 'school', name: '元町エリア', emoji: '🏘️' },
+            { x: 850, y: 500, w: 50, h: 40, type: 'library', name: '中町エリア', emoji: '📚' },
+            { x: 1050, y: 500, w: 50, h: 40, type: 'culture', name: '新町エリア', emoji: '🏙️' },
+
+            // 海・港
+            { x: 1067, y: 823, w: 60, h: 40, type: 'sports', name: '東京湾', emoji: '🌊' },
+            { x: 540, y: 771, w: 60, h: 40, type: 'shop', name: '舞浜リゾート', emoji: '🎢' },
+
+            // 道路・IC
+            { x: 1146, y: 74, w: 60, h: 40, type: 'vote', name: '浦安IC', emoji: '🛣️' },
+            { x: 803, y: 190, w: 50, h: 40, type: 'shop', name: '国道沿い商店', emoji: '🏪' },
         ];
+
+        // Character walking routes - waypoints along actual roads on the map
+        const characterRoutes = {
+            // イチョウめいすいくん (環境・緑化) — 公園巡りルート
+            meisui: [
+                {x: 793, y: 412, name: '中央公園'},      // Start at 中央公園
+                {x: 750, y: 350},                          // Road north
+                {x: 720, y: 280, name: '市役所前'},        // 市役所
+                {x: 660, y: 200, name: '元町'},            // 元町エリア
+                {x: 700, y: 300},                          // Back south
+                {x: 850, y: 500, name: '中町'},            // 中町エリア
+                {x: 962, y: 612, name: '高洲中央公園'},    // 高洲中央公園
+                {x: 1120, y: 560, name: '総合公園'},       // 総合公園
+                {x: 1000, y: 480},                          // Back toward center
+            ],
+
+            // ツツジめいちゃん (子育て・教育) — 学校・図書館ルート(元町〜中町)
+            tsutsuji: [
+                {x: 660, y: 200, name: '元町'},
+                {x: 700, y: 250},
+                {x: 720, y: 280, name: '市役所'},
+                {x: 780, y: 350},
+                {x: 850, y: 500, name: '中町エリア'},
+                {x: 793, y: 412, name: '中央公園'},
+                {x: 750, y: 300},
+                {x: 660, y: 250},
+            ],
+
+            // ビーナスめいちゃん (観光・まちづくり) — 駅〜リゾートルート
+            meisui_chan: [
+                {x: 935, y: 364, name: '新浦安駅'},
+                {x: 880, y: 420},
+                {x: 803, y: 190, name: '国道沿い'},
+                {x: 700, y: 250},
+                {x: 608, y: 132, name: '浦安駅'},
+                {x: 650, y: 300},
+                {x: 629, y: 618, name: '舞浜駅'},
+                {x: 540, y: 771, name: '舞浜リゾート'},
+                {x: 700, y: 600},
+                {x: 850, y: 450},
+            ],
+
+            // 浦安の海めいすいくん (環境保全・三番瀬) — 海沿い・三番瀬ルート
+            bekabune: [
+                {x: 1093, y: 428, name: '三番瀬'},
+                {x: 1120, y: 560, name: '総合公園'},
+                {x: 1067, y: 700},                          // Coast
+                {x: 1067, y: 823, name: '東京湾'},
+                {x: 900, y: 791},                           // South coast
+                {x: 886, y: 700, name: '見明川'},
+                {x: 962, y: 612, name: '高洲'},
+                {x: 1050, y: 500, name: '新町'},
+            ],
+
+            // 屋形船めいすいくん (文化・伝統) — 旧市街〜川沿いルート
+            asari: [
+                {x: 491, y: 105, name: '旧江戸川北'},
+                {x: 510, y: 250},                           // River path
+                {x: 517, y: 400},
+                {x: 517, y: 527, name: '旧江戸川南'},
+                {x: 550, y: 650},
+                {x: 629, y: 618, name: '舞浜駅'},
+                {x: 608, y: 400},
+                {x: 608, y: 200},
+                {x: 550, y: 150},
+            ],
+
+            // 漁師めいすいくん (産業振興) — 港・市場・商店街ルート
+            ryoushi: [
+                {x: 660, y: 200, name: '元町漁師町'},
+                {x: 608, y: 132, name: '浦安駅前'},
+                {x: 700, y: 180},
+                {x: 803, y: 190, name: '国道沿い商店'},
+                {x: 900, y: 300},
+                {x: 935, y: 364, name: '新浦安'},
+                {x: 850, y: 500, name: '中町商店街'},
+                {x: 750, y: 400},
+                {x: 700, y: 280, name: '市役所前'},
+            ],
+        };
 
         // Character data
         const characters = [
-            { name: 'イチョウめいすいくん', type: 'meisui', x: 400, y: 300, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, thoughts: ['投票に行こう！', 'みんなの一票が大事！', 'イチョウの木を植えるぞ！', '浦安を愛してます！'] },
-            { name: 'ビーナスめいちゃん', type: 'meisui_chan', x: 500, y: 250, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 1, thoughts: ['選挙ってステキ💕', '観光で浦安を元気に！', 'みんなで作る未来'] },
-            { name: 'ツツジめいちゃん', type: 'tsutsuji', x: 600, y: 400, targetX: 0, targetY: 0, speed: 0.75, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 2, thoughts: ['お花を植えよう！', '子どもたちの笑顔が好き', 'きれいな花壇にするよ'] },
-            { name: '浦安の海めいすいくん', type: 'bekabune', x: 700, y: 350, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 3, thoughts: ['三番瀬を守ろう！', '海をきれいにするよ', 'お魚さん元気？'] },
-            { name: '屋形船めいすいくん', type: 'asari', x: 800, y: 500, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 4, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
-            { name: '漁師めいすいくん', type: 'ryoushi', x: 300, y: 600, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 5, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
+            { name: 'イチョウめいすいくん', type: 'meisui', x: 793, y: 412, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['投票に行こう！', 'みんなの一票が大事！', 'イチョウの木を植えるぞ！', '浦安を愛してます！'] },
+            { name: 'ツツジめいちゃん', type: 'tsutsuji', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.75, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['お花を植えよう！', '子どもたちの笑顔が好き', 'きれいな花壇にするよ'] },
+            { name: 'ビーナスめいちゃん', type: 'meisui_chan', x: 935, y: 364, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['選挙ってステキ💕', '観光で浦安を元気に！', 'みんなで作る未来'] },
+            { name: '浦安の海めいすいくん', type: 'bekabune', x: 1093, y: 428, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['三番瀬を守ろう！', '海をきれいにするよ', 'お魚さん元気？'] },
+            { name: '屋形船めいすいくん', type: 'asari', x: 491, y: 105, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
+            { name: '漁師めいすいくん', type: 'ryoushi', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
         ];
         // ============================================
         // Cloud System
@@ -1944,18 +2032,19 @@
             return positions;
         }
 
-        // Ginkgo positions - large trees lining roads and filling parks
-        const ginkgoPositions = generatePositions(1001, 40, 120, 1500, 60, 740);
-        // Azalea/flower positions - everywhere on land
-        const azaleaPositions = generatePositions(2002, 40, 130, 1450, 80, 720);
-        // Beach positions - coastline
-        const beachPositions = generatePositions(3003, 25, 80, 1520, MAP_H - 220, MAP_H - 150);
-        // Marine positions - in water
-        const marinePositions = generatePositions(4004, 30, 60, 1540, MAP_H - 190, MAP_H - 10);
-        // Boat positions - water
-        const boatPositions = generatePositions(5005, 20, 100, 1500, MAP_H - 175, MAP_H - 30);
-        // Fish market positions - shore area
-        const fishMarketPositions = generatePositions(6006, 25, 150, 1450, 620, MAP_H - 210);
+        // Vote effect positions - mapped to real Urayasu map coordinates
+        // Ginkgo positions - parks and green areas (central north)
+        const ginkgoPositions = generatePositions(1001, 40, 550, 1200, 100, 650);
+        // Azalea/flower positions - residential and school areas (元町〜中町)
+        const azaleaPositions = generatePositions(2002, 40, 550, 1000, 150, 500);
+        // Beach positions - south coastline area
+        const beachPositions = generatePositions(3003, 25, 500, 1150, 700, 850);
+        // Marine positions - Tokyo Bay area
+        const marinePositions = generatePositions(4004, 30, 800, 1200, 750, 1050);
+        // Boat positions - river and bay
+        const boatPositions = generatePositions(5005, 20, 450, 1100, 650, 900);
+        // Fish market positions - old town area (元町)
+        const fishMarketPositions = generatePositions(6006, 25, 550, 850, 150, 400);
 
         // Persistent vote particles (leaves, petals, etc.)
         let voteParticles = [];
@@ -1988,8 +2077,8 @@
                     const leafCount = Math.min(vM * 3, 40);
                     for (let i = 0; i < leafCount; i++) {
                         const phase = now * 0.0005 + i * 1.7;
-                        const lx = (100 + ((i * 137) % 1300)) + Math.sin(phase) * 30;
-                        const ly = ((now * 0.02 + i * 80) % (MAP_H - 200));
+                        const lx = (550 + ((i * 137) % 650)) + Math.sin(phase) * 30;
+                        const ly = ((now * 0.02 + i * 80) % 650);
                         const rot = Math.sin(phase * 2) * 0.5;
                         ctx.save();
                         ctx.translate(lx, ly);
@@ -2026,8 +2115,8 @@
                     const petalCount = Math.min(vT * 3, 45);
                     for (let i = 0; i < petalCount; i++) {
                         const phase = now * 0.0004 + i * 2.1;
-                        const px = (120 + ((i * 151) % 1280)) + Math.sin(phase * 1.3) * 25;
-                        const py = ((now * 0.015 + i * 70) % (MAP_H - 200));
+                        const px = (550 + ((i * 151) % 450)) + Math.sin(phase * 1.3) * 25;
+                        const py = ((now * 0.015 + i * 70) % 500);
                         ctx.save();
                         ctx.translate(px, py);
                         ctx.rotate(Math.sin(phase) * Math.PI);
@@ -2064,13 +2153,13 @@
                     drawBeachFacility(ctx, p.x, p.y, p.seed, i, now);
                 }
 
-                // 5票以上で灯台
+                // 5票以上で灯台 (near 三番瀬 area)
                 if (vV >= 5) {
-                    drawLighthouse(ctx, 1450, MAP_H - 260, now);
+                    drawLighthouse(ctx, 1150, 500, now);
                 }
-                // 10票以上でマリーナ
+                // 10票以上でマリーナ (near 総合公園 coast)
                 if (vV >= 10) {
-                    drawMarina(ctx, 300, MAP_H - 220, now);
+                    drawMarina(ctx, 1150, 650, now);
                 }
             }
 
@@ -2098,9 +2187,9 @@
                     drawMarineCreature(ctx, p.x, p.y, p.seed, i, now);
                 }
 
-                // 5票以上でクジラの噴水
+                // 5票以上でクジラの噴水 (in Tokyo Bay)
                 if (vU >= 5) {
-                    drawWhale(ctx, 800, MAP_H - 100, now);
+                    drawWhale(ctx, 1000, 900, now);
                 }
                 // 8票以上でサンゴ礁
                 if (vU >= 8) {
@@ -2121,8 +2210,8 @@
                 if (vA >= 3) {
                     const lanternCount = Math.min(vA * 3, 30);
                     for (let i = 0; i < lanternCount; i++) {
-                        const lx = 100 + (i / lanternCount) * (MAP_W - 200);
-                        const ly = MAP_H - 205;
+                        const lx = 500 + (i / lanternCount) * 600;
+                        const ly = 850;
                         const swing = Math.sin(now * 0.002 + i * 0.8) * 3;
                         // 提灯
                         ctx.fillStyle = '#ff4500';
@@ -3294,15 +3383,18 @@
 
                 // Decide to move or idle
                 if (char.state === 'idle') {
-                    if (char.stateTimer > 4000 + Math.random() * 4000) {
-                        // Pick random landmark
-                        char.targetLandmark = Math.floor(Math.random() * landmarks.length);
-                        const target = landmarks[char.targetLandmark];
-                        char.targetX = target.x + target.w / 2;
-                        char.targetY = target.y + target.h / 2;
-                        char.state = 'walking';
-                        char.stateTimer = 0;
-                        char.currentThought = null; // Clear thought when starting to walk
+                    if (char.stateTimer > 3000 + Math.random() * 3000) {
+                        // Pick next waypoint from character's route
+                        const route = characterRoutes[char.type];
+                        if (route) {
+                            char.routeIndex = ((char.routeIndex || 0) + 1) % route.length;
+                            const waypoint = route[char.routeIndex];
+                            char.targetX = waypoint.x;
+                            char.targetY = waypoint.y;
+                            char.state = 'walking';
+                            char.stateTimer = 0;
+                            char.currentThought = null; // Clear thought when starting to walk
+                        }
                     } else if (!char.currentThought && char.stateTimer > 1000) {
                         // Show random thought once when idle (stays for full idle period)
                         char.currentThought = char.thoughts[Math.floor(Math.random() * char.thoughts.length)];
