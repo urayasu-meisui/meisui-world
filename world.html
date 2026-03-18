@@ -338,51 +338,103 @@
             color: #888 !important;
         }
 
-        @media (max-width: 600px) {
-            .vote-grid {
-                grid-template-columns: repeat(2, 1fr);
-                gap: 8px;
+        /* ========== MOBILE RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            /* Bottom action buttons: reposition for mobile */
+            #bottomButtons {
+                left: 10px !important;
+                bottom: 50px !important;
+                gap: 6px !important;
             }
-            .vote-card img { max-height: 80px; }
-            .vote-card-name { font-size: 11px; }
-            .vote-card-count { font-size: 16px; }
+            #bottomButtons button {
+                font-size: 11px !important;
+                padding: 6px 12px !important;
+                border-radius: 8px !important;
+            }
+            /* Title bar: smaller */
+            .title-bar {
+                font-size: 14px;
+                height: 36px;
+                padding: 0 10px;
+            }
+
+            /* Vote button: centered, smaller */
             #voteBtn {
                 font-size: 16px;
-                padding: 10px 24px;
-                bottom: 10px;
+                padding: 10px 28px;
+                bottom: 8px;
+                border-radius: 24px;
             }
-            .title-bar {
-                font-size: 16px;
-                height: 40px;
-            }
-            #barGraph {
-                width: 160px !important;
-                padding: 8px !important;
-                bottom: 60px !important;
-                right: 5px !important;
-                font-size: 10px !important;
-            }
-            #zoomControls {
-                bottom: 10px !important;
-                right: 170px !important;
-            }
-            #zoomControls button {
-                width: 36px !important;
-                height: 36px !important;
-                font-size: 20px !important;
-            }
+
+            /* Vote modal: full screen on mobile */
             .vote-panel {
                 padding: 15px !important;
-                max-width: 95% !important;
+                max-width: 98% !important;
+                max-height: 90vh !important;
+                border-radius: 16px !important;
             }
-            .vote-panel h2 { font-size: 20px !important; }
-            .vote-panel p { font-size: 13px !important; }
+            .vote-panel h2 { font-size: 18px !important; margin-bottom: 8px !important; }
+            .vote-panel p { font-size: 12px !important; margin-bottom: 10px !important; }
+            .vote-grid {
+                grid-template-columns: repeat(2, 1fr) !important;
+                gap: 8px !important;
+            }
+            .vote-card { padding: 10px !important; }
+            .vote-card img { max-height: 70px !important; }
+            .vote-card-name { font-size: 11px !important; }
+            .vote-card-count { font-size: 14px !important; }
+            .vote-close { padding: 8px 20px !important; font-size: 14px !important; }
+
+            /* Character popup: fit screen */
+            .character-popup {
+                max-width: 200px !important;
+                font-size: 11px !important;
+            }
+
+            /* Welcome screen: smaller text */
+            .welcome-content h1 { font-size: 28px !important; }
+            .welcome-content h2 { font-size: 18px !important; }
+            .welcome-content p { font-size: 14px !important; }
+            #startButton { font-size: 18px !important; padding: 12px 40px !important; }
         }
+
+        /* Ranking panel: responsive */
+        @media (max-width: 600px) {
+            #barGraph {
+                width: 140px !important;
+                padding: 6px !important;
+                bottom: 50px !important;
+                right: 5px !important;
+                font-size: 9px !important;
+                border-radius: 10px !important;
+            }
+
+            /* Zoom controls: compact, left side */
+            #zoomControls {
+                bottom: 50px !important;
+                right: auto !important;
+                left: 5px !important;
+                flex-direction: row !important;
+                gap: 4px !important;
+            }
+            #zoomControls button {
+                width: 32px !important;
+                height: 32px !important;
+                font-size: 18px !important;
+            }
+
+            /* Bottom buttons (街ランク, リセット): stack vertically */
+        }
+
+        /* Very small screens */
         @media (max-width: 400px) {
-            .vote-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
-            .vote-card { padding: 8px; }
-            .vote-card img { max-height: 60px; }
+            .title-bar { font-size: 12px; height: 32px; }
+            #voteBtn { font-size: 14px; padding: 8px 20px; }
             #barGraph { display: none !important; }
+            #zoomControls { display: none !important; }
+            .vote-grid { gap: 6px !important; }
+            .vote-card { padding: 6px !important; }
+            .vote-card img { max-height: 50px !important; }
         }
         /* (News ticker styles removed) */
         
@@ -928,7 +980,7 @@
         </div>
     </div>
 
-    <div style="position:fixed;bottom:20px;left:200px;z-index:200;display:flex;gap:10px;">
+    <div id="bottomButtons" style="position:fixed;bottom:20px;left:200px;z-index:200;display:flex;gap:10px;">
         <button onclick="openRankPopup()"
             style="font-size:14px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:2px solid #e8a000;padding:10px 20px;border-radius:12px;cursor:pointer;font-family:'Hiragino Sans',sans-serif;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
             🏆 街ランク
@@ -1092,7 +1144,7 @@
         // CHANGE 4: minimapCanvas and minimapCtx removed
 
         let W = canvas.width = window.innerWidth;
-        let H = canvas.height = window.innerHeight - 50;
+        let H = canvas.height = window.innerHeight - (window.innerWidth <= 768 ? 36 : 50);
 
         // Map constants
         const MAP_W = 1600;
@@ -3502,7 +3554,7 @@
         // Window resize
         window.addEventListener('resize', () => {
             canvas.width = W = window.innerWidth;
-            canvas.height = H = window.innerHeight - 50;
+            canvas.height = H = window.innerHeight - (window.innerWidth <= 768 ? 36 : 50);
         });
 
         // ============================================
