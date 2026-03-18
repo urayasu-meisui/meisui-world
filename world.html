@@ -982,9 +982,7 @@
         </div>
     </div>
 
-    <div id="barGraph" style="position:fixed; bottom:80px; right:15px; z-index:100;
-        background:rgba(255,255,255,0.92); border-radius:16px; padding:15px;
-        box-shadow:0 4px 15px rgba(0,0,0,0.1); width:220px;">
+    <div id="barGraph" style="position:fixed; top:60px; right:10px; z-index:100; background:rgba(255,255,255,0.95); border-radius:16px; padding:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); width:200px; max-height:calc(100vh - 120px); overflow-y:auto;">
         <div style="font-weight:bold; font-size:14px; text-align:center; margin-bottom:10px;">
             📊 投票速報
         </div>
@@ -3672,6 +3670,9 @@
                         const speed = char.speed;
                         char.x += (dx / dist) * speed;
                         char.y += (dy / dist) * speed;
+                        // Clamp to map bounds (map image area: x=412-1508, y=0-1080)
+                        char.x = Math.max(450, Math.min(1500, char.x));
+                        char.y = Math.max(80, Math.min(850, char.y));
                     }
                 }
             });
@@ -3776,7 +3777,7 @@
             for (let i = 0; i < 6; i++) {
                 ctx.beginPath();
                 for (let x = 0; x <= MAP_W; x += 15) {
-                    const y = MAP_H - 180 + i*20 + Math.sin(x*0.03 + now*0.001)*4 + Math.sin(x*0.07)*2;
+                    const y = 790 + i*20 + Math.sin(x*0.03 + now*0.001)*4 + Math.sin(x*0.07)*2;
                     if (x === 0) ctx.moveTo(x, y);
                     else ctx.lineTo(x, y);
                 }
@@ -4011,6 +4012,8 @@
 
         function openVoteModal() {
             if (window.voteInProgress) return;
+            const profileCard = document.getElementById('charProfileCard');
+            if (profileCard) profileCard.remove();
             const modal = document.getElementById('voteModal');
             modal.style.display = 'flex';
             updateVoteModalDisplay();
@@ -4155,7 +4158,7 @@
             // Create certificate overlay
             const cert = document.createElement('div');
             cert.className = 'voted-cert';
-            const certHTML = '<div class="cert-card"><div class="cert-border"><div class="cert-title">✨ 選挙済証 ✨</div><div class="cert-body"><p>あなたは</p><p class="cert-char">' + charName + '</p><p>に投票しました！</p><p class="cert-thanks">ありがとう！🗳️</p><p class="cert-total">現在の総投票数: ' + totalVotes + '票</p></div></div></div>';
+            const certHTML = '<div class="cert-card"><div class="cert-border"><div class="cert-title">✨ 選挙済証 ✨</div><div class="cert-body"><p>あなたは</p><p class="cert-char">' + charName + '</p><p>に投票しました！</p><p class="cert-thanks">ありがとう！🗳️</p><p class="cert-total">現在の総投票数: ' + totalVotes + '票</p><p style="margin-top:10px;font-size:20px;color:#1565c0;font-weight:bold;">あなたの1票＝17人分の声！</p></div></div></div>';
             cert.innerHTML = certHTML;
             document.body.appendChild(cert);
 
@@ -4715,7 +4718,7 @@
                 card.style.opacity = '0';
                 card.style.transition = 'opacity 0.5s';
                 setTimeout(() => card.remove(), 500);
-            }, 3000);
+            }, 6000);
         }
 
         // ============================================
