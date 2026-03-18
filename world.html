@@ -2523,10 +2523,7 @@
 
             // ========== 1. めいすいくん → イチョウ並木・黄金の紅葉 ==========
             if (vM > 0) {
-                // 地面に金色のグラデーションオーバーレイ（投票が増えるほど黄金色に）
-                const intensity = Math.min(vM / 15, 1);
-                ctx.fillStyle = 'rgba(255, 215, 0, ' + (intensity * 0.05) + ')';
-                ctx.fillRect(100, 0, MAP_W - 100, MAP_H - 200);
+                // (color overlay removed - using real map image)
 
                 // 大きなイチョウの木
                 const count = Math.min(vM * 2, ginkgoPositions.length);
@@ -2562,10 +2559,7 @@
 
             // ========== 2. ツツジ → 花園・ピンクの楽園 ==========
             if (vT > 0) {
-                // ピンクの花びらオーバーレイ
-                const intensity = Math.min(vT / 15, 1);
-                ctx.fillStyle = 'rgba(255, 105, 180, ' + (intensity * 0.03) + ')';
-                ctx.fillRect(100, 0, MAP_W - 100, MAP_H - 200);
+                // (color overlay removed - using real map image)
 
                 // 大きなツツジの花壇
                 const count = Math.min(vT * 2, azaleaPositions.length);
@@ -2596,19 +2590,7 @@
 
             // ========== 3. ヴィーナス → 海岸線リゾート開発 ==========
             if (vV > 0) {
-                // 砂浜が広がる（海岸線手前にビーチエリア）
-                const beachWidth = Math.min(vV * 8, 60);
-                const beachGrad = ctx.createLinearGradient(0, MAP_H - 200 - beachWidth, 0, MAP_H - 200);
-                beachGrad.addColorStop(0, 'rgba(244, 220, 180, 0)');
-                beachGrad.addColorStop(0.5, 'rgba(244, 220, 180, 0.7)');
-                beachGrad.addColorStop(1, 'rgba(230, 200, 150, 0.9)');
-                ctx.fillStyle = beachGrad;
-                ctx.fillRect(0, MAP_H - 200 - beachWidth, MAP_W, beachWidth + 10);
-
-                // 海の色が美しく変化
-                const seaIntensity = Math.min(vV / 10, 1);
-                ctx.fillStyle = 'rgba(0, 200, 220, ' + (seaIntensity * 0.08) + ')';
-                ctx.fillRect(0, MAP_H - 200, MAP_W, 200);
+                // (beach gradient and sea color overlays removed - using real map image)
 
                 // ビーチ施設
                 const count = Math.min(vV * 2, beachPositions.length);
@@ -2629,19 +2611,8 @@
 
             // ========== 4. 浦安の海 → 海洋生物の楽園 ==========
             if (vU > 0) {
-                // 海がエメラルドグリーンに
+                // (sea/river color overlays removed - using real map image)
                 const clarity = Math.min(vU / 12, 1);
-                ctx.fillStyle = 'rgba(0, 230, 180, ' + (clarity * 0.06) + ')';
-                ctx.fillRect(0, MAP_H - 200, MAP_W, 200);
-                // 河川もきれいに
-                ctx.fillStyle = 'rgba(0, 200, 220, ' + (clarity * 0.04) + ')';
-                ctx.beginPath();
-                ctx.moveTo(0, 0);
-                for (let y = 0; y <= MAP_H; y += 15) {
-                    ctx.lineTo(80 + Math.sin(y * 0.02) * 15, y);
-                }
-                ctx.lineTo(0, MAP_H);
-                ctx.closePath();
                 ctx.fill();
 
                 // 海洋生物
