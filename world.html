@@ -894,6 +894,16 @@
                 opacity: 0;
             }
         }
+
+        /* Mikoshi Event Animations */
+        @keyframes mikoshiBounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-15px); }
+        }
+        @keyframes mikoshiParticle {
+            0% { transform: scale(1) translateY(0); opacity: 1; }
+            100% { transform: scale(0) translateY(-80px) rotate(360deg); opacity: 0; }
+        }
     </style>
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
@@ -1266,6 +1276,166 @@
             ],
         };
 
+        // Location-specific dialogues for named waypoints
+        const locationDialogues = {
+            '中央公園': {
+                meisui: 'この公園にもっとイチョウを植えたいな🌳',
+                tsutsuji: '公園の花壇をもっとキレイにするよ！',
+                meisui_chan: '公園でイベントしたら楽しそう！',
+                bekabune: '公園の池にお魚いるかな？',
+                asari: '公園でお祭りしたいね🏮',
+                ryoushi: '公園の横に屋台出したいなぁ',
+                _default: 'いい公園だなぁ〜'
+            },
+            '浦安駅': {
+                meisui: '駅前にイチョウ並木があるといいな',
+                tsutsuji: '通学する子どもたちを見守るよ',
+                meisui_chan: '浦安の玄関口！観光客を歓迎しよう',
+                bekabune: '駅から海まで近いよ！',
+                asari: '昔はここも漁師町だったんだよ',
+                ryoushi: '駅前の商店街をにぎやかにするぞ',
+                _default: '浦安駅に来たよ！'
+            },
+            '新浦安駅': {
+                meisui: '新浦安の街路樹も立派だね',
+                tsutsuji: 'この辺は学校がたくさんあるんだ',
+                meisui_chan: 'おしゃれなお店が増えてるね✨',
+                bekabune: '新浦安から海が見えるよ！',
+                asari: '新しい街にも伝統を伝えたい',
+                ryoushi: 'ショッピングモールでお魚売りたいな',
+                _default: '新浦安に来たよ！'
+            },
+            '舞浜駅': {
+                meisui: '舞浜の並木道はきれいだなぁ',
+                tsutsuji: '家族連れがたくさんいるね😊',
+                meisui_chan: '舞浜はみんなが笑顔になる場所！',
+                bekabune: '昔はここも海だったんだよ',
+                asari: '舞浜の夕日は最高だよ',
+                ryoushi: 'リゾート帰りのお客さんにお魚を！',
+                _default: '舞浜に来たよ！'
+            },
+            '三番瀬': {
+                meisui: '三番瀬の自然を守りたいね',
+                tsutsuji: '子どもたちに潮干狩り体験させたい！',
+                meisui_chan: '三番瀬は浦安の宝物だよ✨',
+                bekabune: 'ここが僕のホーム！渡り鳥も来るよ🐦',
+                asari: '三番瀬で昔はたくさん貝がとれたんだ',
+                ryoushi: 'アサリにハマグリ…海の恵みだね！',
+                _default: '三番瀬は大切な干潟だよ'
+            },
+            '市役所前': {
+                meisui: '市役所の前の木も元気だね',
+                tsutsuji: '子育て支援の相談はここでできるよ',
+                meisui_chan: '浦安市の中心だね！',
+                bekabune: '海のことも市役所にお願いしよう',
+                asari: '市の予算で伝統文化を守ってほしいな',
+                ryoushi: '漁業振興の陳情に来たよ！',
+                _default: 'みんなの声が届く場所だよ'
+            },
+            '元町': {
+                meisui: '元町の路地にも緑を増やしたいな',
+                tsutsuji: '昔ながらの学校があるんだよ',
+                meisui_chan: 'レトロな雰囲気がいいね！',
+                bekabune: '元町から旧江戸川が見える',
+                asari: 'ここが浦安の原点だよ！',
+                ryoushi: '元町の漁師文化を誇りに思う！',
+                _default: '浦安発祥の地、元町だよ'
+            },
+            '中町': {
+                meisui: '中町の街路樹を手入れしなきゃ',
+                tsutsuji: '中町は子育てしやすい街だよ',
+                meisui_chan: 'マンションが立ち並ぶ便利な街！',
+                bekabune: '中町から海まで歩いていけるよ',
+                asari: '新しい住民にも浦安の歴史を知ってほしい',
+                ryoushi: 'スーパーで新鮮なお魚並べるよ！',
+                _default: '中町エリアだよ'
+            },
+            '中町エリア': {
+                _default: '住みやすい中町だね'
+            },
+            '高洲中央公園': {
+                meisui: 'ここにもイチョウを植えよう！',
+                tsutsuji: '遊具がたくさんある公園だね',
+                meisui_chan: '海の近くの素敵な公園✨',
+                bekabune: '公園から海が見えて気持ちいい！',
+                asari: '公園でお祭りやりたいなぁ',
+                ryoushi: '散歩にちょうどいい公園だ',
+                _default: '高洲の公園だよ'
+            },
+            '総合公園': {
+                meisui: '浦安で一番大きな公園だ！',
+                tsutsuji: 'デイキャンプもできるんだよ',
+                meisui_chan: '海沿いの最高のロケーション！',
+                bekabune: 'ここから三番瀬が見渡せるよ',
+                asari: '広い芝生でのんびりしたいね',
+                ryoushi: 'バーベキューで魚を焼きたいな🐟',
+                _default: '浦安市総合公園だよ！'
+            },
+            '東京湾': {
+                meisui: '海の向こうに富士山が見えるかな',
+                tsutsuji: '子どもたちに海の大切さを教えたい',
+                meisui_chan: 'サンセットクルーズしたいなぁ🌅',
+                bekabune: '東京湾をきれいにするのが僕の使命！',
+                asari: '昔はもっと海が近かったんだよ',
+                ryoushi: '東京湾の恵みに感謝だね',
+                _default: '広い東京湾だなぁ'
+            },
+            '旧江戸川北': {
+                meisui: '川沿いの木々がきれいだね',
+                asari: '旧江戸川は浦安の歴史そのもの！',
+                ryoushi: '昔はここでのり養殖してたんだ',
+                _default: '旧江戸川だよ'
+            },
+            '旧江戸川南': {
+                asari: 'べか舟がここを行き来してたんだよ',
+                ryoushi: '川と海の恵みに感謝！',
+                _default: '旧江戸川の南側だよ'
+            },
+            '見明川': {
+                bekabune: '見明川もきれいにしたいな',
+                _default: '見明川だよ'
+            },
+            '舞浜リゾート': {
+                meisui_chan: 'ここは夢と魔法の国の入口！✨',
+                _default: '舞浜リゾートエリアだよ'
+            },
+            '国道沿い': {
+                meisui_chan: '国道沿いにも観光スポットを！',
+                ryoushi: '国道沿いに海鮮レストランを出したい',
+                _default: '国道沿いだよ'
+            },
+            '国道沿い商店': {
+                ryoushi: '商店街をもっと活気づけるぞ！',
+                _default: '国道沿いのお店だよ'
+            },
+            '新町': {
+                meisui_chan: '新しい街並みがきれいだね',
+                bekabune: '新町から海が近いよ',
+                _default: '新町エリアだよ'
+            },
+            '元町漁師町': {
+                ryoushi: 'ここが漁師の魂の場所だ！大漁旗を掲げるぞ！',
+                asari: '漁師町の伝統は浦安の誇りだよ',
+                _default: '元町の漁師町だよ'
+            },
+            '浦安駅前': {
+                ryoushi: '駅前の朝市でお魚を売るよ！',
+                _default: '浦安駅前だよ'
+            },
+            '新浦安': {
+                ryoushi: '新浦安のお客さんにもお魚を届けるよ！',
+                _default: '新浦安だよ'
+            },
+            '中町商店街': {
+                ryoushi: '商店街のみんなと一緒に盛り上げるぞ！',
+                _default: '中町の商店街だよ'
+            },
+            '高洲': {
+                bekabune: '高洲から海を眺めるのが好き',
+                _default: '高洲エリアだよ'
+            },
+        };
+
         // Character data
         const characters = [
             { name: 'イチョウめいすいくん', type: 'meisui', x: 793, y: 412, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['投票に行こう！', 'みんなの一票が大事！', 'イチョウの木を植えるぞ！', '浦安を愛してます！'] },
@@ -1275,6 +1445,74 @@
             { name: '屋形船めいすいくん', type: 'asari', x: 491, y: 105, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
             { name: '漁師めいすいくん', type: 'ryoushi', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
         ];
+
+        // ============================================
+        // Mikoshi Event Display
+        // ============================================
+        function showMikoshiEvent(char1, char2) {
+            // Calculate center point between two characters
+            const centerX = (char1.x + char2.x) / 2;
+            const centerY = (char1.y + char2.y) / 2;
+
+            // Create DOM overlay for mikoshi event
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position: fixed;
+                left: 0; top: 0; width: 100%; height: 100%;
+                pointer-events: none;
+                z-index: 300;
+            `;
+
+            // Calculate screen position from map coordinates
+            const screenX = (centerX - camera.x) * camera.zoom + W / 2;
+            const screenY = (centerY - camera.y) * camera.zoom + H / 2;
+
+            // Mikoshi text that bounces
+            const mikoshi = document.createElement('div');
+            mikoshi.style.cssText = `
+                position: absolute;
+                left: ${screenX - 100}px;
+                top: ${Math.max(20, screenY - 120)}px;
+                width: 200px;
+                text-align: center;
+                font-size: 32px;
+                font-weight: 900;
+                color: #d32f2f;
+                text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 0 0 20px #ffd700;
+                animation: mikoshiBounce 0.5s ease infinite;
+                font-family: sans-serif;
+            `;
+            mikoshi.innerHTML = '🏮 わっしょい！🏮<br><span style="font-size:16px;color:#ff6f00;">' + char1.type.replace('_', ' ') + ' × ' + char2.type.replace('_', ' ') + '</span>';
+            overlay.appendChild(mikoshi);
+
+            // Spawn festival particles
+            for (let i = 0; i < 20; i++) {
+                const particle = document.createElement('div');
+                const colors = ['#ff1744', '#ffd600', '#ff6d00', '#ff4081', '#ffab00'];
+                const size = 6 + Math.random() * 8;
+                particle.style.cssText = `
+                    position: absolute;
+                    width: ${size}px; height: ${size}px;
+                    background: ${colors[Math.floor(Math.random() * colors.length)]};
+                    border-radius: 50%;
+                    left: ${screenX + (Math.random() - 0.5) * 200}px;
+                    top: ${screenY + (Math.random() - 0.5) * 100}px;
+                    animation: mikoshiParticle ${1 + Math.random() * 2}s ease-out forwards;
+                    pointer-events: none;
+                `;
+                overlay.appendChild(particle);
+            }
+
+            document.body.appendChild(overlay);
+
+            // Remove after 4 seconds
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.5s';
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.remove(), 500);
+            }, 3500);
+        }
+
         // ============================================
         // Cloud System
         // ============================================
@@ -1401,36 +1639,33 @@
                     const dx = char1.x - char2.x;
                     const dy = char1.y - char2.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
-                    
-                    if (dist < 60 && !char1.interacting && !char2.interacting) {
+
+                    if (dist < 80 && !char1.interacting && !char2.interacting && !char1.celebrating && !char2.celebrating) {
                         char1.interacting = true;
                         char2.interacting = true;
-                        char1.interactionTimer = 3000;
-                        char2.interactionTimer = 3000;
-                        
-                        // Show dialogue bubble
-                        const greetings = {
-                            meisui: 'イチョウがきれいだね！',
-                            meisui_chan: 'うみがキラキラ☆',
-                            tsutsuji: 'おはなみにいこうよ！',
-                            bekabune: 'おさかなさん、げんき？',
-                            asari: 'やかたぶねにのろう！',
-                            ryoushi: 'きょうもたいりょうだ！'
-                        };
-                        
-                        const greeting1 = greetings[char1.type] || 'やあ！';
-                        const greeting2 = greetings[char2.type] || 'こんにちは！';
-                        
-                        // Could show bubbles here - simplified for now
+                        char1.interactionTimer = 4000;
+                        char2.interactionTimer = 4000;
+                        char1.state = 'idle';
+                        char2.state = 'idle';
+                        char1.stateTimer = 0;
+                        char2.stateTimer = 0;
+
+                        // Set mikoshi dialogue
+                        char1.currentThought = 'わっしょい！🏮';
+                        char2.currentThought = 'わっしょい！🏮';
+
+                        // Create mikoshi event overlay
+                        showMikoshiEvent(char1, char2);
                     }
                 }
             }
-            
+
             chars.forEach(char => {
                 if (char.interacting && char.interactionTimer > 0) {
                     char.interactionTimer -= 16;
                     if (char.interactionTimer <= 0) {
                         char.interacting = false;
+                        char.currentThought = null;
                     }
                 }
             });
@@ -3182,8 +3417,12 @@
                 ctx.shadowOffsetY = 0;
             }
 
-            // Bobbing animation when walking or celebration
+            // Bobbing animation when walking, interacting (mikoshi), or celebration
             let bob = char.state === 'walking' ? Math.sin(Date.now() * 0.008) * 2 : 0;
+            if (char.interacting && char.interactionTimer > 0) {
+                // Mikoshi bounce animation during interaction
+                bob = -Math.abs(Math.sin((4000 - char.interactionTimer) / 500 * Math.PI)) * 8;
+            }
 
             // CHANGE 5: Enhanced 5-second celebration animation with phases
             if (char.celebrating && char.celebrateTimer > 0) {
@@ -3395,8 +3634,8 @@
                             char.stateTimer = 0;
                             char.currentThought = null; // Clear thought when starting to walk
                         }
-                    } else if (!char.currentThought && char.stateTimer > 1000) {
-                        // Show random thought once when idle (stays for full idle period)
+                    } else if (!char.currentThought && char.stateTimer > 5000) {
+                        // Show random thought after location dialogue expires (stays for full idle period)
                         char.currentThought = char.thoughts[Math.floor(Math.random() * char.thoughts.length)];
                     }
                 } else if (char.state === 'walking') {
@@ -3409,6 +3648,16 @@
                         char.stateTimer = 0;
                         char.x = char.targetX;
                         char.y = char.targetY;
+
+                        // Set location-specific dialogue when arriving at named waypoint
+                        const route = characterRoutes[char.type];
+                        if (route) {
+                            const waypoint = route[char.routeIndex || 0];
+                            if (waypoint && waypoint.name && locationDialogues[waypoint.name]) {
+                                const dialogues = locationDialogues[waypoint.name];
+                                char.currentThought = dialogues[char.type] || dialogues._default || null;
+                            }
+                        }
                     } else {
                         const speed = char.speed;
                         char.x += (dx / dist) * speed;
