@@ -3893,6 +3893,9 @@
 
         function updateCharacters(deltaTime) {
             characters.forEach(char => {
+                // Skip AI movement if being dragged by user
+                if (draggedChar === char) return;
+
                 // Handle celebration
                 if (char.celebrating && char.celebrateTimer > 0) {
                     char.celebrateTimer -= deltaTime;
@@ -4208,16 +4211,54 @@
         // Input handling
         let dragging = false;
         let lastMx = 0, lastMy = 0;
+        let draggedChar = null; // Character being dragged
+
+        // Convert screen coords to map coords
+        function screenToMap(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const titleBarH = window.innerWidth <= 768 ? 36 : 50;
+            return {
+                x: (clientX - rect.left - W / 2) / camera.zoom + camera.x,
+                y: (clientY - rect.top - H / 2) / camera.zoom + camera.y
+            };
+        }
+
+        // Find character at map coordinates
+        function findCharAt(mapX, mapY) {
+            for (let i = characters.length - 1; i >= 0; i--) {
+                const char = characters[i];
+                const dx = char.x - mapX;
+                const dy = char.y - mapY;
+                const charSize = (char.type === 'tsutsuji' ? 240 : 160) / 2;
+                if (Math.abs(dx) < charSize && Math.abs(dy) < charSize) {
+                    return char;
+                }
+            }
+            return null;
+        }
 
         canvas.addEventListener('mousedown', e => {
-            dragging = true;
+            const map = screenToMap(e.clientX, e.clientY);
+            const char = findCharAt(map.x, map.y);
+            if (char) {
+                draggedChar = char;
+                draggedChar.state = 'idle';
+                draggedChar.stateTimer = 0;
+                canvas.style.cursor = 'move';
+            } else {
+                dragging = true;
+                canvas.style.cursor = 'grabbing';
+            }
             lastMx = e.clientX;
             lastMy = e.clientY;
-            canvas.style.cursor = 'grabbing';
         });
 
         canvas.addEventListener('mousemove', e => {
-            if (dragging) {
+            if (draggedChar) {
+                const map = screenToMap(e.clientX, e.clientY);
+                draggedChar.x = map.x;
+                draggedChar.y = map.y;
+            } else if (dragging) {
                 camera.x -= (e.clientX - lastMx) / camera.zoom;
                 camera.y -= (e.clientY - lastMy) / camera.zoom;
                 lastMx = e.clientX;
@@ -4226,6 +4267,9 @@
         });
 
         canvas.addEventListener('mouseup', () => {
+            if (draggedChar) {
+                draggedChar = null;
+            }
             dragging = false;
             canvas.style.cursor = 'grab';
         });
@@ -4246,21 +4290,36 @@
         canvas.addEventListener('touchstart', e => {
             e.preventDefault();
             if (e.touches.length === 1) {
-                dragging = true;
+                const map = screenToMap(e.touches[0].clientX, e.touches[0].clientY);
+                const char = findCharAt(map.x, map.y);
+                if (char) {
+                    draggedChar = char;
+                    draggedChar.state = 'idle';
+                    draggedChar.stateTimer = 0;
+                } else {
+                    dragging = true;
+                }
                 lastMx = e.touches[0].clientX;
                 lastMy = e.touches[0].clientY;
             } else if (e.touches.length === 2) {
+                if (draggedChar) { draggedChar = null; }
                 lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
             }
         }, { passive: false });
 
         canvas.addEventListener('touchmove', e => {
             e.preventDefault();
-            if (e.touches.length === 1 && dragging) {
-                camera.x -= (e.touches[0].clientX - lastMx) / camera.zoom;
-                camera.y -= (e.touches[0].clientY - lastMy) / camera.zoom;
-                lastMx = e.touches[0].clientX;
-                lastMy = e.touches[0].clientY;
+            if (e.touches.length === 1) {
+                if (draggedChar) {
+                    const map = screenToMap(e.touches[0].clientX, e.touches[0].clientY);
+                    draggedChar.x = map.x;
+                    draggedChar.y = map.y;
+                } else if (dragging) {
+                    camera.x -= (e.touches[0].clientX - lastMx) / camera.zoom;
+                    camera.y -= (e.touches[0].clientY - lastMy) / camera.zoom;
+                    lastMx = e.touches[0].clientX;
+                    lastMy = e.touches[0].clientY;
+                }
             } else if (e.touches.length === 2) {
                 const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
                 if (lastTouchDist > 0) {
@@ -4272,6 +4331,7 @@
         }, { passive: false });
 
         canvas.addEventListener('touchend', e => {
+            if (draggedChar) { draggedChar = null; }
             dragging = false;
             lastTouchDist = 0;
         });
