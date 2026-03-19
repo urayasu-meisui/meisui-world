@@ -4413,10 +4413,11 @@
         // ========== YEAR SYSTEM (1889-2100) ==========
         const START_YEAR = 1889;
         const END_YEAR = 2100;
-        const YEARS_PER_CYCLE = END_YEAR - START_YEAR; // 211
+        const YEARS_PER_CYCLE = END_YEAR - START_YEAR + 1; // 212 (1889~2100 inclusive)
 
         function getCurrentYear() {
-            return START_YEAR + (totalVotes % YEARS_PER_CYCLE);
+            const yearInCycle = totalVotes % YEARS_PER_CYCLE;
+            return START_YEAR + yearInCycle;
         }
 
         function getWorldLine() {
@@ -4499,6 +4500,10 @@
             updateYearDisplay();
             if (typeof checkBuildingUnlock === 'function') {
                 checkBuildingUnlock(totalVotes - 1);
+            }
+            // Check ending from any source (including debug buttons)
+            if (getCurrentYear() === END_YEAR && typeof showEnding === 'function') {
+                setTimeout(() => showEnding(), 1000);
             }
         }
         votesRef.on('value', handleVoteSnapshot, (error) => {
@@ -4741,17 +4746,17 @@
             // Play ending sound
             playSound('levelup');
 
-            // After 8 seconds, fade out and reset
+            // After 10 seconds, fade out and reset
             setTimeout(() => {
                 clearInterval(fwInterval);
-                overlay.style.transition = 'opacity 1s';
+                overlay.style.transition = 'opacity 1.5s';
                 overlay.style.opacity = '0';
                 setTimeout(() => {
                     overlay.remove();
                     // Year resets automatically because getCurrentYear uses modulo
                     updateYearDisplay();
-                }, 1000);
-            }, 8000);
+                }, 1500);
+            }, 10000);
         }
 
         function updateVoteDisplay() {
