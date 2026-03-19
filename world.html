@@ -2481,6 +2481,26 @@
         // renderStaticMap();
 
         // ============================================
+        // 地図画像のAI生成文字修正
+        // ============================================
+        function fixMapTextLabels(ctx) {
+            // 境川: AI生成で文字が崩れている（約 x=1140-1190, y=575-655）
+            // 背景色で塗りつぶして正しいテキストを上書き
+            ctx.save();
+            // 崩れた文字を背景色で隠す
+            ctx.fillStyle = '#DFD7CE'; // 地図の背景色 rgb(223,215,206)
+            ctx.fillRect(1135, 575, 55, 85);
+            // 正しい「境川」を縦書きで描画
+            ctx.font = 'bold 30px sans-serif';
+            ctx.fillStyle = '#2E7DB5'; // 地図上の川名の青色
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('境', 1162, 598);
+            ctx.fillText('川', 1162, 635);
+            ctx.restore();
+        }
+
+        // ============================================
         // 投票所の建物描画
         // ============================================
         function drawVotingStations(ctx, now) {
@@ -4089,6 +4109,8 @@
             if (currentYear >= 2026 && mapImage && mapImage.complete) {
                 // Modern era: use real map image
                 ctx.drawImage(mapImage, 0, 0, MAP_W, MAP_H);
+                // Fix garbled AI-generated text on the map image
+                fixMapTextLabels(ctx);
             } else {
                 // Historical era: draw simplified map
                 // Ocean background
