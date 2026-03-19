@@ -4415,14 +4415,14 @@
         // ========== YEAR SYSTEM (1889-2100, 1票=10年) ==========
         const START_YEAR = 1889;
         const END_YEAR = 2100;
-        const YEARS_PER_VOTE = 10; // 1票で10年進む
-        const TOTAL_YEARS = END_YEAR - START_YEAR; // 211年
-        const VOTES_PER_CYCLE = Math.ceil(TOTAL_YEARS / YEARS_PER_VOTE); // 22票で1周
+        const YEARS_PER_VOTE = 10;
+        // 22票で1周: 0票=1889, 1票=1899, ..., 20票=2089, 21票=2100, 22票→1889(次の世界線)
+        const VOTES_PER_CYCLE = 22;
 
         function getCurrentYear() {
             const votesInCycle = totalVotes % VOTES_PER_CYCLE;
-            const year = START_YEAR + votesInCycle * YEARS_PER_VOTE;
-            return Math.min(year, END_YEAR);
+            if (votesInCycle >= 21) return END_YEAR; // 21票目で2100年到達
+            return START_YEAR + votesInCycle * YEARS_PER_VOTE;
         }
 
         function getWorldLine() {
@@ -4430,8 +4430,8 @@
         }
 
         function isEndingTrigger() {
-            // エンディングは2100年を超えた瞬間（サイクルの最後の票）
-            return (totalVotes % VOTES_PER_CYCLE) === 0 && totalVotes > 0;
+            // 21票目（2100年到達時）にエンディング発動
+            return (totalVotes % VOTES_PER_CYCLE) === 21;
         }
 
         function updateYearDisplay() {
