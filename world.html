@@ -4279,19 +4279,21 @@
         // Debug: add multiple votes at once (for testing year progression)
         function debugAddVotes(count) {
             if (!confirm('デバッグ: ' + count + '票を一括追加しますか？')) return;
-            // Distribute votes evenly across characters
-            const chars = ['meisui', 'tsutsuji', 'meisui_chan', 'bekabune', 'asari', 'ryoushi'];
-            const additions = {};
-            for (let i = 0; i < count; i++) {
-                const c = chars[i % chars.length];
-                additions[c] = (additions[c] || 0) + 1;
-            }
-            // Apply all at once to Firebase
-            const updates = {};
-            for (const c of chars) {
-                updates[c] = (votes[c] || 0) + (additions[c] || 0);
-            }
-            votesRef.set(updates);
+            // Read latest from Firebase, then add
+            votesRef.once('value').then(snap => {
+                const current = snap.val() || {};
+                const chars = ['meisui', 'tsutsuji', 'meisui_chan', 'bekabune', 'asari', 'ryoushi'];
+                const updates = {};
+                for (let i = 0; i < count; i++) {
+                    const c = chars[i % chars.length];
+                    updates[c] = (updates[c] || (current[c] || 0)) + 1;
+                }
+                // Fill remaining chars with their current values
+                for (const c of chars) {
+                    if (!(c in updates)) updates[c] = current[c] || 0;
+                }
+                votesRef.set(updates);
+            });
         }
 
         // Zoom button functions
