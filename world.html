@@ -4279,11 +4279,19 @@
         // Debug: add multiple votes at once (for testing year progression)
         function debugAddVotes(count) {
             if (!confirm('デバッグ: ' + count + '票を一括追加しますか？')) return;
+            // Distribute votes evenly across characters
             const chars = ['meisui', 'tsutsuji', 'meisui_chan', 'bekabune', 'asari', 'ryoushi'];
+            const additions = {};
             for (let i = 0; i < count; i++) {
-                const randomChar = chars[Math.floor(Math.random() * chars.length)];
-                votesRef.child(randomChar).transaction(current => (current || 0) + 1);
+                const c = chars[i % chars.length];
+                additions[c] = (additions[c] || 0) + 1;
             }
+            // Apply all at once to Firebase
+            const updates = {};
+            for (const c of chars) {
+                updates[c] = (votes[c] || 0) + (additions[c] || 0);
+            }
+            votesRef.set(updates);
         }
 
         // Zoom button functions
