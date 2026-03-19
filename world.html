@@ -4777,7 +4777,7 @@
                 `;
                 document.body.appendChild(popup);
 
-                // After 10 seconds total (8 more), fade everything out
+                // After 10 seconds total (8 more), fade out fireworks and popup
                 setTimeout(() => {
                     clearInterval(fwInterval);
                     popup.style.transition = 'opacity 1.5s';
@@ -4787,11 +4787,60 @@
                     setTimeout(() => {
                         popup.remove();
                         fwOverlay.remove();
-                        endingActive = false;
-                        updateYearDisplay();
+                        // Show "next world line" button on the map
+                        showNextWorldLineButton();
                     }, 1500);
                 }, 8000);
             }, 2000);
+        }
+
+        function showNextWorldLineButton() {
+            // Remove existing button if any
+            const existing = document.getElementById('nextWorldLineBtn');
+            if (existing) existing.remove();
+
+            const nextWL = getWorldLine() + 1;
+            const btn = document.createElement('button');
+            btn.id = 'nextWorldLineBtn';
+            btn.innerHTML = '🌀 第' + nextWL + '世界線へ →';
+            btn.style.cssText = `
+                position:fixed;
+                bottom:50%;
+                left:50%;
+                transform:translateX(-50%);
+                z-index:9000;
+                font-size:28px;
+                font-weight:bold;
+                color:#fff;
+                background:linear-gradient(135deg, #667eea, #764ba2);
+                border:3px solid #ffd700;
+                border-radius:20px;
+                padding:20px 50px;
+                cursor:pointer;
+                font-family:sans-serif;
+                box-shadow:0 0 30px rgba(102,126,234,0.5), 0 8px 30px rgba(0,0,0,0.3);
+                animation:voteBtnPulse 2s ease-in-out infinite;
+            `;
+            btn.onclick = function() {
+                btn.remove();
+                // Add 1 vote to advance past 2100 → loops to 1889 (next world line)
+                votesRef.once('value').then(snap => {
+                    const current = snap.val() || {};
+                    const chars = ['meisui', 'tsutsuji', 'meisui_chan', 'bekabune', 'asari', 'ryoushi'];
+                    const randomChar = chars[Math.floor(Math.random() * chars.length)];
+                    const updates = {};
+                    for (const c of chars) {
+                        updates[c] = current[c] || 0;
+                    }
+                    updates[randomChar] = (updates[randomChar] || 0) + 1;
+                    return votesRef.set(updates);
+                }).then(() => {
+                    endingActive = false;
+                    updateYearDisplay();
+                    playSound('vote');
+                });
+            };
+            document.body.appendChild(btn);
         }
 
         function updateVoteDisplay() {
