@@ -37,13 +37,13 @@ h<!DOCTYPE html>
             top: 0;
             left: 0;
             right: 0;
-            height: 50px;
-            background: linear-gradient(135deg, rgba(30, 100, 60, 0.95), rgba(20, 80, 120, 0.95));
+            height: 36px;
+            background: linear-gradient(135deg, rgba(30, 100, 60, 0.9), rgba(20, 80, 120, 0.9));
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 16px;
             font-weight: bold;
             z-index: 100;
             backdrop-filter: blur(5px);
@@ -128,23 +128,23 @@ h<!DOCTYPE html>
         /* VOTING SYSTEM STYLES */
         #voteBtn {
             position: fixed;
-            bottom: 30px;
-            left: 10px;
-            transform: none;
+            bottom: 16px;
+            left: 50%;
+            transform: translateX(-50%);
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
-            font-size: 20px;
+            font-size: 18px;
             font-weight: bold;
-            padding: 14px 30px;
+            padding: 12px 36px;
             border: none;
-            border-radius: 16px;
+            border-radius: 24px;
             box-shadow: 0 4px 20px rgba(238, 90, 36, 0.4);
             cursor: pointer;
             z-index: 200;
             font-family: "Hiragino Sans", sans-serif;
             animation: voteBtnPulse 2s ease-in-out infinite;
-            width: 200px;
             text-align: center;
+            white-space: nowrap;
         }
 
         @keyframes voteBtnPulse {
@@ -501,14 +501,14 @@ h<!DOCTYPE html>
     <style>
         #soundToggleBtn {
             position: fixed;
-            top: 10px;
-            left: 20px;
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.95);
-            border: 2px solid #2d5016;
+            top: 4px;
+            left: 8px;
+            width: 28px;
+            height: 28px;
+            background: rgba(255, 255, 255, 0.3);
+            border: none;
             border-radius: 50%;
-            font-size: 24px;
+            font-size: 16px;
             cursor: pointer;
             z-index: 250;
             display: flex;
@@ -1058,10 +1058,10 @@ h<!DOCTYPE html>
         🗳️ 仮想うらやす めいすいくんワールド 🌏
     </div>
 
-    <!-- Year Display (1889-2100) -->
-    <div id="yearDisplay" style="position:fixed;top:50px;left:50%;transform:translateX(-50%);z-index:150;text-align:center;pointer-events:none;">
-        <div id="yearText" style="font-size:48px;font-weight:900;color:#fff;text-shadow:3px 3px 0 #000,-1px -1px 0 #000,1px -1px 0 #000,-1px 1px 0 #000,0 0 20px rgba(0,0,0,0.5);font-family:sans-serif;letter-spacing:4px;">1889年</div>
-        <div id="worldLineText" style="font-size:14px;color:#ffd700;text-shadow:1px 1px 0 #000;font-family:sans-serif;">第1世界線</div>
+    <!-- Year Display (1889-2100) — compact, top-center below title -->
+    <div id="yearDisplay" style="position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:150;text-align:center;pointer-events:none;background:rgba(0,0,0,0.4);border-radius:0 0 12px 12px;padding:2px 16px 4px;">
+        <div id="yearText" style="font-size:28px;font-weight:900;color:#fff;text-shadow:2px 2px 0 #000;font-family:sans-serif;letter-spacing:3px;">1889年</div>
+        <div id="worldLineText" style="font-size:11px;color:#ffd700;text-shadow:1px 1px 0 #000;font-family:sans-serif;">第1世界線</div>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -1086,7 +1086,7 @@ h<!DOCTYPE html>
         </div>
     </div>
 
-    <div id="barGraph" style="position:fixed; top:60px; right:10px; z-index:100; background:rgba(255,255,255,0.95); border-radius:16px; padding:12px; box-shadow:0 4px 15px rgba(0,0,0,0.1); width:200px; max-height:calc(100vh - 120px); overflow-y:auto;">
+    <div id="barGraph" style="position:fixed; top:40px; right:8px; z-index:100; background:rgba(255,255,255,0.9); border-radius:12px; padding:8px 10px; box-shadow:0 2px 10px rgba(0,0,0,0.1); width:175px; max-height:calc(100vh - 100px); overflow-y:auto; font-size:12px;">
         <div style="font-weight:bold; font-size:14px; text-align:center; margin-bottom:10px;">
             📊 投票速報
         </div>
@@ -1096,30 +1096,30 @@ h<!DOCTYPE html>
         </div>
     </div>
 
-    <div id="bottomButtons" style="position:fixed;bottom:90px;left:10px;z-index:200;display:flex;flex-direction:column;gap:8px;width:200px;">
+    <!-- 左上：管理ボタン群（コンパクト） -->
+    <div id="adminButtons" style="position:fixed;top:42px;left:8px;z-index:200;display:flex;flex-direction:column;gap:4px;">
         <button onclick="openRankPopup()"
-            style="font-size:14px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:2px solid #e8a000;padding:10px 20px;border-radius:12px;cursor:pointer;font-family:'Hiragino Sans',sans-serif;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
+            style="font-size:12px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;padding:7px 14px;border-radius:10px;cursor:pointer;font-family:'Hiragino Sans',sans-serif;font-weight:bold;box-shadow:0 2px 6px rgba(0,0,0,0.2);">
             🏆 街ランク
         </button>
         <button onclick="if(confirm('⚠️ 本当に全投票を0に戻しますか？\\nこの操作は取り消せません。\\n\\nスタッフ以外は押さないでください。')){votesRef.set({meisui:0,meisui_chan:0,tsutsuji:0,bekabune:0,asari:0,ryoushi:0});}"
-            style="font-size:14px;color:#fff;background:linear-gradient(135deg,#666,#444);border:2px solid #888;padding:10px 20px;border-radius:12px;cursor:pointer;font-family:'Hiragino Sans',sans-serif;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,0.3);">
-            🔄 0票に戻す
+            style="font-size:11px;color:#fff;background:linear-gradient(135deg,#666,#444);border:none;padding:6px 12px;border-radius:8px;cursor:pointer;font-family:'Hiragino Sans',sans-serif;font-weight:bold;box-shadow:0 1px 4px rgba(0,0,0,0.2);">
+            🔄 リセット
         </button>
-        <div style="display:flex;gap:4px;margin-top:4px;">
-            <button onclick="debugAddVotes(1)" style="flex:1;font-size:11px;color:#fff;background:#e53935;border:none;padding:6px;border-radius:8px;cursor:pointer;font-weight:bold;">+10年</button>
-            <button onclick="debugAddVotes(2)" style="flex:1;font-size:11px;color:#fff;background:#d32f2f;border:none;padding:6px;border-radius:8px;cursor:pointer;font-weight:bold;">+20年</button>
-            <button onclick="debugAddVotes(5)" style="flex:1;font-size:11px;color:#fff;background:#b71c1c;border:none;padding:6px;border-radius:8px;cursor:pointer;font-weight:bold;">+50年</button>
+        <div style="display:flex;gap:3px;">
+            <button onclick="debugAddVotes(1)" style="flex:1;font-size:10px;color:#fff;background:#e53935;border:none;padding:4px;border-radius:6px;cursor:pointer;font-weight:bold;">+10年</button>
+            <button onclick="debugAddVotes(2)" style="flex:1;font-size:10px;color:#fff;background:#d32f2f;border:none;padding:4px;border-radius:6px;cursor:pointer;font-weight:bold;">+20年</button>
+            <button onclick="debugAddVotes(5)" style="flex:1;font-size:10px;color:#fff;background:#b71c1c;border:none;padding:4px;border-radius:6px;cursor:pointer;font-weight:bold;">+50年</button>
         </div>
     </div>
 
-    <!-- ズームボタン -->
-    <div id="zoomControls" style="position:fixed;top:200px;left:10px;z-index:200;display:flex;flex-direction:row;gap:6px;">
-        <button onclick="zoomIn()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:28px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">＋</button>
-        <button onclick="zoomOut()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:28px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">ー</button>
-        <button onclick="zoomReset()" style="width:50px;height:50px;border-radius:50%;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:16px;cursor:pointer;box-shadow:0 2px 8px rgba(0,0,0,0.2);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">🔍</button>
+    <!-- 右下：ズーム＆全画面ボタン -->
+    <div id="zoomControls" style="position:fixed;bottom:60px;right:8px;z-index:200;display:flex;flex-direction:column;gap:4px;align-items:center;">
+        <button onclick="zoomIn()" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);font-size:22px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">＋</button>
+        <button onclick="zoomOut()" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);font-size:22px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">ー</button>
+        <button onclick="zoomReset()" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;font-weight:bold;color:#2d5016;">🔍</button>
+        <button onclick="if(document.fullscreenElement){document.exitFullscreen()}else{document.documentElement.requestFullscreen().catch(()=>{})}" style="width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.9);font-size:14px;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.15);display:flex;align-items:center;justify-content:center;color:#2d5016;">⛶</button>
     </div>
-
-    <button id="fullscreenBtn" onclick="if(document.fullscreenElement){document.exitFullscreen()}else{document.documentElement.requestFullscreen().catch(()=>{})}" style="position:fixed;top:60px;left:10px;padding:6px 12px;border-radius:8px;border:2px solid #2d5016;background:rgba(255,255,255,0.95);font-size:12px;font-weight:bold;cursor:pointer;z-index:250;box-shadow:0 2px 8px rgba(0,0,0,0.2);color:#2d5016;font-family:sans-serif;">全画面</button>
 
     <!-- 街ランクポップアップ -->
     <div id="rankPopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;align-items:center;justify-content:center;">
@@ -1274,7 +1274,7 @@ h<!DOCTYPE html>
         // CHANGE 4: minimapCanvas and minimapCtx removed
 
         let W = canvas.width = window.innerWidth;
-        let H = canvas.height = window.innerHeight - (window.innerWidth <= 768 ? 36 : 50);
+        let H = canvas.height = window.innerHeight - 36;
 
         // Map constants
         const MAP_W = 1920;
@@ -2066,17 +2066,21 @@ h<!DOCTYPE html>
             { x: 1350, y: 400 }, // maihama station
         ];
 
-        // Camera system — fixed to show full map in one screen
-        // Zoom is calculated to fit MAP into canvas, camera stays centered
-        let camera = { x: MAP_W / 2, y: MAP_H / 2, zoom: 0.5, targetZoom: 0.5 };
+        // Camera system — offset toward land area to reduce ocean margins
+        // Land & characters are concentrated around x=750, y=350
+        const CAM_CENTER_X = MAP_W * 0.45;  // slightly left of center (land area)
+        const CAM_CENTER_Y = MAP_H * 0.42;  // above center (characters are upper half)
+        let camera = { x: CAM_CENTER_X, y: CAM_CENTER_Y, zoom: 0.5, targetZoom: 0.5 };
         function fitMapToScreen() {
             const zoomX = W / MAP_W;
             const zoomY = H / MAP_H;
+            // Use a zoom that's larger than pure fit — show land area bigger
             const fitZoom = Math.min(zoomX, zoomY);
-            camera.zoom = fitZoom;
-            camera.targetZoom = fitZoom;
-            camera.x = MAP_W / 2;
-            camera.y = MAP_H / 2;
+            const landZoom = fitZoom * 1.35; // 35% closer to fill screen with land
+            camera.zoom = landZoom;
+            camera.targetZoom = landZoom;
+            camera.x = CAM_CENTER_X;
+            camera.y = CAM_CENTER_Y;
         }
 
         // Particle system (cherry blossoms)
@@ -2519,6 +2523,177 @@ h<!DOCTYPE html>
             ctx.fillText('境', 1177, 585);
             ctx.fillText('川', 1177, 620);
             ctx.restore();
+        }
+
+        // ============================================
+        // 海の装飾アニメーションシステム
+        // ============================================
+        const oceanDecorations = {
+            // 小舟（漁船・ヨット）
+            boats: [
+                { x: 200, y: 750, speed: 0.15, type: 'fishing', dir: 1 },
+                { x: 1500, y: 850, speed: 0.1, type: 'yacht', dir: -1 },
+                { x: 800, y: 950, speed: 0.12, type: 'fishing', dir: 1 },
+                { x: 1700, y: 650, speed: 0.08, type: 'yacht', dir: -1 },
+                { x: 400, y: 1000, speed: 0.18, type: 'fishing', dir: 1 },
+            ],
+            // 魚の群れ
+            fishSchools: [
+                { x: 300, y: 800, count: 5, radius: 40, speed: 0.3, phase: 0 },
+                { x: 1200, y: 900, count: 4, radius: 35, speed: 0.25, phase: 2 },
+                { x: 600, y: 1020, count: 6, radius: 45, speed: 0.35, phase: 4 },
+                { x: 1600, y: 750, count: 3, radius: 30, speed: 0.2, phase: 1 },
+            ],
+            // 波紋
+            ripples: [],
+            rippleTimer: 0,
+            // カモメ
+            seagulls: [
+                { x: 100, y: 620, speed: 0.4, wingPhase: 0 },
+                { x: 900, y: 580, speed: 0.35, wingPhase: 1.5 },
+                { x: 1400, y: 700, speed: 0.45, wingPhase: 3 },
+            ],
+        };
+
+        function drawOceanDecorations(ctx, t) {
+            const time = t * 0.001;
+
+            // === 波紋 ===
+            oceanDecorations.rippleTimer += 1;
+            if (oceanDecorations.rippleTimer > 90) { // 新しい波紋を定期的に生成
+                oceanDecorations.rippleTimer = 0;
+                const rx = 100 + Math.random() * (MAP_W - 200);
+                const ry = 600 + Math.random() * (MAP_H - 650);
+                oceanDecorations.ripples.push({ x: rx, y: ry, age: 0, maxAge: 120 });
+            }
+            oceanDecorations.ripples = oceanDecorations.ripples.filter(r => r.age < r.maxAge);
+            for (const rip of oceanDecorations.ripples) {
+                rip.age++;
+                const progress = rip.age / rip.maxAge;
+                const radius = progress * 25;
+                const alpha = (1 - progress) * 0.3;
+                ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.arc(rip.x, rip.y, radius, 0, Math.PI * 2);
+                ctx.stroke();
+                if (radius > 8) {
+                    ctx.beginPath();
+                    ctx.arc(rip.x, rip.y, radius * 0.6, 0, Math.PI * 2);
+                    ctx.stroke();
+                }
+            }
+
+            // === 魚の群れ（水面下の影） ===
+            for (const school of oceanDecorations.fishSchools) {
+                const baseX = school.x + Math.sin(time * school.speed + school.phase) * 80;
+                const baseY = school.y + Math.cos(time * school.speed * 0.7 + school.phase) * 20;
+                for (let i = 0; i < school.count; i++) {
+                    const angle = (i / school.count) * Math.PI * 2 + time * school.speed;
+                    const fx = baseX + Math.cos(angle) * school.radius;
+                    const fy = baseY + Math.sin(angle) * school.radius * 0.5;
+                    const fishDir = Math.cos(time * school.speed + school.phase) > 0 ? 1 : -1;
+                    ctx.save();
+                    ctx.translate(fx, fy);
+                    ctx.scale(fishDir, 1);
+                    ctx.fillStyle = 'rgba(60,120,180,0.35)';
+                    ctx.beginPath();
+                    ctx.ellipse(0, 0, 8, 4, 0, 0, Math.PI * 2);
+                    ctx.fill();
+                    // 尾びれ
+                    ctx.beginPath();
+                    ctx.moveTo(-8, 0);
+                    ctx.lineTo(-13, -4);
+                    ctx.lineTo(-13, 4);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.restore();
+                }
+            }
+
+            // === 小舟 ===
+            for (const boat of oceanDecorations.boats) {
+                boat.x += boat.speed * boat.dir;
+                // 画面端で折り返し
+                if (boat.x > MAP_W + 50) boat.x = -50;
+                if (boat.x < -50) boat.x = MAP_W + 50;
+                const bobY = boat.y + Math.sin(time * 2 + boat.x * 0.01) * 3;
+                const tilt = Math.sin(time * 1.5 + boat.x * 0.01) * 0.05;
+
+                ctx.save();
+                ctx.translate(boat.x, bobY);
+                ctx.rotate(tilt);
+                if (boat.type === 'fishing') {
+                    // 漁船
+                    ctx.fillStyle = '#8B4513';
+                    ctx.beginPath();
+                    ctx.moveTo(-18, 0); ctx.lineTo(-14, 8); ctx.lineTo(14, 8); ctx.lineTo(18, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    // マスト
+                    ctx.strokeStyle = '#654321';
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    ctx.moveTo(2, 0); ctx.lineTo(2, -16);
+                    ctx.stroke();
+                    // 旗
+                    ctx.fillStyle = '#e74c3c';
+                    ctx.beginPath();
+                    ctx.moveTo(2, -16); ctx.lineTo(10, -13); ctx.lineTo(2, -10);
+                    ctx.closePath();
+                    ctx.fill();
+                } else {
+                    // ヨット
+                    ctx.fillStyle = '#fff';
+                    ctx.beginPath();
+                    ctx.moveTo(-14, 0); ctx.lineTo(-10, 6); ctx.lineTo(10, 6); ctx.lineTo(14, 0);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#aaa';
+                    ctx.lineWidth = 0.5;
+                    ctx.stroke();
+                    // 帆
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.beginPath();
+                    ctx.moveTo(0, -20); ctx.lineTo(0, 0); ctx.lineTo(10 * boat.dir, -3);
+                    ctx.closePath();
+                    ctx.fill();
+                    ctx.strokeStyle = '#ccc';
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+
+            // === カモメ ===
+            for (const gull of oceanDecorations.seagulls) {
+                gull.x += gull.speed;
+                if (gull.x > MAP_W + 30) gull.x = -30;
+                gull.wingPhase += 0.08;
+                const gy = gull.y + Math.sin(time * 0.8 + gull.x * 0.005) * 10;
+                const wingAngle = Math.sin(gull.wingPhase) * 0.5;
+
+                ctx.save();
+                ctx.translate(gull.x, gy);
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.lineCap = 'round';
+                // 左翼
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(-8, -6 * (1 + wingAngle), -16, -2 + wingAngle * 8);
+                ctx.stroke();
+                // 右翼
+                ctx.beginPath();
+                ctx.moveTo(0, 0);
+                ctx.quadraticCurveTo(8, -6 * (1 + wingAngle), 16, -2 + wingAngle * 8);
+                ctx.stroke();
+                // 体
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(0, 0, 2, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
+            }
         }
 
         // ============================================
@@ -4123,10 +4298,10 @@ h<!DOCTYPE html>
             if (ambientPhase > 0.75) {
                 updateFireflies();
             }
-            // Camera smooth zoom (position stays fixed at center)
+            // Camera smooth zoom (position stays fixed at land-center offset)
             camera.zoom += (camera.targetZoom - camera.zoom) * 0.1;
-            camera.x = MAP_W / 2;
-            camera.y = MAP_H / 2;
+            camera.x = CAM_CENTER_X;
+            camera.y = CAM_CENTER_Y;
 
             // Clear canvas with sky gradient
             const gradient = ctx.createLinearGradient(0, 0, 0, H);
@@ -4151,6 +4326,8 @@ h<!DOCTYPE html>
                 ctx.drawImage(mapImage, 0, 0, MAP_W, MAP_H);
                 // Fix garbled AI-generated text on the map image
                 fixMapTextLabels(ctx);
+                // 海の装飾アニメーション
+                drawOceanDecorations(ctx, Date.now());
             } else {
                 // Historical era: draw simplified map
                 // Ocean background
@@ -4330,9 +4507,9 @@ h<!DOCTYPE html>
 
         canvas.addEventListener('wheel', e => {
             e.preventDefault();
-            // Zoom only, camera stays centered
-            const fitZoom = Math.min(W / MAP_W, H / MAP_H);
-            camera.targetZoom = Math.max(fitZoom, Math.min(2.5, camera.targetZoom * (e.deltaY > 0 ? 0.9 : 1.1)));
+            // Zoom only, camera stays at land-center offset
+            const fitZoom = Math.min(W / MAP_W, H / MAP_H) * 1.35;
+            camera.targetZoom = Math.max(fitZoom * 0.7, Math.min(2.5, camera.targetZoom * (e.deltaY > 0 ? 0.9 : 1.1)));
         }, { passive: false });
 
         // Touch support for mobile
@@ -4407,12 +4584,11 @@ h<!DOCTYPE html>
             camera.targetZoom = Math.min(2.5, camera.targetZoom * 1.3);
         }
         function zoomOut() {
-            camera.targetZoom = Math.max(0.5, camera.targetZoom * 0.7);
+            const fitZoomMin = Math.min(W / MAP_W, H / MAP_H) * 1.35;
+            camera.targetZoom = Math.max(fitZoomMin * 0.7, camera.targetZoom * 0.7);
         }
         function zoomReset() {
-            camera.targetZoom = 1.0;
-            camera.x = MAP_W / 2;
-            camera.y = MAP_H / 2;
+            fitMapToScreen();
         }
 
         // Character click handler
@@ -4499,7 +4675,7 @@ h<!DOCTYPE html>
         // Window resize
         window.addEventListener('resize', () => {
             canvas.width = W = window.innerWidth;
-            canvas.height = H = window.innerHeight - (window.innerWidth <= 768 ? 36 : 50);
+            canvas.height = H = window.innerHeight - 36;
             fitMapToScreen();
         });
 
