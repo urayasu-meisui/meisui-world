@@ -3805,8 +3805,25 @@ h<!DOCTYPE html>
             const scaledW = w * scaleFactor / voteScale;
             const scaledH = h * scaleFactor / voteScale;
 
-            // Draw character image
-            ctx.drawImage(img, char.x - scaledW / 2, char.y - scaledH / 2 + bob - 10, scaledW, scaledH);
+            // Draw character image (with drag wiggle animation)
+            if (draggedChar === char) {
+                // ゆらゆらぶんぶんアニメーション：掴まれた点を起点に振り子運動
+                const t = Date.now() * 0.001;
+                // 複数の周波数を組み合わせて「いやいや」感を出す
+                const swing = Math.sin(t * 8) * 15 + Math.sin(t * 12.7) * 8 + Math.sin(t * 5.3) * 5;
+                const angleRad = swing * Math.PI / 180;
+                // 少し上下にもバウンス
+                const bounceY = Math.abs(Math.sin(t * 6)) * 5;
+
+                ctx.save();
+                // 掴んだ点（キャラの上端）を起点に回転
+                ctx.translate(char.x, char.y - scaledH / 2 + bob - 10);
+                ctx.rotate(angleRad);
+                ctx.drawImage(img, -scaledW / 2, bounceY, scaledW, scaledH);
+                ctx.restore();
+            } else {
+                ctx.drawImage(img, char.x - scaledW / 2, char.y - scaledH / 2 + bob - 10, scaledW, scaledH);
+            }
 
             if (voteBonus > 0) {
                 ctx.restore();
