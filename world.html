@@ -5161,18 +5161,17 @@ h<!DOCTYPE html>
                 btn.remove();
                 // Clean up any remaining fireworks interval
                 if (activeFwInterval) { clearInterval(activeFwInterval); activeFwInterval = null; }
-                // Atomic multi-path update: worldLineOffset + decorationOffset together
-                const newWLOffset = (worldLineOffset || 0) + 1;
-                const updates = {
-                    'worldLineOffset': newWLOffset,
-                    'decorationOffset/meisui': votes.meisui || 0,
-                    'decorationOffset/tsutsuji': votes.tsutsuji || 0,
-                    'decorationOffset/meisui_chan': votes.meisui_chan || 0,
-                    'decorationOffset/bekabune': votes.bekabune || 0,
-                    'decorationOffset/asari': votes.asari || 0,
-                    'decorationOffset/ryoushi': votes.ryoushi || 0
-                };
-                firebaseDb.ref().update(updates).catch(err => {
+                // Save decoration offset first, then increment world line
+                firebaseDb.ref('decorationOffset').set({
+                    meisui: votes.meisui || 0,
+                    tsutsuji: votes.tsutsuji || 0,
+                    meisui_chan: votes.meisui_chan || 0,
+                    bekabune: votes.bekabune || 0,
+                    asari: votes.asari || 0,
+                    ryoushi: votes.ryoushi || 0
+                }).then(() => {
+                    return firebaseDb.ref('worldLineOffset').transaction(current => (current || 0) + 1);
+                }).catch(err => {
                     console.error('World line transition failed:', err);
                 });
                 // Reset built buildings
