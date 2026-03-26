@@ -5197,22 +5197,26 @@ h<!DOCTYPE html>
                 btn.remove();
                 // Clean up any remaining fireworks interval
                 if (activeFwInterval) { clearInterval(activeFwInterval); activeFwInterval = null; }
-                // Increment world line first (simple transaction), then save decoration offset
-                firebaseDb.ref('worldLineOffset').transaction(current => (current || 0) + 1).then(() => {
-                    console.log('✅ worldLineOffset incremented');
-                    return firebaseDb.ref('decorationOffset').set({
-                        meisui: votes.meisui || 0,
-                        tsutsuji: votes.tsutsuji || 0,
-                        meisui_chan: votes.meisui_chan || 0,
-                        bekabune: votes.bekabune || 0,
-                        asari: votes.asari || 0,
-                        ryoushi: votes.ryoushi || 0
-                    });
-                }).then(() => {
-                    console.log('✅ decorationOffset saved');
-                }).catch(err => {
+
+                // Immediate local update (don't wait for Firebase roundtrip)
+                worldLineOffset = (worldLineOffset || 0) + 1;
+                decorationOffset = {
+                    meisui: votes.meisui || 0,
+                    tsutsuji: votes.tsutsuji || 0,
+                    meisui_chan: votes.meisui_chan || 0,
+                    bekabune: votes.bekabune || 0,
+                    asari: votes.asari || 0,
+                    ryoushi: votes.ryoushi || 0
+                };
+                updateYearDisplay();
+                updateVoteDisplay();
+
+                // Persist to Firebase
+                firebaseDb.ref('worldLineOffset').set(worldLineOffset);
+                firebaseDb.ref('decorationOffset').set(decorationOffset).catch(err => {
                     console.error('World line transition failed:', err);
                 });
+
                 // Reset built buildings
                 builtBuildings = [];
                 localStorage.setItem('meisui_builtBuildings', '[]');
