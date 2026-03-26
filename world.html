@@ -4741,6 +4741,7 @@ h<!DOCTYPE html>
         }
 
         // Listen for real-time vote updates from Firebase
+        var isInitialLoad = true; // 初回読み込みフラグ
         function handleVoteSnapshot(snapshot) {
             const data = snapshot.val() || {};
             votes = {
@@ -4754,6 +4755,13 @@ h<!DOCTYPE html>
             totalVotes = Object.values(votes).reduce((a, b) => a + b, 0);
             updateVoteDisplay();
             updateYearDisplay();
+
+            // 初回読み込み時はイベント・エンディングをスキップ
+            if (isInitialLoad) {
+                isInitialLoad = false;
+                return;
+            }
+
             if (typeof checkBuildingUnlock === 'function') {
                 const decoTotal = Object.values(decorationOffset || {}).reduce((a, b) => a + b, 0);
                 checkBuildingUnlock(totalVotes - decoTotal - 1);
