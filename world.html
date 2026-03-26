@@ -618,16 +618,9 @@ h<!DOCTYPE html>
             pointer-events: none;
         }
 
-        /* Day/Night Cycle Overlay */
+        /* Day/Night Cycle Overlay (disabled — daytime only) */
         #ambientOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            z-index: 50;
-            pointer-events: none;
-            transition: background-color 0.5s ease-in-out;
+            display: none;
         }
 
         /* Fireflies */
@@ -1092,9 +1085,9 @@ h<!DOCTYPE html>
     </div>
 
     <!-- 左サイドパネル -->
-    <div id="leftPanel" style="position:fixed;top:42px;left:8px;z-index:200;width:168px;display:flex;flex-direction:column;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.12);overflow:hidden;max-height:calc(100vh - 94px);font-family:'Hiragino Sans',sans-serif;">
-        <!-- 投票速報（スクロール領域） -->
-        <div id="barGraph" style="padding:8px 10px 6px;font-size:11px;overflow-y:auto;flex:1;min-height:0;">
+    <div id="leftPanel" style="position:fixed;top:42px;left:8px;z-index:200;width:260px;display:flex;flex-direction:column;background:rgba(255,255,255,0.92);backdrop-filter:blur(8px);border-radius:14px;box-shadow:0 2px 16px rgba(0,0,0,0.12);overflow:hidden;max-height:calc(100vh - 94px);font-family:'Hiragino Sans',sans-serif;">
+        <!-- 投票速報 -->
+        <div id="barGraph" style="padding:8px 10px 6px;font-size:11px;flex:1;min-height:0;">
             <div style="font-weight:bold;font-size:12px;text-align:center;margin-bottom:6px;color:#333;">📊 投票速報</div>
             <div id="barGraphBars"></div>
             <div id="barGraphTotal" style="text-align:center;font-size:10px;color:#999;margin-top:4px;">総投票数: 0票</div>
@@ -1752,30 +1745,8 @@ h<!DOCTYPE html>
         let ambientPhase = 0; // 0-1 cycle every 3 minutes = 180000ms
         
         function updateDayNightCycle() {
-            ambientPhase = (Date.now() % 180000) / 180000;
-
-            const overlay = document.getElementById('ambientOverlay');
-            if (!overlay) return;
-
-            let color = 'transparent';
-            if (ambientPhase < 0.25) {
-                // Dawn: warm orange
-                const t = ambientPhase / 0.25;
-                color = `rgba(255, ${Math.floor(200 + t * 55)}, ${Math.floor(100 + t * 155)}, ${0.1 * t})`;
-            } else if (ambientPhase < 0.5) {
-                // Day: no tint
-                color = 'transparent';
-            } else if (ambientPhase < 0.75) {
-                // Dusk: purple/pink
-                const t = (ambientPhase - 0.5) / 0.25;
-                color = `rgba(${Math.floor(200 - t * 100)}, ${Math.floor(100 - t * 50)}, 200, ${0.15 * t})`;
-            } else {
-                // Night: dark blue with stars - CHANGE 6: improved
-                const t = (ambientPhase - 0.75) / 0.25;
-                color = `rgba(25, 50, ${Math.floor(100 + t * 55)}, ${0.25 + 0.05 * t})`;
-            }
-
-            overlay.style.backgroundColor = color;
+            // Disabled — daytime only mode
+            ambientPhase = 0.35; // Always daytime
         }
 
         // CHANGE 6: Draw night time effects (stars, moon, building lights, street lamps)
@@ -4427,8 +4398,8 @@ h<!DOCTYPE html>
             // Draw vote-based town evolution effects
             drawVoteEffects(ctx, now);
 
-            // CHANGE 6: Draw night time effects (stars, moon, building lights)
-            drawNightEffects(ctx, now);
+            // Night effects disabled — daytime only
+            // drawNightEffects(ctx, now);
 
             // Water shimmer removed (interfered with map image)
 
@@ -4889,24 +4860,18 @@ h<!DOCTYPE html>
                 // Log vote timestamp for statistics
                 firebaseDb.ref('stats/lastVoteTime').set(Date.now());
                 firebaseDb.ref('stats/totalVoteCount').transaction(current => (current || 0) + 1);
+
+                // Check for era event after Firebase updates local votes
+                const newYear = getCurrentYear();
+                if (historicalEvents[newYear]) {
+                    setTimeout(() => showEraEvent(newYear), 1500);
+                }
+
+                // Check for ending (2100超え) — after quiz finishes (~14s from vote)
+                if (isEndingTrigger()) {
+                    setTimeout(() => showEnding(), 14000);
+                }
             });
-
-            // Optimistic local update for immediate UI feedback
-            votes[charType]++;
-            totalVotes++;
-            updateVoteDisplay();
-            updateYearDisplay();
-
-            // Check for era event
-            const newYear = getCurrentYear();
-            if (historicalEvents[newYear]) {
-                setTimeout(() => showEraEvent(newYear), 1500);
-            }
-
-            // Check for ending (2100超え) — after quiz finishes (~14s from vote)
-            if (isEndingTrigger()) {
-                setTimeout(() => showEnding(), 14000);
-            }
 
             // V5 Features: Play vote sound
             playSound('vote');
