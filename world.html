@@ -4808,8 +4808,10 @@ h<!DOCTYPE html>
                 const decoTotal = Object.values(decorationOffset || {}).reduce((a, b) => a + b, 0);
                 checkBuildingUnlock(totalVotes - decoTotal - 1);
             }
-            // Ending check is handled in castVote and debugAddVotes only
-            // (removed duplicate check here to prevent double-firing)
+            // Check ending (endingActive flag in showEnding() prevents double-firing)
+            if (isEndingTrigger() && typeof showEnding === 'function') {
+                setTimeout(() => showEnding(), 2000);
+            }
         }
         function attachVoteListener() {
             votesRef.on('value', handleVoteSnapshot, (error) => {
@@ -4870,10 +4872,7 @@ h<!DOCTYPE html>
                     setTimeout(() => showEraEvent(newYear), 1500);
                 }
 
-                // Check for ending (2100超え) — after quiz finishes (~14s from vote)
-                if (isEndingTrigger()) {
-                    setTimeout(() => showEnding(), 14000);
-                }
+                // Ending check is in handleVoteSnapshot (fires after local votes update)
 
                 // Re-enable voting after Firebase confirms + animations complete
                 if (window._reenableVotingCallback) window._reenableVotingCallback();
