@@ -4659,9 +4659,9 @@ h<!DOCTYPE html>
         const START_YEAR = 1889;
         const END_YEAR = 2100;
         const YEARS_PER_VOTE = 10;
-        // 21票で2100年到達(エンディング)。21票以上は2100年固定。
+        // 22票で2100年(エンディング): 0票=1889, ..., 20票=2089, 21票=2099, 22票+=2100
         // 世界線ボタン押下でcycleStartVotes=現在の票数に設定→effective=0→1889年に戻る
-        const VOTES_PER_CYCLE = 22; // 世界線ボタン表示等の参考値（年計算には使わない）
+        const VOTES_PER_CYCLE = 22; // 参考値（年計算にはcycleStartVotesを使用）
 
         // cycleStartVotes: この世界線が始まった時点の累計票数（Firebase保存）
         // 世界線ボタン押下時に現在のtotalVotesを保存する
@@ -4673,8 +4673,9 @@ h<!DOCTYPE html>
 
         function getCurrentYear() {
             const effective = getEffectiveVotes();
-            if (effective >= 21) return END_YEAR; // 21票以上は2100年固定
-            return START_YEAR + effective * YEARS_PER_VOTE;
+            // 0票=1889, ..., 20票=2089, 21票=2099, 22票以上=2100
+            if (effective >= 22) return END_YEAR;
+            return START_YEAR + effective * YEARS_PER_VOTE; // 21*10+1889=2099
         }
 
         function getWorldLine() {
@@ -4683,7 +4684,7 @@ h<!DOCTYPE html>
 
         function isEndingTrigger() {
             const effective = getEffectiveVotes();
-            return effective === 21; // 21票目=2100年でエンディング
+            return effective >= 22; // 22票以上で2100年=エンディング（>=で飛び越え対応）
         }
 
         function updateYearDisplay() {
@@ -4717,6 +4718,7 @@ h<!DOCTYPE html>
             2049: {text: '葛西に橋が架かった！', emoji: '🌉'},
             2069: {text: '浦安↔新浦安 ロープウェイ開通！', emoji: '🚡'},
             2089: {text: '海上都市計画 始動！', emoji: '🏙️'},
+            2099: {text: '未来都市うらやす 完成間近！', emoji: '🌟'},
         };
 
         function showEraEvent(year) {
@@ -5020,125 +5022,43 @@ h<!DOCTYPE html>
         }
 
         // ========== ENDING SEQUENCE (2100) ==========
-        var endingActive = false; // var for global debug access
-        var activeFwInterval = null; // Track fireworks interval for cleanup
+        var endingActive = false;
+        var activeFwInterval = null;
         function showEnding() {
             if (endingActive) return;
             endingActive = true;
-            console.log('🎆 ENDING STARTED! Year:', getCurrentYear(), 'WorldLine:', getWorldLine());
+            console.log('🎆 ENDING! Year:', getCurrentYear(), 'WL:', getWorldLine());
 
-            // Layer 1: Fireworks over the map (semi-dark overlay so fireworks are visible)
-            const fwOverlay = document.createElement('div');
-            fwOverlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;z-index:8000;pointer-events:none;background:rgba(0,0,20,0.3);';
-            const fwCanvas = document.createElement('canvas');
-            fwCanvas.width = window.innerWidth;
-            fwCanvas.height = window.innerHeight;
-            fwCanvas.style.cssText = 'width:100%;height:100%;';
-            fwOverlay.appendChild(fwCanvas);
-            document.body.appendChild(fwOverlay);
-
-            const fwCtx = fwCanvas.getContext('2d');
-            let fwParticles = [];
-
-            function spawnFirework() {
-                const x = 100 + Math.random() * (fwCanvas.width - 200);
-                const y = 50 + Math.random() * (fwCanvas.height * 0.4);
-                const colors = ['#ff1744','#ffd600','#00e676','#2979ff','#e040fb','#ff6d00','#ff4081','#76ff03'];
-                const color = colors[Math.floor(Math.random() * colors.length)];
-                const count = 30 + Math.floor(Math.random() * 30);
-                for (let i = 0; i < count; i++) {
-                    const angle = (i / count) * Math.PI * 2;
-                    const speed = 1.5 + Math.random() * 5;
-                    fwParticles.push({
-                        x, y,
-                        vx: Math.cos(angle) * speed + (Math.random() - 0.5),
-                        vy: Math.sin(angle) * speed + (Math.random() - 0.5),
-                        life: 50 + Math.random() * 50,
-                        maxLife: 50 + Math.random() * 50,
-                        color,
-                        size: 1.5 + Math.random() * 3
-                    });
-                }
-            }
-
-            function animateFw() {
-                fwCtx.clearRect(0, 0, fwCanvas.width, fwCanvas.height);
-                fwParticles = fwParticles.filter(p => p.life > 0);
-                fwParticles.forEach(p => {
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    p.vy += 0.04;
-                    p.vx *= 0.99;
-                    p.life--;
-                    const alpha = p.life / p.maxLife;
-                    fwCtx.globalAlpha = alpha;
-                    fwCtx.fillStyle = p.color;
-                    fwCtx.shadowColor = p.color;
-                    fwCtx.shadowBlur = 6;
-                    fwCtx.beginPath();
-                    fwCtx.arc(p.x, p.y, p.size * alpha, 0, Math.PI * 2);
-                    fwCtx.fill();
-                });
-                fwCtx.globalAlpha = 1;
-                fwCtx.shadowBlur = 0;
-                if (fwOverlay.parentNode) requestAnimationFrame(animateFw);
-            }
-
-            // Start fireworks — rapid bursts
-            spawnFirework();
-            spawnFirework();
-            if (activeFwInterval) clearInterval(activeFwInterval);
-            activeFwInterval = setInterval(() => {
-                spawnFirework();
-                if (Math.random() > 0.5) spawnFirework(); // double burst sometimes
-            }, 400);
-            const fwInterval = activeFwInterval;
-            animateFw();
-
-            // Play sound
             playSound('levelup');
 
-            // Layer 2: Semi-transparent popup (after 2 seconds, map stays visible)
+            // Show a brief congratulations banner (non-blocking, map still visible)
+            const banner = document.createElement('div');
+            banner.style.cssText = `
+                position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:8500;
+                text-align:center;font-family:sans-serif;pointer-events:none;
+                background:rgba(0,0,30,0.8);backdrop-filter:blur(8px);
+                border-radius:20px;padding:24px 48px;
+                border:3px solid rgba(255,215,0,0.6);
+                box-shadow:0 0 40px rgba(255,215,0,0.3);
+                animation:popScale 0.6s cubic-bezier(0.34,1.56,0.64,1);
+            `;
+            const worldLine = getWorldLine();
+            banner.innerHTML = `
+                <div style="font-size:40px;margin-bottom:8px;">🎆🎇🎆</div>
+                <div style="font-size:36px;font-weight:900;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.8);">2100年 到達！</div>
+                <div style="font-size:20px;color:white;margin-top:8px;">第${worldLine}世界線 クリア！おめでとう！</div>
+                <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:8px;">10秒後に次の世界線へのボタンが表示されます</div>
+            `;
+            document.body.appendChild(banner);
+
+            // 10秒間2100年の世界を触れる → その後ボタン表示
             setTimeout(() => {
-                const popup = document.createElement('div');
-                popup.style.cssText = `
-                    position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-                    z-index:8500;text-align:center;font-family:sans-serif;
-                    background:rgba(0,0,30,0.75);backdrop-filter:blur(8px);
-                    border-radius:24px;padding:40px 60px;
-                    border:3px solid rgba(255,215,0,0.6);
-                    box-shadow:0 0 60px rgba(255,215,0,0.3),0 20px 60px rgba(0,0,0,0.5);
-                    animation:popScale 0.8s cubic-bezier(0.34,1.56,0.64,1);
-                    max-width:90vw;
-                `;
-
-                const worldLine = getWorldLine();
-                popup.innerHTML = `
-                    <div style="font-size:64px;margin-bottom:12px;">🎆🎇🎆</div>
-                    <div style="font-size:52px;font-weight:900;color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,0.8);margin-bottom:8px;">2100年</div>
-                    <div style="font-size:32px;font-weight:bold;color:white;margin-bottom:16px;text-shadow:0 2px 10px rgba(0,0,0,0.5);">おめでとう！素敵な未来！！</div>
-                    <div style="width:80%;height:1px;background:linear-gradient(90deg,transparent,rgba(255,215,0,0.5),transparent);margin:16px auto;"></div>
-                    <div style="font-size:16px;color:rgba(255,255,255,0.8);margin-bottom:8px;">第${worldLine}世界線 クリア！</div>
-                    <div style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:20px;">総投票数: ${totalVotes}票</div>
-                    <div style="font-size:18px;color:#ffd700;font-weight:bold;animation:popScale 0.5s ease 0.5s both;">— 次の世界線が始まります —</div>
-                `;
-                document.body.appendChild(popup);
-
-                // After 10 seconds total (8 more), fade out fireworks and popup
-                setTimeout(() => {
-                    clearInterval(fwInterval);
-                    popup.style.transition = 'opacity 1.5s';
-                    popup.style.opacity = '0';
-                    fwOverlay.style.transition = 'opacity 1.5s';
-                    fwOverlay.style.opacity = '0';
-                    setTimeout(() => {
-                        popup.remove();
-                        fwOverlay.remove();
-                        // Show "next world line" button on the map
-                        showNextWorldLineButton();
-                    }, 1500);
-                }, 8000);
-            }, 2000);
+                banner.style.transition = 'opacity 1s';
+                banner.style.opacity = '0';
+                setTimeout(() => banner.remove(), 1000);
+                showNextWorldLineButton();
+                onEventDone();
+            }, 10000);
         }
 
         // World line offset stored in Firebase (does not change vote counts)
