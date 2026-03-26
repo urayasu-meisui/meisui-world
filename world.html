@@ -1113,7 +1113,7 @@ h<!DOCTYPE html>
     </div>
 
     <!-- 街ランクポップアップ -->
-    <div id="rankPopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:500;align-items:center;justify-content:center;">
+    <div id="rankPopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:550;align-items:center;justify-content:center;">
         <div onclick="closeRankPopup()" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);"></div>
         <div id="rankCard" style="position:relative;background:#fff;border-radius:20px;padding:30px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:'Hiragino Sans',sans-serif;">
             <button onclick="closeRankPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
@@ -1803,13 +1803,15 @@ h<!DOCTYPE html>
         function checkCharacterInteractions(chars) {
             const now = Date.now();
 
-            // Update active interaction timers always
+            // Update active interaction timers using real time (not frame-dependent)
             chars.forEach(char => {
-                if (char.interacting && char.interactionTimer > 0) {
-                    char.interactionTimer -= 16;
-                    if (char.interactionTimer <= 0) {
+                if (char.interacting && char.interactionEndTime) {
+                    if (now >= char.interactionEndTime) {
                         char.interacting = false;
+                        char.interactionEndTime = 0;
                     }
+                    // Keep interactionTimer for animation calculations
+                    char.interactionTimer = Math.max(0, char.interactionEndTime - now);
                 }
             });
 
@@ -1827,7 +1829,6 @@ h<!DOCTYPE html>
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
                     if (dist < 80 && !char1.interacting && !char2.interacting && !char1.celebrating && !char2.celebrating) {
-                        // Set next allowed time: 60-90 seconds from now
                         nextInteractionAllowed = now + 60000 + Math.random() * 30000;
                         triggered = true;
 
@@ -1842,6 +1843,8 @@ h<!DOCTYPE html>
 
                         char1.interacting = true;
                         char2.interacting = true;
+                        char1.interactionEndTime = now + 3000;
+                        char2.interactionEndTime = now + 3000;
                         char1.interactionTimer = 3000;
                         char2.interactionTimer = 3000;
                         char1.state = 'idle';
@@ -1849,26 +1852,16 @@ h<!DOCTYPE html>
                         char1.stateTimer = 0;
                         char2.stateTimer = 0;
 
-                        // Show event overlay only (no thought bubbles)
                         if (event.isMikoshi) {
                             showMikoshiEvent(char1, char2);
                         } else {
                             showSimpleInteractionEvent(char1, char2, event);
                         }
                         playSound('event');
-                        break; // Only one event per check
+                        break;
                     }
                 }
             }
-
-            chars.forEach(char => {
-                if (char.interacting && char.interactionTimer > 0) {
-                    char.interactionTimer -= 16;
-                    if (char.interactionTimer <= 0) {
-                        char.interacting = false;
-                    }
-                }
-            });
         }
 
         // ============================================
@@ -4251,6 +4244,8 @@ h<!DOCTYPE html>
             ],
             // 2026+: Use real map image (no polygon needed)
         };
+        // Pre-computed sorted era years (avoid sorting every frame)
+        const sortedEraYears = Object.keys(eraLandPolygons).map(Number).sort((a, b) => a - b);
 
         // Animation loop
         let lastTime = Date.now();
@@ -4309,7 +4304,7 @@ h<!DOCTYPE html>
 
                 // Find the right polygon for current year
                 let landPoly = eraLandPolygons[1889]; // default
-                const eraYears = Object.keys(eraLandPolygons).map(Number).sort((a, b) => a - b);
+                const eraYears = sortedEraYears;
                 for (let i = eraYears.length - 1; i >= 0; i--) {
                     if (currentYear >= eraYears[i]) {
                         landPoly = eraLandPolygons[eraYears[i]];
@@ -4425,12 +4420,18 @@ h<!DOCTYPE html>
         let lastMx = 0, lastMy = 0;
         let draggedChar = null; // Character being dragged
 
+        // Cache canvas rect (updated on resize) to avoid reflow per mouse event
+        let cachedCanvasRect = null;
+        function updateCanvasRect() { cachedCanvasRect = canvas.getBoundingClientRect(); }
+        window.addEventListener('resize', updateCanvasRect);
+        updateCanvasRect();
+
         // Convert screen coords to map coords
         function screenToMap(clientX, clientY) {
-            const rect = canvas.getBoundingClientRect();
+            if (!cachedCanvasRect) updateCanvasRect();
             return {
-                x: (clientX - rect.left) / camera.zoomX,
-                y: (clientY - rect.top) / camera.zoomY
+                x: (clientX - cachedCanvasRect.left) / camera.zoomX,
+                y: (clientY - cachedCanvasRect.top) / camera.zoomY
             };
         }
 
@@ -4533,26 +4534,20 @@ h<!DOCTYPE html>
         // Debug: add multiple votes at once (for testing year progression)
         function debugAddVotes(count) {
             if (!confirm('デバッグ: ' + count + '票を一括追加しますか？')) return;
-            // Read latest from Firebase, then add
-            votesRef.once('value').then(snap => {
-                const current = snap.val() || {};
-                const chars = ['meisui', 'tsutsuji', 'meisui_chan', 'bekabune', 'asari', 'ryoushi'];
-                const updates = {};
+            const chars = ['meisui', 'tsutsuji', 'meisui_chan', 'bekabune', 'asari', 'ryoushi'];
+            // Use transaction to prevent race condition with concurrent votes
+            votesRef.transaction(current => {
+                if (!current) current = {};
                 for (let i = 0; i < count; i++) {
                     const c = chars[i % chars.length];
-                    updates[c] = (updates[c] || (current[c] || 0)) + 1;
+                    current[c] = (current[c] || 0) + 1;
                 }
-                // Fill remaining chars with their current values
-                for (const c of chars) {
-                    if (!(c in updates)) updates[c] = current[c] || 0;
+                return current;
+            }).then(() => {
+                if (isEndingTrigger() && typeof showEnding === 'function') {
+                    setTimeout(() => showEnding(), 2000);
                 }
-                votesRef.set(updates).then(() => {
-                    // Check ending after debug votes applied
-                    if (isEndingTrigger() && typeof showEnding === 'function') {
-                        setTimeout(() => showEnding(), 2000);
-                    }
-                });
-            });
+            }).catch(err => console.error('Debug vote failed:', err));
         }
 
         // Zoom button functions
@@ -5637,16 +5632,19 @@ h<!DOCTYPE html>
                 left: 0;
                 right: 0;
                 bottom: 0;
-                z-index: 500;
+                z-index: 600;
                 display: flex;
                 align-items: center;
                 justify-content: center;
                 background: rgba(0, 0, 0, 0.4);
             `;
             
+            // Store quiz data in JS to avoid HTML attribute escaping issues
+            window._currentQuizData = { explanation: quiz.explanation, answer: quiz.a, charType: charType };
             let buttonsHTML = '';
-            shuffled.forEach(choice => {
+            shuffled.forEach((choice, idx) => {
                 const isCorrect = choice === quiz.a;
+                const escapedChoice = choice.replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 buttonsHTML += `<button style="
                     width: 100%;
                     padding: 16px;
@@ -5661,7 +5659,7 @@ h<!DOCTYPE html>
                     min-height: 60px;
                     font-family: sans-serif;
                     transition: all 0.2s;
-                " data-correct="${isCorrect}" data-explanation="${quiz.explanation.replace(/"/g, '&quot;')}" data-chartype="${charType}" data-answer="${quiz.a.replace(/"/g, '&quot;')}" onclick="handleQuizAnswer(this, this.dataset.correct==='true', this.dataset.explanation, this.dataset.chartype, this.dataset.answer)">${choice}</button>`;
+                " data-correct="${isCorrect}" onclick="handleQuizAnswer(this, ${isCorrect})">${escapedChoice}</button>`;
             });
             
             quizModal.innerHTML = `
@@ -5684,7 +5682,11 @@ h<!DOCTYPE html>
             document.body.appendChild(quizModal);
         }
         
-        function handleQuizAnswer(button, isCorrect, explanation, charType, correctAnswer) {
+        function handleQuizAnswer(button, isCorrect) {
+            const quizData = window._currentQuizData || {};
+            const explanation = quizData.explanation || '';
+            const charType = quizData.charType || '';
+            const correctAnswer = quizData.answer || '';
             const modal = document.getElementById('quizModal');
             const buttons = modal.querySelectorAll('button');
             buttons.forEach(btn => btn.disabled = true);

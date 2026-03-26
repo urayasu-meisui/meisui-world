@@ -386,6 +386,20 @@
     ::-webkit-scrollbar-thumb:hover {
       background: rgba(102, 126, 234, 0.8);
     }
+
+    /* Large screen (55" monitor etc.) — scale up text and spacing */
+    @media (min-width: 1920px) {
+      .title-bar { font-size: 3.5em; padding: 30px 60px; }
+      .results-title { font-size: 2.2em; }
+      .ranking-item { padding: 18px; margin-bottom: 20px; }
+      .rank-medal { font-size: 2.5em; }
+      .rank-name { font-size: 1.3em; }
+      .rank-count { font-size: 1.6em; }
+      .bar-label { font-size: 1.1em; }
+      .bar { height: 28px; }
+      .stat-value { font-size: 1.8em; }
+      .character-icon { font-size: 5.5em; }
+    }
   </style>
 </head>
 <body>
