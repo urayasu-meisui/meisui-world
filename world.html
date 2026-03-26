@@ -5149,16 +5149,10 @@ h<!DOCTYPE html>
         });
 
         // cycleStartVotes: この世界線が始まった時の累計票数
-        firebaseDb.ref('cycleStartVotes').on('value', snap => {
-            const saved = snap.val();
-            if (saved === null && worldLineOffset > 0 && totalVotes > 0) {
-                // Migration: cycleStartVotesが未設定の場合、現在の票数で初期化
-                // （旧VOTES_PER_CYCLEベースのデータからの移行）
-                cycleStartVotes = totalVotes;
-                firebaseDb.ref('cycleStartVotes').set(cycleStartVotes);
-            } else {
-                cycleStartVotes = saved || 0;
-            }
+        // null/未設定 → 0（最初の世界線は0票から開始）
+        // 世界線ボタン押下時にtotalVotesを保存して次の世界線をリセット
+        firebaseDb.ref('stats/cycleStartVotes').on('value', snap => {
+            cycleStartVotes = snap.val() || 0;
             updateYearDisplay();
         });
 
@@ -5228,7 +5222,7 @@ h<!DOCTYPE html>
 
                 // Persist to Firebase
                 firebaseDb.ref('worldLineOffset').set(worldLineOffset);
-                firebaseDb.ref('cycleStartVotes').set(cycleStartVotes);
+                firebaseDb.ref('stats/cycleStartVotes').set(cycleStartVotes);
                 firebaseDb.ref('decorationOffset').set(decorationOffset).catch(err => {
                     console.error('World line transition failed:', err);
                 });
