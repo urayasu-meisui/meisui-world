@@ -426,6 +426,8 @@
 
         <div id="townRank" class="town-rank rank-f">町ランク: F</div>
 
+        <div id="worldLineDisplay" style="margin-top:10px;padding:8px;background:#f0f0f0;border-radius:8px;text-align:center;font-size:0.9em;color:#667eea;font-weight:bold;">第1世界線</div>
+
         <div class="connection-status">
           <span class="status-dot connected" id="statusDot"></span>
           <span id="statusText">接続中</span>
@@ -594,6 +596,15 @@
       rankDiv.textContent = `町ランク: ${rank}`;
     }
 
+    // Listen to world line offset
+    function listenToWorldLine() {
+      database.ref('worldLineOffset').on('value', snapshot => {
+        const offset = snapshot.val() || 0;
+        const wlEl = document.getElementById('worldLineDisplay');
+        if (wlEl) wlEl.textContent = '第' + (offset + 1) + '世界線';
+      });
+    }
+
     // Listen to votes
     function listenToVotes() {
       database.ref('votes').on('value', snapshot => {
@@ -640,8 +651,12 @@
       }
     }
 
-    // Create blossoms
+    // Create blossoms (capped to prevent DOM bloat on long-running displays)
+    const MAX_BLOSSOMS = 20;
     function createBlossom() {
+      const bg = document.getElementById('bgAnimation');
+      if (bg.querySelectorAll('.blossom').length >= MAX_BLOSSOMS) return;
+
       const blossom = document.createElement('div');
       blossom.className = 'particle blossom';
       blossom.textContent = '🌸';
@@ -650,7 +665,7 @@
       blossom.style.opacity = Math.random() * 0.7 + 0.3;
       blossom.style.animationDuration = (Math.random() * 5 + 8) + 's';
 
-      document.getElementById('bgAnimation').appendChild(blossom);
+      bg.appendChild(blossom);
 
       setTimeout(() => blossom.remove(), 13000);
     }
@@ -680,6 +695,7 @@
       renderCharacterWorld();
       setupConnectionListener();
       listenToVotes();
+      listenToWorldLine();
       setupBlossoms();
       setupFullscreenButton();
     });

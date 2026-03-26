@@ -2070,9 +2070,12 @@ h<!DOCTYPE html>
             });
         }
 
-        // Spawn petals periodically
+        // Spawn petals periodically (with max particle cap to prevent memory leak)
+        const MAX_PARTICLES = 150;
         setInterval(() => {
-            for (let i = 0; i < 3; i++) spawnPetal();
+            if (particles.length < MAX_PARTICLES) {
+                for (let i = 0; i < 3; i++) spawnPetal();
+            }
         }, 200);
 
         // Seeded pseudo-random for consistent wobble per object
@@ -4543,7 +4546,12 @@ h<!DOCTYPE html>
                 for (const c of chars) {
                     if (!(c in updates)) updates[c] = current[c] || 0;
                 }
-                votesRef.set(updates);
+                votesRef.set(updates).then(() => {
+                    // Check ending after debug votes applied
+                    if (isEndingTrigger() && typeof showEnding === 'function') {
+                        setTimeout(() => showEnding(), 2000);
+                    }
+                });
             });
         }
 
@@ -4805,18 +4813,18 @@ h<!DOCTYPE html>
                 const decoTotal = Object.values(decorationOffset || {}).reduce((a, b) => a + b, 0);
                 checkBuildingUnlock(totalVotes - decoTotal - 1);
             }
-            // Check ending from any source (including debug buttons)
-            if (isEndingTrigger() && typeof showEnding === 'function') {
-                setTimeout(() => showEnding(), 2000);
-            }
+            // Ending check is handled in castVote and debugAddVotes only
+            // (removed duplicate check here to prevent double-firing)
         }
-        votesRef.on('value', handleVoteSnapshot, (error) => {
-            // If listener fails (permission error), retry after 3 seconds
-            console.error('Firebase listener error:', error);
-            setTimeout(() => {
-                votesRef.on('value', handleVoteSnapshot);
-            }, 3000);
-        });
+        function attachVoteListener() {
+            votesRef.on('value', handleVoteSnapshot, (error) => {
+                console.error('Firebase listener error:', error);
+                // Detach broken listener, then retry with error callback intact
+                votesRef.off('value', handleVoteSnapshot);
+                setTimeout(() => attachVoteListener(), 3000);
+            });
+        }
+        attachVoteListener();
 
         // Character metadata for voting modal
         const charMetadata = {
@@ -4871,6 +4879,15 @@ h<!DOCTYPE html>
                 if (isEndingTrigger()) {
                     setTimeout(() => showEnding(), 14000);
                 }
+
+                // Re-enable voting after Firebase confirms + animations complete
+                if (window._reenableVotingCallback) window._reenableVotingCallback();
+            }).catch(error => {
+                console.error('Vote transaction failed:', error);
+                // Re-enable voting on error so user isn't stuck
+                window.voteInProgress = false;
+                document.getElementById('voteBtn').style.opacity = '1';
+                document.getElementById('voteBtn').style.pointerEvents = 'auto';
             });
 
             // V5 Features: Play vote sound
@@ -4955,16 +4972,26 @@ h<!DOCTYPE html>
                 showQuizModal(charType);
             }, 5500);
 
-            // Re-enable vote button after all animations (~7s)
-            setTimeout(() => {
-                window.voteInProgress = false;
-                document.getElementById('voteBtn').style.opacity = '1';
-                document.getElementById('voteBtn').style.pointerEvents = 'auto';
-            }, 7000);
+            // Re-enable vote button after all animations finish
+            // Use both Firebase completion AND minimum animation time (whichever is later)
+            const voteStartTime = Date.now();
+            const MIN_VOTE_COOLDOWN = 7000; // minimum time for animations to complete
+            function reenableVoting() {
+                const elapsed = Date.now() - voteStartTime;
+                const remaining = Math.max(0, MIN_VOTE_COOLDOWN - elapsed);
+                setTimeout(() => {
+                    window.voteInProgress = false;
+                    document.getElementById('voteBtn').style.opacity = '1';
+                    document.getElementById('voteBtn').style.pointerEvents = 'auto';
+                }, remaining);
+            }
+            // Called from Firebase transaction .then() — see castVote above
+            window._reenableVotingCallback = reenableVoting;
         }
 
         // ========== ENDING SEQUENCE (2100) ==========
         var endingActive = false; // var for global debug access
+        var activeFwInterval = null; // Track fireworks interval for cleanup
         function showEnding() {
             if (endingActive) return;
             endingActive = true;
@@ -5030,10 +5057,12 @@ h<!DOCTYPE html>
             // Start fireworks — rapid bursts
             spawnFirework();
             spawnFirework();
-            const fwInterval = setInterval(() => {
+            if (activeFwInterval) clearInterval(activeFwInterval);
+            activeFwInterval = setInterval(() => {
                 spawnFirework();
                 if (Math.random() > 0.5) spawnFirework(); // double burst sometimes
             }, 400);
+            const fwInterval = activeFwInterval;
             animateFw();
 
             // Play sound
@@ -5101,9 +5130,10 @@ h<!DOCTYPE html>
                 asari: data.asari || 0,
                 ryoushi: data.ryoushi || 0
             };
-            // Reset built buildings when decoration offset changes
+            // Reset built buildings and event tracking when decoration offset changes
             builtBuildings = [];
             localStorage.setItem('meisui_builtBuildings', '[]');
+            if (typeof lastEventVotes !== 'undefined') lastEventVotes = 0;
         });
 
         function showNextWorldLineButton() {
@@ -5134,16 +5164,21 @@ h<!DOCTYPE html>
             `;
             btn.onclick = function() {
                 btn.remove();
-                // Increment world line offset (no vote change)
-                firebaseDb.ref('worldLineOffset').transaction(current => (current || 0) + 1);
-                // Save current votes as decoration offset (reset trees/fish/buildings visually)
-                firebaseDb.ref('decorationOffset').set({
-                    meisui: votes.meisui || 0,
-                    tsutsuji: votes.tsutsuji || 0,
-                    meisui_chan: votes.meisui_chan || 0,
-                    bekabune: votes.bekabune || 0,
-                    asari: votes.asari || 0,
-                    ryoushi: votes.ryoushi || 0
+                // Clean up any remaining fireworks interval
+                if (activeFwInterval) { clearInterval(activeFwInterval); activeFwInterval = null; }
+                // Atomic multi-path update: worldLineOffset + decorationOffset together
+                const newWLOffset = (worldLineOffset || 0) + 1;
+                const updates = {
+                    'worldLineOffset': newWLOffset,
+                    'decorationOffset/meisui': votes.meisui || 0,
+                    'decorationOffset/tsutsuji': votes.tsutsuji || 0,
+                    'decorationOffset/meisui_chan': votes.meisui_chan || 0,
+                    'decorationOffset/bekabune': votes.bekabune || 0,
+                    'decorationOffset/asari': votes.asari || 0,
+                    'decorationOffset/ryoushi': votes.ryoushi || 0
+                };
+                firebaseDb.ref().update(updates).catch(err => {
+                    console.error('World line transition failed:', err);
                 });
                 // Reset built buildings
                 builtBuildings = [];
