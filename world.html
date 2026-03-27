@@ -4666,6 +4666,32 @@ h<!DOCTYPE html>
                 html += '</div>';
             });
 
+            // 建設した建物一覧
+            html += '<div style="font-size:14px;font-weight:bold;color:#555;margin:18px 0 10px;">🏗️ 建設した建物</div>';
+            var allBuildings = buildingsList.concat(charBuildingsList || []);
+            var builtCount = 0;
+            var totalBuildingCount = allBuildings.length;
+            allBuildings.forEach(function(b) {
+                var isBuilt = builtBuildings.includes(b.id);
+                if (isBuilt) builtCount++;
+                var icon = isBuilt ? '✅' : '🔒';
+                var opacity = isBuilt ? '1' : '0.4';
+                var bgColor = isBuilt ? '#f0faf0' : '#f5f5f5';
+                var charLabel = b.char ? (' — ' + (charMetadata[b.char] ? charMetadata[b.char].name : b.char) + 'の力') : '';
+                html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 12px;margin-bottom:4px;border-radius:10px;background:' + bgColor + ';opacity:' + opacity + ';">';
+                html += '<span style="font-size:20px;">' + icon + '</span>';
+                html += '<div style="flex:1;">';
+                html += '<div style="font-size:13px;font-weight:bold;">' + (b.emoji || '🏠') + ' ' + b.name + '</div>';
+                if (!isBuilt) {
+                    html += '<div style="font-size:11px;color:#999;">あと ' + (b.unlock_votes) + '票で建設' + charLabel + '</div>';
+                } else {
+                    html += '<div style="font-size:11px;color:#4caf50;">建設済み！' + charLabel + '</div>';
+                }
+                html += '</div>';
+                html += '</div>';
+            });
+            html += '<div style="text-align:center;font-size:12px;color:#888;margin-top:8px;">建設: ' + builtCount + ' / ' + totalBuildingCount + '</div>';
+
             // 過去の世界線の記録
             html += '<div style="font-size:14px;font-weight:bold;color:#555;margin:18px 0 10px;">🌀 過去の世界線の記録</div>';
             html += '<div id="worldLineHistoryContainer" style="font-size:12px;color:#888;">読み込み中...</div>';
