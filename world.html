@@ -1118,17 +1118,17 @@ h<!DOCTYPE html>
     <!-- 左サイドパネル -->
     <div id="leftPanel" style="position:fixed;top:36px;left:0;bottom:0;z-index:200;width:300px;display:flex;flex-direction:column;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:0 14px 0 0;box-shadow:2px 0 20px rgba(0,0,0,0.15);font-family:'Hiragino Sans','Meiryo',sans-serif;">
         <!-- 投票速報ヘッダー -->
-        <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:6px 14px;color:#fff;flex-shrink:0;">
-            <div style="font-weight:900;font-size:14px;text-align:center;letter-spacing:2px;">📊 投票速報</div>
+        <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:10px 14px;color:#fff;flex-shrink:0;">
+            <div style="font-weight:900;font-size:18px;text-align:center;letter-spacing:3px;">📊 投票速報</div>
         </div>
         <!-- ランキング本体 -->
-        <div id="barGraph" style="padding:4px 10px;font-size:12px;flex:1;min-height:0;overflow-y:auto;">
+        <div id="barGraph" style="padding:8px 12px;font-size:14px;flex:1;min-height:0;overflow-y:auto;">
             <div id="barGraphBars"></div>
         </div>
         <!-- 下部固定エリア -->
-        <div style="flex-shrink:0;border-top:1px solid rgba(0,0,0,0.1);padding:4px 8px 6px;">
-            <div style="display:flex;gap:4px;margin-bottom:4px;">
-                <button onclick="openRankPopup()" style="flex:1;font-size:11px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-weight:bold;">🏆 街ランク</button>
+        <div style="flex-shrink:0;border-top:2px solid rgba(0,0,0,0.1);padding:8px 10px 8px;">
+            <div style="display:flex;gap:6px;margin-bottom:6px;">
+                <button onclick="openRankPopup()" style="flex:1;font-size:13px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;padding:8px 0;border-radius:8px;cursor:pointer;font-weight:bold;">🏆 街ランク</button>
                 <button onclick="if(confirm('⚠️ 全データをリセットしますか？（投票・世界線・すべて初期化）')){votesRef.set({meisui:0,meisui_chan:0,tsutsuji:0,bekabune:0,asari:0,ryoushi:0});firebaseDb.ref('worldLineOffset').set(0);firebaseDb.ref('stats/cycleStartVotes').set(0);firebaseDb.ref('stats/decorationOffset').set({meisui:0,tsutsuji:0,meisui_chan:0,bekabune:0,asari:0,ryoushi:0});endingActive=false;builtBuildings=[];localStorage.setItem('meisui_builtBuildings','[]');}" style="flex:1;font-size:11px;color:#fff;background:#78909c;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-weight:bold;">🔄 リセット</button>
             </div>
             <div style="display:flex;gap:3px;">
@@ -5514,7 +5514,7 @@ h<!DOCTYPE html>
             // Create sorted ranking
             const sorted = Object.entries(votes).sort((a, b) => b[1] - a[1]);
 
-            let html = '<div style="font-size:12px;font-weight:bold;color:#1a237e;margin-bottom:4px;padding-bottom:4px;border-bottom:1px solid #e0e0e0;">🏆 得票ランキング</div>';
+            let html = '<div style="font-size:15px;font-weight:bold;color:#1a237e;margin-bottom:8px;padding-bottom:6px;border-bottom:2px solid #e0e0e0;">🏆 得票ランキング</div>';
 
             sorted.forEach((entry, index) => {
                 const type = entry[0];
@@ -5526,30 +5526,30 @@ h<!DOCTYPE html>
                 const textColor = rank <= 3 ? '#333' : '#666';
                 const pct = totalVotes > 0 ? ((count / totalVotes) * 100).toFixed(0) : 0;
 
-                const rankHtml = `<div style="margin:2px 0;padding:4px 6px;background:${bgColor};border-radius:6px;border-left:3px solid ${borderColor};font-weight:bold;">
-                    <div style="display:flex;align-items:center;font-size:12px;">
-                        <div style="width:26px;text-align:center;color:${textColor};">${rankEmoji}</div>
+                const rankHtml = `<div style="margin:4px 0;padding:8px 10px;background:${bgColor};border-radius:8px;border-left:4px solid ${borderColor};font-weight:bold;">
+                    <div style="display:flex;align-items:center;font-size:15px;">
+                        <div style="width:30px;text-align:center;color:${textColor};font-size:16px;">${rankEmoji}</div>
                         <div style="flex:1;color:${textColor};white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${charNames[type]}</div>
-                        <div style="color:${textColor};font-size:13px;min-width:40px;text-align:right;">${count}票</div>
+                        <div style="color:${textColor};font-size:17px;font-weight:900;min-width:50px;text-align:right;">${count}票</div>
                     </div>
-                    <div style="width:100%;height:4px;background:#e0e0e0;border-radius:2px;margin-top:3px;">
-                        <div style="width:${pct}%;height:100%;background:${colors[type]};border-radius:2px;transition:width 0.5s;"></div>
+                    <div style="width:100%;height:6px;background:#e0e0e0;border-radius:3px;margin-top:5px;">
+                        <div style="width:${pct}%;height:100%;background:${colors[type]};border-radius:3px;transition:width 0.5s;"></div>
                     </div>
                 </div>`;
                 html += rankHtml;
             });
 
             // Total votes
-            html += `<div style="font-size:13px;font-weight:900;color:#333;margin-top:6px;padding-top:4px;border-top:1px solid #e0e0e0;text-align:center;">総投票数: ${totalVotes}票</div>`;
+            html += `<div style="font-size:16px;font-weight:900;color:#333;margin-top:10px;padding-top:8px;border-top:2px solid #e0e0e0;text-align:center;">総投票数: ${totalVotes}票</div>`;
 
             // Voter turnout
             const turnoutPercent = ((totalVotes * 17) / 171322 * 100).toFixed(1);
-            html += `<div style="font-size:12px;font-weight:bold;color:#1565c0;margin-top:4px;padding:4px;background:rgba(21,101,192,0.06);border-radius:6px;text-align:center;">📊 換算投票率: ${turnoutPercent}%</div>`;
+            html += `<div style="font-size:14px;font-weight:bold;color:#1565c0;margin-top:6px;padding:6px 8px;background:rgba(21,101,192,0.08);border-radius:8px;text-align:center;">📊 換算投票率: ${turnoutPercent}%</div>`;
 
             // Current town rank
             const rankInfo = getOverallRank();
             const curRank = rankInfo.current;
-            html += `<div style="font-size:11px;font-weight:bold;color:${curRank.color};margin-top:4px;padding:4px;background:rgba(0,0,0,0.03);border-radius:6px;text-align:center;">${curRank.star} ランク${curRank.rank} - ${curRank.title}</div>`;
+            html += `<div style="font-size:14px;font-weight:bold;color:${curRank.color};margin-top:6px;padding:6px 8px;background:rgba(0,0,0,0.04);border-radius:8px;text-align:center;">${curRank.star} ランク${curRank.rank} - ${curRank.title}</div>`;
 
             barsEl.innerHTML = html;
         }
