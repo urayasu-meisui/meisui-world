@@ -3554,15 +3554,18 @@ h<!DOCTYPE html>
             document.body.appendChild(overlay);
 
             // Special: Black Water Incident — sea turns black
-            if (event.special === 'blackWater') {
+            const hasBlackWater = event.special === 'blackWater';
+            if (hasBlackWater) {
                 showBlackWaterEffect();
             }
 
+            // BlackWater時は表示時間を延長（6秒+フェード）して演出と合わせる
+            const displayTime = hasBlackWater ? 7000 : 3000;
             setTimeout(() => {
                 overlay.style.transition = 'opacity 0.5s';
                 overlay.style.opacity = '0';
                 setTimeout(() => { overlay.remove(); onEventDone(); }, 500);
-            }, 3000);
+            }, displayTime);
         }
 
         // Black Water Incident effect: sea area turns dark/black temporarily
@@ -3875,11 +3878,9 @@ h<!DOCTYPE html>
                     checkEventTrigger();
                     // ③クイズ（回答→解説→playEventQueue）
                     showQuizModal(charType);
-                    setTimeout(() => {
-                        window.voteInProgress = false;
-                    }, 1000);
-                }, 2000);
-            }, 2500);
+                    // voteInProgressはplayEventQueue完了後に解除される
+                }, 2000); // ②投票済証の表示時間
+            }, 2800); // ①カットイン完了を待つ
         });
 
         // Character metadata for voting modal
@@ -3903,6 +3904,13 @@ h<!DOCTYPE html>
         function playNextEvent() {
             if (eventQueue.length === 0) {
                 eventQueuePlaying = false;
+                // キュー完了 → 投票ボタン再有効化
+                window.voteInProgress = false;
+                const voteBtn = document.getElementById('voteBtn');
+                if (voteBtn) {
+                    voteBtn.style.opacity = '1';
+                    voteBtn.style.pointerEvents = 'auto';
+                }
                 return;
             }
             const showFn = eventQueue.shift();
@@ -4012,14 +4020,10 @@ h<!DOCTYPE html>
                     // クイズ表示（回答→解説→playEventQueue で④以降が順番に再生）
                     showQuizModal(charType);
 
-                    // ボタン再有効化（クイズ表示中に次の投票準備）
-                    setTimeout(() => {
-                        window.voteInProgress = false;
-                        document.getElementById('voteBtn').style.opacity = '1';
-                        document.getElementById('voteBtn').style.pointerEvents = 'auto';
-                    }, 1000);
+                    // ボタン再有効化はplayEventQueue完了後に移動
+                    // （連続投票でキューが積み上がるのを防止）
                 }, 2000); // ②投票済証の表示時間
-            }, 2500); // ①カットインの表示時間
+            }, 2800); // ①カットイン完了を待つ（2700ms + 余裕100ms）
         }
 
         // ========== ENDING SEQUENCE (2100) ==========
