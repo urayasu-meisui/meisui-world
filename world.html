@@ -4993,139 +4993,89 @@ h<!DOCTYPE html>
         }
 
         function castVote(charType) {
-            // CHANGE 2: Vote button spam prevention
+            // 投票スパム防止
             if (window.voteInProgress) return;
             window.voteInProgress = true;
 
-            // Gray out vote button
+            // ボタン無効化
             document.getElementById('voteBtn').style.opacity = '0.5';
             document.getElementById('voteBtn').style.pointerEvents = 'none';
 
-            // Save votes before incrementing for building unlock check
+            // 投票前の票数を保存（建物アンロック判定用）
             const prevVotes = totalVotes;
+            const oldLevel = getCurrentLevel();
 
-            // Firebase atomic increment (on('value') listener will update local votes)
+            // Firebase書き込み
             votesRef.child(charType).transaction(current => (current || 0) + 1).then(() => {
-                // Firebase listener will handle UI update
-                // Log vote timestamp for statistics
                 firebaseDb.ref('stats/lastVoteTime').set(Date.now());
                 firebaseDb.ref('stats/totalVoteCount').transaction(current => (current || 0) + 1);
-
-                // Queue era event (will show after quiz)
-                const newYear = getCurrentYear();
-                if (historicalEvents[newYear]) {
-                    queueEvent(() => showEraEvent(newYear));
-                }
-
-                // Ending check is in handleVoteSnapshot (fires after local votes update)
-
-                // Re-enable voting after Firebase confirms + animations complete
-                if (window._reenableVotingCallback) window._reenableVotingCallback();
             }).catch(error => {
                 console.error('Vote transaction failed:', error);
-                // Re-enable voting on error so user isn't stuck
                 window.voteInProgress = false;
                 document.getElementById('voteBtn').style.opacity = '1';
                 document.getElementById('voteBtn').style.pointerEvents = 'auto';
             });
 
-            // V5 Features: Play vote sound
             playSound('vote');
 
-            // CHANGE 1: Show cut-in animation first
-            showCutinAnimation(charType);
-
-            // Show voted certificate AFTER cutin finishes (cutin=2.7s + 0.5s gap)
-            setTimeout(() => {
-                showVotedCertificate(charType);
-            }, 3200);
-
-            // World effect: celebration particles on the character
+            // パーティクル・キャラお祝い（背景演出、UIと被らない）
             const char = characters.find(c => c.type === charType);
             if (char) {
-                // CHANGE 3 & 4: Enhanced celebration with more particles
-                // Spawn 60 celebration particles (doubled from 30)
                 for (let i = 0; i < 60; i++) {
                     particles.push({
-                        x: char.x + (Math.random() - 0.5) * 60,
-                        y: char.y - 20,
-                        vx: (Math.random() - 0.5) * 3,
-                        vy: -1 - Math.random() * 3,
-                        rotation: Math.random() * Math.PI * 2,
-                        rotSpeed: (Math.random() - 0.5) * 0.1,
-                        size: 4 + Math.random() * 4,
-                        alpha: 1,
+                        x: char.x + (Math.random() - 0.5) * 60, y: char.y - 20,
+                        vx: (Math.random() - 0.5) * 3, vy: -1 - Math.random() * 3,
+                        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.1,
+                        size: 4 + Math.random() * 4, alpha: 1,
                         color: ['#ff6b6b', '#ffa500', '#ffd700', '#ff69b4', '#87ceeb'][Math.floor(Math.random() * 5)],
-                        type: 'confetti',
-                        life: 120
+                        type: 'confetti', life: 120
                     });
                 }
-                // CHANGE 5: Make character jump (5-second structured celebration)
                 char.celebrating = true;
                 char.celebrateTimer = 5000;
-
-                // Show celebration speech bubble (3.5s = after cutin)
-                setTimeout(() => {
-                    if (char && characters.includes(char)) {
-                        const celebrationLines = ['やったー！', 'ありがとう！', 'うれしい！', 'みんなのちから！', '1票のパワー！'];
-                        const randomLine = celebrationLines[Math.floor(Math.random() * celebrationLines.length)];
-
-                        const bubble = document.createElement('div');
-                        bubble.className = 'speech-bubble';
-                        bubble.textContent = randomLine;
-                        bubble.style.left = (char.x * camera.zoomX - 40) + 'px';
-                        bubble.style.top = (char.y * camera.zoomY + 36 - 80) + 'px';
-                        bubble.style.backgroundColor = charMetadata[charType]?.color || '#ffd700';
-                        bubble.style.color = 'white';
-                        document.body.appendChild(bubble);
-
-                        setTimeout(() => bubble.remove(), 3000);
-                    }
-                }, 3500);
-
-                // Trigger special attack effect after cutin ends
-                setTimeout(() => triggerSpecialAttack(charType), 3500);
             }
-
-            // V5 Features: Track achievements
             unlockAchievement('first_vote');
 
-            // V3 Features: Check building unlock
-            checkBuildingUnlock(prevVotes);
-
-            // V3 Features: Check event trigger
-            checkEventTrigger();
-
-            // V3 Features: Check for level changes (queued, shown after quiz)
-            const oldLevel = getCurrentLevel();
-            // Defer level check to after Firebase updates local votes
+            // ========== 順番制御: 全て前のステップ完了後に次を開始 ==========
+            // ①カットイン 2.5秒
+            showCutinAnimation(charType);
             setTimeout(() => {
-                const newLevel = getCurrentLevel();
-                if (newLevel.min > oldLevel.min) {
-                    queueEvent(() => { showLevelUpAnimation(newLevel); playSound('levelup'); });
-                }
-            }, 1000);
-
-            // Show quiz after cutin(2.7s) + certificate(3s) + buffer
-            setTimeout(() => {
-                showQuizModal(charType);
-            }, 5500);
-
-            // Re-enable vote button after all animations finish
-            // Use both Firebase completion AND minimum animation time (whichever is later)
-            const voteStartTime = Date.now();
-            const MIN_VOTE_COOLDOWN = 7000; // minimum time for animations to complete
-            function reenableVoting() {
-                const elapsed = Date.now() - voteStartTime;
-                const remaining = Math.max(0, MIN_VOTE_COOLDOWN - elapsed);
+                // ②投票済証 2秒
+                showVotedCertificate(charType);
                 setTimeout(() => {
-                    window.voteInProgress = false;
-                    document.getElementById('voteBtn').style.opacity = '1';
-                    document.getElementById('voteBtn').style.pointerEvents = 'auto';
-                }, remaining);
-            }
-            // Called from Firebase transaction .then() — see castVote above
-            window._reenableVotingCallback = reenableVoting;
+                    // ③クイズ（ユーザーが回答するまで待つ）
+                    // クイズ完了後に showExplanationCard → playEventQueue が呼ばれる
+                    // その前にキューにイベントを積んでおく
+
+                    // 年代イベント
+                    const newYear = getCurrentYear();
+                    if (historicalEvents[newYear]) {
+                        queueEvent(() => showEraEvent(newYear));
+                    }
+
+                    // レベルアップチェック
+                    const newLevel = getCurrentLevel();
+                    if (newLevel.min > oldLevel.min) {
+                        queueEvent(() => { showLevelUpAnimation(newLevel); playSound('levelup'); });
+                    }
+
+                    // 建物アンロック（queueEvent内部で呼ばれる）
+                    checkBuildingUnlock(prevVotes);
+
+                    // イベントトリガー（queueEvent内部で呼ばれる）
+                    checkEventTrigger();
+
+                    // クイズ表示（回答→解説→playEventQueue で④以降が順番に再生）
+                    showQuizModal(charType);
+
+                    // ボタン再有効化（クイズ表示中に次の投票準備）
+                    setTimeout(() => {
+                        window.voteInProgress = false;
+                        document.getElementById('voteBtn').style.opacity = '1';
+                        document.getElementById('voteBtn').style.pointerEvents = 'auto';
+                    }, 1000);
+                }, 2000); // ②投票済証の表示時間
+            }, 2500); // ①カットインの表示時間
         }
 
         // ========== ENDING SEQUENCE (2100) ==========
