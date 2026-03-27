@@ -1403,17 +1403,16 @@ h<!DOCTYPE html>
             ],
 
             // 屋形船めいすいくん (文化・伝統) — 海/川のみ: 旧江戸川〜東京湾
+            // 屋形船めいすいくん — 東京湾・見明川のみ（左側の旧江戸川には行かない）
             asari: [
-                {x: 470, y: 120, name: '旧江戸川上流'},
-                {x: 465, y: 250},
-                {x: 460, y: 400, name: '旧江戸川中流'},
-                {x: 455, y: 550},
-                {x: 450, y: 680, name: '旧江戸川下流'},
-                {x: 500, y: 800},
-                {x: 650, y: 870, name: '東京湾'},
-                {x: 850, y: 870, name: '東京湾沖'},
-                {x: 650, y: 830},
-                {x: 500, y: 750},
+                {x: 700, y: 750, name: '見明川河口'},
+                {x: 750, y: 820},
+                {x: 850, y: 870, name: '東京湾'},
+                {x: 1000, y: 880, name: '東京湾沖'},
+                {x: 1150, y: 850},
+                {x: 1000, y: 800},
+                {x: 850, y: 780},
+                {x: 750, y: 750},
             ],
 
             // 漁師めいすいくん (産業振興) — 海/川のみ: 境川河口〜見明川〜東京湾
@@ -1633,7 +1632,7 @@ h<!DOCTYPE html>
             { name: 'ツツジめいちゃん', type: 'tsutsuji', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.75, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['お花を植えよう！', '子どもたちの笑顔が好き', 'きれいな花壇にするよ'] },
             { name: 'ビーナスめいちゃん', type: 'meisui_chan', x: 935, y: 364, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['選挙ってステキ💕', '観光で浦安を元気に！', 'みんなで作る未来'] },
             { name: '浦安の海めいすいくん', type: 'bekabune', x: 1150, y: 500, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['三番瀬を守ろう！', '海をきれいにするよ', 'お魚さん元気？'] },
-            { name: '屋形船めいすいくん', type: 'asari', x: 470, y: 120, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
+            { name: '屋形船めいすいくん', type: 'asari', x: 850, y: 870, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
             { name: '漁師めいすいくん', type: 'ryoushi', x: 730, y: 650, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
         ];
 
@@ -5388,7 +5387,9 @@ h<!DOCTYPE html>
                 charDiv.style.cssText = 'position:absolute;right:-120%;top:-15%;width:120%;height:130%;z-index:4;animation:cutinCharSlide 0.4s 0.2s cubic-bezier(0.16,1,0.3,1) forwards;opacity:0;display:flex;align-items:center;justify-content:center;overflow:visible;';
                 const img = document.createElement('img');
                 img.src = charImg.src;
-                img.style.cssText = 'max-width:500%;max-height:500%;filter:drop-shadow(0 0 60px ' + charColor + ') drop-shadow(0 0 120px ' + charColor + ') drop-shadow(0 0 200px white);animation:cutinCharKira 0.6s ease-in-out infinite alternate;';
+                // 画面高さの5倍をキャラ画像サイズとする
+                const cutinCharSize = Math.max(window.innerWidth, window.innerHeight) * 5;
+                img.style.cssText = 'width:' + cutinCharSize + 'px;height:auto;filter:drop-shadow(0 0 60px ' + charColor + ') drop-shadow(0 0 120px ' + charColor + ') drop-shadow(0 0 200px white);animation:cutinCharKira 0.6s ease-in-out infinite alternate;';
                 charDiv.appendChild(img);
                 overlay.appendChild(charDiv);
             }
