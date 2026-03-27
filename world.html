@@ -4813,8 +4813,8 @@ h<!DOCTYPE html>
 
         function checkReclamationEvolution(newYear) {
             const newStage = getReclamationStage(newYear);
-            if (newStage > lastReclamationStage && lastReclamationStage !== 0) {
-                // 段階が上がった → イベントキューに追加（クイズ等の後に再生）
+            // 段階が上がった場合に発火（isInitialLoadガードは呼び出し元で済み）
+            if (newStage > lastReclamationStage && newStage !== 0) {
                 const stageInfo = reclamationStages[newStage];
                 if (stageInfo) {
                     queueEvent(() => showReclamationEvolution(stageInfo));
@@ -4823,8 +4823,11 @@ h<!DOCTYPE html>
             lastReclamationStage = newStage;
         }
 
+        // 埋め立て光エフェクト用（canvas描画ループで使用）
+        let reclamationGlowTimer = 0;
+
         function showReclamationEvolution(stageInfo) {
-            // 1. 白フラッシュオーバーレイ（ポケモン進化の光）
+            // 1. 白フラッシュ（ポケモン進化の光）
             const flash = document.createElement('div');
             flash.style.cssText = `
                 position:fixed;top:0;left:0;width:100%;height:100%;z-index:450;
@@ -4833,7 +4836,7 @@ h<!DOCTYPE html>
             `;
             document.body.appendChild(flash);
 
-            // 2. 拡大リング（波紋エフェクト）
+            // 2. 波紋リング
             for (let i = 0; i < 3; i++) {
                 setTimeout(() => {
                     const ring = document.createElement('div');
@@ -4848,7 +4851,7 @@ h<!DOCTYPE html>
                 }, i * 400);
             }
 
-            // 3. 「ぐんぐん大きくなる」テキスト
+            // 3. 「ぐんぐん！」テキスト
             const growText = document.createElement('div');
             growText.style.cssText = `
                 position:fixed;top:50%;left:50%;z-index:452;pointer-events:none;
@@ -4860,7 +4863,7 @@ h<!DOCTYPE html>
             growText.textContent = '🌊 ぐんぐん！';
             document.body.appendChild(growText);
 
-            // 4. フラッシュ終了後にポップ表示
+            // 4. 2秒後: ポップ表示（3.5秒間）
             setTimeout(() => {
                 flash.remove();
                 growText.remove();
@@ -4882,13 +4885,64 @@ h<!DOCTYPE html>
                 `;
                 document.body.appendChild(popup);
 
+                // 5. 3.5秒後: ポップ消去 → 埋め立て部分が光るエフェクト
                 setTimeout(() => {
                     popup.style.transition = 'opacity 0.8s, transform 0.8s';
                     popup.style.opacity = '0';
                     popup.style.transform = 'translateX(-50%) translateY(-30px)';
-                    setTimeout(() => { popup.remove(); onEventDone(); }, 800);
+                    setTimeout(() => popup.remove(), 800);
+
+                    // 新しい陸地が光って生まれるエフェクト（2秒間）
+                    showNewLandGlow();
+
+                    setTimeout(() => onEventDone(), 2500);
                 }, 3500);
             }, 2000);
+        }
+
+        function showNewLandGlow() {
+            // canvas描画ループで使うタイマーをセット（2秒間光る）
+            reclamationGlowTimer = 2000;
+
+            // DOM側にも金色のフラッシュオーバーレイ
+            const glow = document.createElement('div');
+            glow.style.cssText = `
+                position:fixed;top:0;left:300px;right:0;bottom:0;z-index:300;
+                pointer-events:none;opacity:0;
+                background:radial-gradient(ellipse at center, rgba(255,215,0,0.4) 0%, rgba(255,215,0,0.1) 50%, transparent 80%);
+            `;
+            document.body.appendChild(glow);
+
+            // フェードイン
+            requestAnimationFrame(() => {
+                glow.style.transition = 'opacity 0.5s';
+                glow.style.opacity = '1';
+            });
+
+            // キラキラパーティクル（新しい陸地を祝福）
+            for (let i = 0; i < 25; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    const x = 300 + Math.random() * (window.innerWidth - 300);
+                    const y = Math.random() * window.innerHeight;
+                    sparkle.style.cssText = `
+                        position:fixed;left:${x}px;top:${y}px;z-index:301;
+                        pointer-events:none;font-size:${16 + Math.random() * 20}px;
+                        color:gold;text-shadow:0 0 10px gold;
+                        animation:cutinSparkle 1.2s ease-in-out forwards;
+                    `;
+                    sparkle.textContent = ['✦', '✧', '⭐', '💎'][Math.floor(Math.random() * 4)];
+                    document.body.appendChild(sparkle);
+                    setTimeout(() => sparkle.remove(), 1200);
+                }, i * 80);
+            }
+
+            // 2秒後にフェードアウト
+            setTimeout(() => {
+                glow.style.transition = 'opacity 1s';
+                glow.style.opacity = '0';
+                setTimeout(() => glow.remove(), 1000);
+            }, 1500);
         }
 
         // Listen for real-time vote updates from Firebase
