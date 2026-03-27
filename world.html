@@ -1525,9 +1525,55 @@ h<!DOCTYPE html>
         // Persistent vote particles (leaves, petals, etc.)
         let voteParticles = [];
 
+        // 投票後ハイライト用グローバル変数
+        let lastVotedCharType = null;
+        let lastVoteHighlightTime = 0;
+        const HIGHLIGHT_DURATION = 5000; // 5秒間キラキラ
+
         function drawVoteEffects(ctx, now) {
             const COASTLINE_Y = 780; // South coastline on the actual Urayasu map
             const WATER_START_Y = 800; // Where water begins
+
+            // 投票後ハイライト: 該当キャラのエリアにキラキラ
+            const highlightActive = lastVotedCharType && (now - lastVoteHighlightTime < HIGHLIGHT_DURATION);
+            if (highlightActive) {
+                const t = (now - lastVoteHighlightTime) / 1000;
+                const alpha = Math.max(0, 1 - t / (HIGHLIGHT_DURATION / 1000)) * 0.8;
+                // キャラタイプに応じたキラキラ位置
+                const sparkleAreas = {
+                    meisui: [{x:600,y:200},{x:700,y:300},{x:500,y:350},{x:650,y:150},{x:550,y:250}],
+                    tsutsuji: [{x:450,y:300},{x:550,y:400},{x:500,y:200},{x:600,y:350},{x:400,y:250}],
+                    meisui_chan: [{x:950,y:400},{x:1050,y:350},{x:900,y:500},{x:1000,y:300},{x:1100,y:450}],
+                    bekabune: [{x:1100,y:600},{x:1200,y:500},{x:1000,y:700},{x:1150,y:550},{x:1050,y:650}],
+                    asari: [{x:800,y:850},{x:900,y:800},{x:700,y:900},{x:850,y:750},{x:950,y:850}],
+                    ryoushi: [{x:700,y:700},{x:800,y:650},{x:600,y:750},{x:750,y:600},{x:650,y:680}]
+                };
+                const areas = sparkleAreas[lastVotedCharType] || [];
+                const color = charMetadata[lastVotedCharType]?.color || '#ffd700';
+                ctx.save();
+                ctx.globalAlpha = alpha;
+                areas.forEach((pos, i) => {
+                    const sparkleSize = 6 + Math.sin(t * 5 + i * 1.5) * 4;
+                    const ox = Math.sin(t * 3 + i * 2) * 15;
+                    const oy = Math.cos(t * 2.5 + i * 1.8) * 15;
+                    // 星型キラキラ
+                    ctx.fillStyle = color;
+                    ctx.beginPath();
+                    for (let j = 0; j < 5; j++) {
+                        const angle = (j * 4 * Math.PI / 5) - Math.PI / 2 + t * 2;
+                        const r = j % 2 === 0 ? sparkleSize : sparkleSize * 0.4;
+                        ctx.lineTo(pos.x + ox + Math.cos(angle) * r, pos.y + oy + Math.sin(angle) * r);
+                    }
+                    ctx.closePath();
+                    ctx.fill();
+                    // 白い光の点
+                    ctx.fillStyle = 'rgba(255,255,255,0.9)';
+                    ctx.beginPath();
+                    ctx.arc(pos.x + ox, pos.y + oy, sparkleSize * 0.3, 0, Math.PI * 2);
+                    ctx.fill();
+                });
+                ctx.restore();
+            }
 
             const vM = Math.max(0, (votes.meisui || 0) - (decorationOffset.meisui || 0));
             const vT = Math.max(0, (votes.tsutsuji || 0) - (decorationOffset.tsutsuji || 0));
@@ -3424,6 +3470,67 @@ h<!DOCTYPE html>
             2099: {text: '未来都市うらやす 完成間近！', emoji: '🌟'},
         };
 
+        // ============================================
+        // 投票効果フィードバック表示
+        // ============================================
+        function showVoteEffect(charType) {
+            const effect = charEffects[charType];
+            const meta = charMetadata[charType];
+            if (!effect || !meta) { onEventDone(); return; }
+
+            // 現在のキャラ投票数（decorationOffset考慮）
+            const charVotes = Math.max(0, (votes[charType] || 0) - (decorationOffset[charType] || 0));
+
+            // 現在レベルと次レベルを算出
+            let currentLevel = 0;
+            for (let i = effect.thresholds.length - 1; i >= 0; i--) {
+                if (charVotes >= effect.thresholds[i]) { currentLevel = i; break; }
+            }
+            const currentLevelName = effect.levels[currentLevel];
+            const nextLevel = currentLevel < effect.levels.length - 1 ? currentLevel + 1 : null;
+            const nextLevelName = nextLevel ? effect.levels[nextLevel] : null;
+            const nextThreshold = nextLevel ? effect.thresholds[nextLevel] : null;
+
+            // 進捗バー
+            const prevThreshold = effect.thresholds[currentLevel];
+            const range = nextThreshold ? nextThreshold - prevThreshold : 1;
+            const progress = nextThreshold ? Math.min(1, (charVotes - prevThreshold) / range) : 1;
+            const barFilled = Math.round(progress * 10);
+            const barEmpty = 10 - barFilled;
+            const progressBar = '━'.repeat(barFilled) + '░'.repeat(barEmpty);
+
+            // 次レベルまでのメッセージ
+            const remaining = nextThreshold ? nextThreshold - charVotes : 0;
+            const nextMsg = nextLevelName ? `あと${remaining}票で「${nextLevelName}」！` : '🎉 最高レベル達成！';
+
+            const overlay = document.createElement('div');
+            overlay.style.cssText = `
+                position:fixed;top:120px;left:50%;transform:translateX(-50%);
+                background:linear-gradient(135deg, ${meta.color}22, ${meta.color}44);
+                border:3px solid ${meta.color};color:#333;padding:24px 40px;
+                border-radius:20px;z-index:400;text-align:center;
+                font-family:sans-serif;animation:eraEventPop 0.4s ease;
+                box-shadow:0 8px 30px rgba(0,0,0,0.3);
+                backdrop-filter:blur(10px);max-width:500px;
+            `;
+            overlay.innerHTML = `
+                <div style="font-size:48px;margin-bottom:8px;">${effect.icon}</div>
+                <div style="font-size:22px;font-weight:bold;margin-bottom:8px;">${effect.desc}</div>
+                <div style="font-size:16px;color:#555;margin-bottom:4px;">いま：${currentLevelName}</div>
+                <div style="font-size:20px;letter-spacing:2px;margin:8px 0;color:${meta.color};">${progressBar}</div>
+                <div style="font-size:14px;color:#666;">${nextMsg}</div>
+            `;
+            document.body.appendChild(overlay);
+
+            playSound('event');
+
+            setTimeout(() => {
+                overlay.style.transition = 'opacity 0.5s';
+                overlay.style.opacity = '0';
+                setTimeout(() => { overlay.remove(); onEventDone(); }, 500);
+            }, 3000);
+        }
+
         function showEraEvent(year) {
             const event = historicalEvents[year];
             if (!event) return;
@@ -3737,6 +3844,10 @@ h<!DOCTYPE html>
                 char.celebrateTimer = 30000;
             }
 
+            // マップ上キラキラハイライト開始
+            lastVotedCharType = charType;
+            lastVoteHighlightTime = Date.now();
+
             playSound('vote');
             window.voteInProgress = true;
 
@@ -3746,6 +3857,8 @@ h<!DOCTYPE html>
                 // ②投票済証 2秒
                 showVotedCertificate(charType);
                 setTimeout(() => {
+                    // 投票効果フィードバック（最初に表示）
+                    queueEvent(() => showVoteEffect(charType));
                     // 年代イベントをキューに積む
                     const newYear = getCurrentYear();
                     if (historicalEvents[newYear]) {
@@ -3860,6 +3973,10 @@ h<!DOCTYPE html>
             }
             unlockAchievement('first_vote');
 
+            // マップ上キラキラハイライト開始
+            lastVotedCharType = charType;
+            lastVoteHighlightTime = Date.now();
+
             // ========== 順番制御: 全て前のステップ完了後に次を開始 ==========
             // ①カットイン 2.5秒
             showCutinAnimation(charType);
@@ -3870,6 +3987,9 @@ h<!DOCTYPE html>
                     // ③クイズ（ユーザーが回答するまで待つ）
                     // クイズ完了後に showExplanationCard → playEventQueue が呼ばれる
                     // その前にキューにイベントを積んでおく
+
+                    // 投票効果フィードバック（最初に表示）
+                    queueEvent(() => showVoteEffect(charType));
 
                     // 年代イベント
                     const newYear = getCurrentYear();
