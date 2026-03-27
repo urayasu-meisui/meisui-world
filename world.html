@@ -3943,10 +3943,14 @@ h<!DOCTYPE html>
                 ryoushi: data.ryoushi || 0
             };
             // Reset built buildings and event tracking when decoration offset changes
-            builtBuildings = [];
-            localStorage.setItem('meisui_builtBuildings', '[]');
-            saveBuildingsToFirebase();
-            if (typeof lastEventVotes !== 'undefined') lastEventVotes = 0;
+            try {
+                builtBuildings = [];
+                localStorage.setItem('meisui_builtBuildings', '[]');
+                if (typeof saveBuildingsToFirebase === 'function') saveBuildingsToFirebase();
+                lastEventVotes = 0;
+            } catch(e) {
+                console.warn('decorationOffset listener early fire:', e.message);
+            }
         });
 
         function showNextWorldLineButton() {
