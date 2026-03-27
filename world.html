@@ -3773,9 +3773,11 @@ h<!DOCTYPE html>
             updateVoteDisplay();
             updateYearDisplay();
 
-            // 初回読み込み時はイベント・エンディングをスキップ
+            // 初回読み込み時はイベント・エンディングをスキップ（建物は静かにチェック）
             if (isInitialLoad) {
                 isInitialLoad = false;
+                // 建物の初期同期（通知なしで状態だけ更新）
+                silentBuildingSync();
                 return;
             }
 
@@ -4909,6 +4911,29 @@ h<!DOCTYPE html>
                 localStorage.setItem('meisui_builtBuildings', JSON.stringify(builtBuildings));
             }
         });
+
+        // 初回ロード時に建物状態を静かに同期（通知なし）
+        function silentBuildingSync() {
+            const effective = getEffectiveVotes();
+            let changed = false;
+            buildingsList.forEach(b => {
+                if (effective >= b.unlock_votes && !builtBuildings.includes(b.id)) {
+                    builtBuildings.push(b.id);
+                    changed = true;
+                }
+            });
+            charBuildingsList.forEach(b => {
+                const cv = Math.max(0, (votes[b.char] || 0) - (decorationOffset[b.char] || 0));
+                if (cv >= b.unlock_votes && !builtBuildings.includes(b.id)) {
+                    builtBuildings.push(b.id);
+                    changed = true;
+                }
+            });
+            if (changed) {
+                localStorage.setItem('meisui_builtBuildings', JSON.stringify(builtBuildings));
+                saveBuildingsToFirebase();
+            }
+        }
 
         function saveBuildingsToFirebase() {
             firebaseDb.ref('stats/builtBuildings').set(builtBuildings).catch(err => {
