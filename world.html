@@ -3326,9 +3326,7 @@ h<!DOCTYPE html>
         // VOTING SYSTEM
         // ============================================
 
-        // Vote storage (Firebase Realtime Database sync)
-        let votes = { meisui: 0, meisui_chan: 0, tsutsuji: 0, bekabune: 0, asari: 0, ryoushi: 0 };
-        let totalVotes = 0;
+        // votes, totalVotes はfirebase.jsで定義済み
 
         // ========== YEAR SYSTEM (1889-2100, 1票=10年) ==========
         // 22票で2100年(エンディング): 0票=1889, ..., 20票=2089, 21票=2099, 22票+=2100
