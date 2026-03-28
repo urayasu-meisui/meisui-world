@@ -1384,13 +1384,45 @@ h<!DOCTYPE html>
         // VOTE-BASED TOWN EVOLUTION (大規模演出版)
         // ============================================
 
-        function generatePositions(seed, count, xMin, xMax, yMin, yMax) {
+        // 点がポリゴン内にあるか判定（ray casting法）
+        function isPointInPolygon(px, py, polygon) {
+            let inside = false;
+            for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+                const xi = polygon[i][0], yi = polygon[i][1];
+                const xj = polygon[j][0], yj = polygon[j][1];
+                if ((yi > py) !== (yj > py) && px < (xj - xi) * (py - yi) / (yj - yi) + xi) {
+                    inside = !inside;
+                }
+            }
+            return inside;
+        }
+
+        // 浦安市域ポリゴン（1981年=全埋め立て完了後の最大範囲）
+        const urayasuLandPolygon = eraLandPolygons[1981] || [];
+
+        // 地形制約付き位置生成
+        // terrain: 'land'=浦安市内の陸地のみ, 'sea'=陸地の外（海・川）, 'any'=どこでも
+        function generatePositions(seed, count, xMin, xMax, yMin, yMax, terrain) {
             const rng = seededRandom(seed);
             const positions = [];
-            for (let i = 0; i < count; i++) {
+            let attempts = 0;
+            const maxAttempts = count * 20; // 無限ループ防止
+
+            while (positions.length < count && attempts < maxAttempts) {
+                attempts++;
+                const x = xMin + rng() * (xMax - xMin);
+                const y = yMin + rng() * (yMax - yMin);
+
+                // 地形チェック
+                if (terrain === 'land') {
+                    if (!isPointInPolygon(x, y, urayasuLandPolygon)) continue;
+                } else if (terrain === 'sea') {
+                    if (isPointInPolygon(x, y, urayasuLandPolygon)) continue;
+                }
+                // 'any' または terrain未指定の場合はチェックなし
+
                 positions.push({
-                    x: xMin + rng() * (xMax - xMin),
-                    y: yMin + rng() * (yMax - yMin),
+                    x, y,
                     seed: Math.floor(rng() * 99999),
                     size: 0.7 + rng() * 0.6
                 });
@@ -1398,19 +1430,16 @@ h<!DOCTYPE html>
             return positions;
         }
 
-        // Vote effect positions - mapped to real Urayasu map coordinates
-        // Ginkgo positions - parks and green areas (central north)
-        const ginkgoPositions = generatePositions(1001, 40, 550, 1200, 100, 650);
-        // Azalea/flower positions - residential and school areas (元町〜中町)
-        const azaleaPositions = generatePositions(2002, 40, 550, 1000, 150, 500);
-        // Beach positions - south coastline area
-        const beachPositions = generatePositions(3003, 25, 500, 1150, 700, 850);
-        // Marine positions - Tokyo Bay area
-        const marinePositions = generatePositions(4004, 30, 800, 1200, 750, 1050);
-        // Boat positions - river and bay
-        const boatPositions = generatePositions(5005, 20, 450, 1100, 650, 900);
-        // Fish market positions - old town area (元町)
-        const fishMarketPositions = generatePositions(6006, 25, 550, 850, 150, 400);
+        // 投票効果の位置配列（地形制約付き）
+        // 陸地系: イチョウ、ツツジ、魚市場 → 浦安市内のみ
+        const ginkgoPositions = generatePositions(1001, 40, 490, 1170, 60, 720, 'land');
+        const azaleaPositions = generatePositions(2002, 40, 490, 1170, 60, 720, 'land');
+        const fishMarketPositions = generatePositions(6006, 25, 490, 1170, 60, 720, 'land');
+        // 海岸系: ビーチ → 市域の南端付近
+        const beachPositions = generatePositions(3003, 25, 490, 1150, 600, 850, 'land');
+        // 海系: 海洋生物、屋形船 → 海・川のみ
+        const marinePositions = generatePositions(4004, 30, 400, 1400, 400, 1050, 'sea');
+        const boatPositions = generatePositions(5005, 20, 400, 1200, 500, 1000, 'sea');
 
         // 1票=1オブジェクト出現アニメーション
         let newObjectAnim = null; // { charType, startTime }
