@@ -105,6 +105,13 @@
       margin-top: 8px;
       color: #333;
     }
+    .char-preview {
+      font-size: 0.7em;
+      font-weight: 600;
+      margin-top: 4px;
+      min-height: 1.2em;
+      color: #888;
+    }
 
     /* 感謝オーバーレイ */
     .thank-overlay {
@@ -198,6 +205,36 @@
     const db = firebase.database();
 
     let voting = false; // 連打防止フラグ
+    let currentVotes = {}; // リアルタイム投票数
+
+    // 次のマイルストーンを算出
+    function getNextMilestone(charType) {
+      const v = currentVotes[charType] || 0;
+      const effect = charEffects[charType];
+      if (!effect) return null;
+      for (let i = 0; i < effect.thresholds.length; i++) {
+        if (v < effect.thresholds[i]) {
+          return { remaining: effect.thresholds[i] - v, label: effect.levels[i] };
+        }
+      }
+      return null; // 最高レベル
+    }
+
+    // 予告テキストを更新
+    function updatePreviews() {
+      CHAR_TYPES.forEach(type => {
+        const el = document.getElementById('preview-' + type);
+        if (!el) return;
+        const ms = getNextMilestone(type);
+        if (ms) {
+          el.textContent = `あと${ms.remaining}票で「${ms.label}」！`;
+          el.style.color = charMetadata[type].color;
+        } else {
+          el.textContent = '🎉 最高レベル！';
+          el.style.color = '#ffd700';
+        }
+      });
+    }
 
     // キャラカードを生成（config.jsのCHAR_TYPES/charMetadata/charImagesを使用）
     function renderGrid() {
@@ -208,7 +245,7 @@
 
         const card = document.createElement('div');
         card.className = 'char-card';
-        card.style.borderColor = meta.color + '40'; // 薄いボーダー
+        card.style.borderColor = meta.color + '40';
 
         const imgEl = document.createElement('img');
         imgEl.src = img.src;
@@ -220,6 +257,12 @@
         name.textContent = meta.name;
         name.style.color = meta.color;
         card.appendChild(name);
+
+        // 予告テキスト
+        const preview = document.createElement('div');
+        preview.className = 'char-preview';
+        preview.id = 'preview-' + type;
+        card.appendChild(preview);
 
         card.addEventListener('click', () => vote(type));
         grid.appendChild(card);
@@ -307,6 +350,12 @@
     // 初期化
     renderGrid();
     setupAdmin();
+
+    // 投票数をリアルタイム監視して予告表示を更新
+    db.ref('votes').on('value', snap => {
+      currentVotes = snap.val() || {};
+      updatePreviews();
+    });
   </script>
 </body>
 </html>

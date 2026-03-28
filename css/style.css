@@ -1139,3 +1139,108 @@
             0%, 100% { opacity: 0.5; }
             50% { opacity: 1; }
         }
+
+        /* =============================================
+           タイムラインバー（大画面下部）
+           ============================================= */
+        #timelineBar {
+            position: fixed;
+            bottom: 0;
+            left: 340px;
+            right: 0;
+            z-index: 200;
+            height: 56px;
+            background: rgba(0, 0, 30, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            gap: 12px;
+            font-family: "Hiragino Sans", sans-serif;
+        }
+        .tl-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.6);
+            flex-shrink: 0;
+        }
+        .tl-track {
+            flex: 1;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+            position: relative;
+        }
+        .tl-filled {
+            height: 100%;
+            border-radius: 4px;
+            background: linear-gradient(90deg, #ffd700, #ff8c00);
+            transition: width 0.8s ease;
+            width: 0%;
+        }
+        .tl-marker {
+            position: absolute;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 18px;
+            height: 18px;
+            background: #ffd700;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            box-shadow: 0 0 12px rgba(255, 215, 0, 0.6);
+            transition: left 0.8s ease;
+            left: 0%;
+        }
+        .tl-year {
+            position: absolute;
+            bottom: 22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 15px;
+            font-weight: 900;
+            color: #ffd700;
+            white-space: nowrap;
+            text-shadow: 0 1px 4px rgba(0,0,0,0.5);
+        }
+        .tl-next {
+            font-size: 14px;
+            font-weight: 700;
+            color: #ffd700;
+            white-space: nowrap;
+            flex-shrink: 0;
+            max-width: 300px;
+            animation: hintPulse 2s ease-in-out infinite;
+        }
+
+        /* =============================================
+           Effect層（マイルストーン全画面演出用）
+           ============================================= */
+        .popup-effect {
+            top: 0; left: 0;
+            width: 100vw; height: 100vh;
+            max-width: 100vw;
+            z-index: 9500;
+            border-radius: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(ellipse at center, rgba(0,0,30,0.95), rgba(0,0,0,0.98));
+        }
+        .popup-effect.popup-enter {
+            animation: effectIn 0.5s ease-out forwards;
+        }
+        .popup-effect.popup-exit {
+            animation: effectOut 0.4s ease-in forwards;
+        }
+        @keyframes effectIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        @keyframes effectOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+        @keyframes quickFlash {
+            from { opacity: 0.6; }
+            to { opacity: 0; }
+        }

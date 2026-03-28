@@ -94,11 +94,26 @@ function showEraEvent(year) {
     const hasBlackWater = event.special === 'blackWater';
     const yearColor = hasBlackWater ? '#888' : '#ffd700';
 
+    // 画面揺れ + ミニフラッシュ（歴史イベントの重み）
+    document.body.style.animation = 'screenShake 0.4s ease';
+    setTimeout(() => { document.body.style.animation = ''; }, 400);
+
+    const miniFlash = document.createElement('div');
+    miniFlash.style.cssText = `
+        position:fixed;top:0;left:0;width:100%;height:100%;z-index:450;
+        pointer-events:none;background:rgba(255,255,255,0.5);
+        animation:quickFlash 0.3s ease forwards;
+    `;
+    document.body.appendChild(miniFlash);
+    setTimeout(() => miniFlash.remove(), 300);
+
+    playSound('event');
+
     const content = document.createElement('div');
     content.innerHTML = `
-        <div style="font-size:48px;margin-bottom:8px;">${event.emoji}</div>
-        <div style="font-size:14px;color:${yearColor};margin-bottom:4px;">${year}年</div>
-        <div style="font-size:22px;font-weight:bold;">${event.text}</div>
+        <div style="font-size:56px;margin-bottom:8px;">${event.emoji}</div>
+        <div style="font-size:16px;color:${yearColor};margin-bottom:4px;">${year}年</div>
+        <div style="font-size:24px;font-weight:bold;">${event.text}</div>
     `;
 
     // 黒水イベント時は特殊エフェクトも同時発動
@@ -377,15 +392,34 @@ function showEventPopup(event) {
 }
 
 // ============================================
-// レベルアップアニメーション
+// レベルアップアニメーション（全画面マイルストーン演出）
 // ============================================
 function showLevelUpAnimation(newLevel) {
+    // 白フラッシュ
+    const flash = document.createElement('div');
+    flash.style.cssText = `
+        position:fixed;top:0;left:0;width:100%;height:100%;z-index:9600;
+        pointer-events:none;background:white;
+        animation:evolutionFlash 1.5s ease forwards;
+    `;
+    document.body.appendChild(flash);
+    setTimeout(() => flash.remove(), 1500);
+
+    playSound('levelup');
+
+    // 全画面コンテンツ
     const content = document.createElement('div');
+    content.style.cssText = 'text-align:center;';
     content.innerHTML = `
-        <div style="font-size:60px;margin-bottom:12px;">${newLevel.emoji}</div>
-        <div style="font-size:36px;font-weight:bold;color:#fff;text-shadow:0 0 20px rgba(255,215,0,0.8);margin-bottom:8px;">${newLevel.title}</div>
-        <div style="font-size:20px;color:#ffd700;">に レベルアップ！</div>
+        <div style="font-size:100px;margin-bottom:16px;">${newLevel.emoji}</div>
+        <div style="font-size:20px;color:#ffd700;margin-bottom:8px;">🎉 浦安が…</div>
+        <div style="font-size:56px;font-weight:900;color:#fff;
+            text-shadow:0 0 30px rgba(255,215,0,0.8),0 0 60px rgba(255,215,0,0.4);
+            margin-bottom:16px;">
+            ${newLevel.title}
+        </div>
+        <div style="font-size:28px;color:#ffd700;">になった！</div>
     `;
 
-    pm.show('toast', content, { duration: 3000, onDone: onEventDone });
+    pm.show('effect', content, { duration: 4000, onDone: onEventDone });
 }
