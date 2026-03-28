@@ -4063,7 +4063,7 @@ h<!DOCTYPE html>
         function updateBarGraph() {
             const barsEl = document.getElementById('barGraphBars');
 
-            // 逆転検知（ランキング表示は削除するが検知は残す）
+            // 逆転検知
             const sorted = Object.entries(votes).sort((a, b) => b[1] - a[1]);
             const currentRanking = sorted.map(e => e[0]);
             if (previousRanking.length > 0 && currentRanking[0] !== previousRanking[0] && sorted[0][1] > 0) {
@@ -4071,32 +4071,33 @@ h<!DOCTYPE html>
             }
             previousRanking = [...currentRanking];
 
-            // 投票速報パネル: 総投票数 + 現在ランクのみ表示（シンプルに）
-            const rankInfo = getOverallRank();
-            const curRank = rankInfo.current;
+            const maxVotes = sorted.length > 0 ? (sorted[0][1] || 1) : 1;
+            // タイトル行「🏆 得票ランキング」は削除。ランキングリストはそのまま表示
             let html = '';
 
-            // 総投票数（大きく表示）
-            html += `<div style="text-align:center;padding:16px 0 12px;">
-                <div style="font-size:14px;color:#888;">総投票数</div>
-                <div style="font-size:48px;font-weight:900;color:#1a237e;line-height:1.1;">${totalVotes}</div>
-                <div style="font-size:14px;color:#888;">票</div>
-            </div>`;
-
-            // 現在の街ランク
-            html += `<div style="text-align:center;padding:12px;margin:8px 0;background:rgba(0,0,0,0.04);border-radius:12px;">
-                <div style="font-size:24px;">${curRank.star}</div>
-                <div style="font-size:20px;font-weight:900;color:${curRank.color};margin:4px 0;">ランク${curRank.rank}</div>
-                <div style="font-size:15px;font-weight:bold;color:#333;">${curRank.title}</div>
-            </div>`;
-
-            // 次のランクまで
-            if (rankInfo.next) {
-                const remaining = rankInfo.next.min - rankInfo.total;
-                html += `<div style="text-align:center;font-size:13px;color:#666;">
-                    次のランク${rankInfo.next.rank}まで あと<b style="color:${rankInfo.next.color};font-size:16px;"> ${remaining}票</b>
+            // 6キャラのランキングリスト
+            sorted.forEach(([type, count], idx) => {
+                const meta = charMetadata[type];
+                if (!meta) return;
+                const pct = Math.round((count / maxVotes) * 100);
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+                html += `
+                <div style="margin-bottom:6px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                        <span style="font-weight:bold;font-size:13px;">${medal} ${meta.name}</span>
+                        <span style="font-size:13px;color:#555;">${count}票</span>
+                    </div>
+                    <div style="background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
+                        <div style="background:${meta.color};height:100%;width:${pct}%;transition:width 0.4s ease;border-radius:4px;"></div>
+                    </div>
                 </div>`;
-            }
+            });
+
+            // 総投票数
+            html += `<div style="text-align:center;padding:8px 0 4px;border-top:1px solid #e0e0e0;margin-top:4px;">
+                <span style="font-size:13px;color:#888;">総投票数: </span>
+                <span style="font-size:18px;font-weight:900;color:#1a237e;">${totalVotes}票</span>
+            </div>`;
 
             barsEl.innerHTML = html;
         }
