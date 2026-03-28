@@ -33,7 +33,6 @@ const landmarks = [
     { x: 1093, y: 428, w: 60, h: 40, type: 'culture', name: '三番瀬', emoji: '🐚' },
 
     // 行政・文化
-    { x: 720, y: 280, w: 50, h: 40, type: 'city_hall', name: '市役所', emoji: '🏛️' },
     { x: 660, y: 200, w: 50, h: 40, type: 'school', name: '元町エリア', emoji: '🏘️' },
     { x: 850, y: 500, w: 50, h: 40, type: 'library', name: '中町エリア', emoji: '📚' },
     { x: 1050, y: 500, w: 50, h: 40, type: 'culture', name: '新町エリア', emoji: '🏙️' },
@@ -46,7 +45,7 @@ const landmarks = [
     { x: 803, y: 190, w: 50, h: 40, type: 'shop', name: '国道沿い商店', emoji: '🏪' },
 
     // 投票所（6箇所）
-    { x: 633, y: 210, w: 40, h: 35, type: 'vote', name: '浦安市役所', emoji: '🗳️' },
+    { x: 1081, y: 420, w: 50, h: 40, type: 'vote', name: '市役所', emoji: '🗳️' },
     { x: 780, y: 280, w: 40, h: 35, type: 'vote', name: '中央公民館', emoji: '🗳️' },
     { x: 638, y: 221, w: 40, h: 35, type: 'vote', name: '市民プラザ', emoji: '🗳️' },
     { x: 1018, y: 421, w: 40, h: 35, type: 'vote', name: '日の出公民館', emoji: '🗳️' },
