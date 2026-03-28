@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>座標エディタ - めいすいくん総選挙</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: "Hiragino Sans", sans-serif;
+      background: #1a1a2e; color: #eee;
+      display: flex; flex-direction: column; height: 100vh;
+    }
+    .toolbar {
+      display: flex; align-items: center; gap: 8px;
+      padding: 8px 12px; background: #0d0d1a;
+      flex-wrap: wrap;
+    }
+    .toolbar button {
+      padding: 6px 14px; border: none; border-radius: 6px;
+      font-size: 13px; font-weight: 700; cursor: pointer;
+      color: #fff; transition: opacity 0.2s;
+    }
+    .toolbar button:hover { opacity: 0.85; }
+    .toolbar button.active { box-shadow: 0 0 0 3px #fff; }
+    .btn-save { background: #4caf50; }
+    .btn-load { background: #2196f3; }
+    .btn-reset { background: #78909c; }
+    .info { font-size: 12px; color: #888; margin-left: auto; }
+    .canvas-wrap {
+      flex: 1; overflow: auto; position: relative;
+      display: flex; align-items: flex-start; justify-content: center;
+      background: #111;
+    }
+    canvas { cursor: crosshair; }
+    #coords {
+      position: fixed; bottom: 10px; right: 10px;
+      background: rgba(0,0,0,0.8); color: #ffd700;
+      padding: 6px 12px; border-radius: 6px; font-size: 13px;
+      font-family: monospace;
+    }
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span style="font-weight:900;color:#ffd700;">座標エディタ</span>
+    <button class="btn-save" onclick="saveJSON()">保存 (JSON)</button>
+    <button class="btn-load" onclick="loadJSON()">読み込み</button>
+    <button class="btn-reset" onclick="resetAll()">全リセット</button>
+    <span style="color:#666;">|</span>
+    <div id="markerButtons"></div>
+    <span class="info">クリック=追加 / ドラッグ=移動 / 右クリック=削除</span>
+  </div>
+  <div class="canvas-wrap">
+    <canvas id="canvas"></canvas>
+  </div>
+  <div id="coords">x: 0, y: 0</div>
+  <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileLoad(event)">
+
+  <script>
+    const MAP_W = 1920, MAP_H = 1080;
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = MAP_W;
+    canvas.height = MAP_H;
+
+    // 編集対象の固定座標オブジェクト
+    const markerDefs = [
+      { id: 'lighthouse', label: '灯台', color: '#ffeb3b', x: 1150, y: 500 },
+      { id: 'marina', label: 'マリーナ', color: '#00bcd4', x: 1150, y: 650 },
+      { id: 'whale', label: 'クジラ', color: '#42a5f5', x: 1000, y: 900 },
+      { id: 'fish_market', label: '魚市場', color: '#ff9800', x: 700, y: 660 },
+      { id: 'shopping_arcade', label: '商店街', color: '#e040fb', x: 400, y: 680 },
+      { id: 'harbor', label: '港施設', color: '#66bb6a', x: 1100, y: 670 },
+    ];
+
+    let markers = markerDefs.map(d => ({ ...d }));
+    let selectedId = null; // 選択中のマーカーID（新規追加不要なので null でOK）
+    let dragging = null;
+    let dragOffset = { x: 0, y: 0 };
+
+    // マップ画像
+    const mapImg = new Image();
+    mapImg.src = 'map_real.png';
+    mapImg.onload = () => draw();
+
+    // マーカーボタン生成
+    const btnContainer = document.getElementById('markerButtons');
+    markerDefs.forEach(d => {
+      const btn = document.createElement('button');
+      btn.textContent = d.label;
+      btn.style.background = d.color;
+      btn.style.color = d.color === '#ffeb3b' ? '#333' : '#fff';
+      btn.id = 'btn-' + d.id;
+      btn.onclick = () => {
+        selectedId = (selectedId === d.id) ? null : d.id;
+        updateButtonStates();
+      };
+      btnContainer.appendChild(btn);
+    });
+
+    function updateButtonStates() {
+      markerDefs.forEach(d => {
+        const btn = document.getElementById('btn-' + d.id);
+        btn.classList.toggle('active', selectedId === d.id);
+      });
+    }
+
+    // 描画
+    function draw() {
+      ctx.clearRect(0, 0, MAP_W, MAP_H);
+      if (mapImg.complete) ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
+
+      markers.forEach(m => {
+        const isSelected = m.id === selectedId;
+        const r = isSelected ? 18 : 14;
+
+        // 影
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, r + 2, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.fill();
+
+        // 丸
+        ctx.beginPath();
+        ctx.arc(m.x, m.y, r, 0, Math.PI * 2);
+        ctx.fillStyle = m.color;
+        ctx.fill();
+        ctx.lineWidth = isSelected ? 3 : 2;
+        ctx.strokeStyle = '#fff';
+        ctx.stroke();
+
+        // ラベル
+        ctx.font = 'bold 13px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#fff';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 3;
+        ctx.strokeText(m.label, m.x, m.y - r - 6);
+        ctx.fillText(m.label, m.x, m.y - r - 6);
+
+        // 座標表示
+        ctx.font = '11px monospace';
+        ctx.fillStyle = 'rgba(255,255,255,0.7)';
+        ctx.strokeStyle = '#000';
+        ctx.lineWidth = 2;
+        const coordText = `(${Math.round(m.x)}, ${Math.round(m.y)})`;
+        ctx.strokeText(coordText, m.x, m.y + r + 14);
+        ctx.fillText(coordText, m.x, m.y + r + 14);
+      });
+    }
+
+    // マウス座標変換
+    function getMapCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const scaleX = MAP_W / rect.width;
+      const scaleY = MAP_H / rect.height;
+      return {
+        x: (e.clientX - rect.left) * scaleX,
+        y: (e.clientY - rect.top) * scaleY
+      };
+    }
+
+    // マーカー当たり判定
+    function findMarkerAt(mx, my) {
+      for (let i = markers.length - 1; i >= 0; i--) {
+        const m = markers[i];
+        const dx = m.x - mx, dy = m.y - my;
+        if (dx * dx + dy * dy < 400) return m; // 半径20px
+      }
+      return null;
+    }
+
+    // マウスイベント
+    canvas.addEventListener('mousedown', e => {
+      const { x, y } = getMapCoords(e);
+      const hit = findMarkerAt(x, y);
+      if (e.button === 2 && hit) {
+        // 右クリック = 削除ではなく位置リセット（固定オブジェクトなので削除はしない）
+        const def = markerDefs.find(d => d.id === hit.id);
+        if (def) { hit.x = def.x; hit.y = def.y; }
+        draw();
+        return;
+      }
+      if (hit) {
+        dragging = hit;
+        dragOffset.x = hit.x - x;
+        dragOffset.y = hit.y - y;
+        selectedId = hit.id;
+        updateButtonStates();
+      }
+    });
+
+    canvas.addEventListener('mousemove', e => {
+      const { x, y } = getMapCoords(e);
+      document.getElementById('coords').textContent = `x: ${Math.round(x)}, y: ${Math.round(y)}`;
+      if (dragging) {
+        dragging.x = x + dragOffset.x;
+        dragging.y = y + dragOffset.y;
+        draw();
+      }
+    });
+
+    canvas.addEventListener('mouseup', () => { dragging = null; });
+    canvas.addEventListener('mouseleave', () => { dragging = null; });
+    canvas.addEventListener('contextmenu', e => e.preventDefault());
+
+    // 保存: JSONダウンロード
+    function saveJSON() {
+      const data = {};
+      markers.forEach(m => {
+        data[m.id] = { x: Math.round(m.x), y: Math.round(m.y) };
+      });
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'fixed-positions.json';
+      a.click();
+
+      // 適用コードも表示
+      let code = '// world.htmlの固定座標をこの値に更新:\n';
+      markers.forEach(m => {
+        code += `// ${m.label}: (${Math.round(m.x)}, ${Math.round(m.y)})\n`;
+      });
+      console.log(code);
+      alert('保存しました！\nコンソール(F12)に適用コードも出力しています。');
+    }
+
+    // 読み込み
+    function loadJSON() {
+      document.getElementById('fileInput').click();
+    }
+    function handleFileLoad(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          markers.forEach(m => {
+            if (data[m.id]) {
+              m.x = data[m.id].x;
+              m.y = data[m.id].y;
+            }
+          });
+          draw();
+          alert('読み込みました');
+        } catch (err) {
+          alert('JSONの読み込みに失敗: ' + err.message);
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // リセット
+    function resetAll() {
+      if (!confirm('全マーカーを初期位置に戻しますか？')) return;
+      markers = markerDefs.map(d => ({ ...d }));
+      draw();
+    }
+
+    draw();
+  </script>
+</body>
+</html>
