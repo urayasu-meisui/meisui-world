@@ -1588,10 +1588,36 @@ h<!DOCTYPE html>
             // 陸キャラ: 陸ゾーン内を移動
             characterRoutes.meisui   = generateRouteWaypoints(landZonePolygon, 8, 7001);
             characterRoutes.tsutsuji = generateRouteWaypoints(landZonePolygon, 8, 7002);
-            // 海キャラ: 海ゾーン内を移動
-            characterRoutes.bekabune = generateRouteWaypoints(seaZonePolygon,  10, 7003);
-            characterRoutes.asari    = generateRouteWaypoints(seaZonePolygon,  10, 7004);
-            characterRoutes.ryoushi  = generateRouteWaypoints(seaZonePolygon,  10, 7005);
+            // 海キャラ（bekabune/ryoushi）: 海ゾーン全体を移動
+            characterRoutes.bekabune = generateRouteWaypoints(seaZonePolygon, 10, 7003);
+            characterRoutes.ryoushi  = generateRouteWaypoints(seaZonePolygon, 10, 7005);
+            // 屋形船（asari）: 海ゾーンの左下エリアに集中
+            // 海ゾーンのバウンディングボックスを計算して左40%・下50%に絞る
+            const sxs = seaZonePolygon.map(p => p.x), sys = seaZonePolygon.map(p => p.y);
+            const sxMin = Math.min(...sxs), sxMax = Math.max(...sxs);
+            const syMin = Math.min(...sys), syMax = Math.max(...sys);
+            const asariXMax = sxMin + (sxMax - sxMin) * 0.42; // 左40%
+            const asariYMin = syMin + (syMax - syMin) * 0.50; // 下50%
+            // 左下に絞ったサブポリゴンを作成（海ゾーンと矩形の交差）
+            const asariSubPoly = [
+                { x: sxMin,     y: asariYMin },
+                { x: asariXMax, y: asariYMin },
+                { x: asariXMax, y: syMax     },
+                { x: sxMin,     y: syMax     },
+            ];
+            // サブポリゴン内かつ海ゾーン内の点を生成（両方を満たす）
+            const asariPts = [];
+            const rng = seededRandom(7004);
+            let att = 0;
+            while (asariPts.length < 10 && att < 400) {
+                att++;
+                const x = sxMin + rng() * (asariXMax - sxMin);
+                const y = asariYMin + rng() * (syMax - asariYMin);
+                if (isPointInZone(x, y, seaZonePolygon)) {
+                    asariPts.push({ x: Math.round(x), y: Math.round(y) });
+                }
+            }
+            characterRoutes.asari = asariPts.length >= 3 ? asariPts : generateRouteWaypoints(seaZonePolygon, 10, 7004);
             // ビーナスめいちゃん: 陸ゾーン5点 + 海ゾーン5点を組み合わせ
             const chanLand = generateRouteWaypoints(landZonePolygon, 5, 7006);
             const chanSea  = generateRouteWaypoints(seaZonePolygon,  5, 7007);
