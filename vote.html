@@ -155,6 +155,33 @@
       50% { opacity: 1; }
     }
 
+    /* 投票用紙カットインアニメーション */
+    @keyframes ballotBoxAppear {
+      0%   { transform: translateX(-50%) scale(0); }
+      65%  { transform: translateX(-50%) scale(1.12); }
+      100% { transform: translateX(-50%) scale(1); }
+    }
+    @keyframes ballotBoxShake {
+      0%,100% { transform: translateX(-50%) scale(1) rotate(0deg); }
+      20%  { transform: translateX(calc(-50% - 8px)) scale(1.06) rotate(-5deg); }
+      40%  { transform: translateX(calc(-50% + 8px)) scale(1.06) rotate(5deg); }
+      60%  { transform: translateX(calc(-50% - 4px)) scale(1.02) rotate(-2deg); }
+      80%  { transform: translateX(calc(-50% + 4px)) scale(1.02) rotate(2deg); }
+    }
+    @keyframes ballotPaperFall {
+      0%   { transform: translateX(-50%) translateY(-220px) rotate(-8deg); opacity: 0; }
+      12%  { opacity: 1; }
+      64%  { transform: translateX(-50%) translateY(120px) rotate(-1deg); opacity: 1; }
+      80%  { transform: translateX(-50%) translateY(138px) scaleY(0.45) rotate(0deg); opacity: 0.7; }
+      93%  { transform: translateX(-50%) translateY(148px) scaleY(0.08) rotate(0deg); opacity: 0.2; }
+      100% { transform: translateX(-50%) translateY(152px) scaleY(0) rotate(0deg); opacity: 0; }
+    }
+    @keyframes ballotDoneText {
+      0%   { transform: translateX(-50%) scale(0); opacity: 0; }
+      60%  { transform: translateX(-50%) scale(1.18); opacity: 1; }
+      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+    }
+
     /* 管理者用リセットボタン（デフォルト非表示） */
     .admin-footer {
       display: none;
@@ -293,34 +320,125 @@
         });
     }
 
-    // 感謝画面を表示（2秒で自動復帰）
+    // 投票用紙が投票箱に入るカットイン
+    function showBallotCutin(type, meta) {
+      const charColor = meta.color;
+      const charName = meta.name;
+
+      const cutin = document.createElement('div');
+      cutin.style.cssText = `
+        position:fixed;top:0;left:0;width:100%;height:100%;z-index:600;
+        pointer-events:none;background:rgba(10,10,30,0.88);
+        display:flex;align-items:center;justify-content:center;
+      `;
+
+      const container = document.createElement('div');
+      container.style.cssText = `
+        position:relative;width:260px;height:400px;
+      `;
+
+      // 投票箱（SVG）
+      const boxEl = document.createElement('div');
+      boxEl.style.cssText = `
+        position:absolute;bottom:20px;left:50%;
+        transform:translateX(-50%) scale(0);
+        animation:ballotBoxAppear 0.45s 0.1s cubic-bezier(0.34,1.56,0.64,1) forwards,
+                  ballotBoxShake 0.45s 1.55s ease forwards;
+        transform-origin:bottom center;
+      `;
+      boxEl.innerHTML = `
+        <svg width="150" height="170" viewBox="0 0 150 170" style="filter:drop-shadow(0 6px 18px rgba(0,0,0,0.6))">
+          <rect x="8" y="52" width="134" height="110" rx="10" fill="#c62828" stroke="rgba(255,255,255,0.45)" stroke-width="2"/>
+          <rect x="8" y="52" width="134" height="26" rx="10" fill="rgba(255,255,255,0.12)"/>
+          <rect x="4" y="36" width="142" height="22" rx="6" fill="#e53935" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
+          <rect x="42" y="40" width="66" height="9" rx="4" fill="#7f0000"/>
+          <rect x="22" y="90" width="106" height="38" rx="6" fill="rgba(255,255,255,0.13)"/>
+          <text x="75" y="107" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="sans-serif">めいすいくん</text>
+          <text x="75" y="122" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="10" font-family="sans-serif">総 選 挙</text>
+          <rect x="15" y="154" width="120" height="4" rx="2" fill="rgba(0,0,0,0.2)"/>
+        </svg>
+      `;
+
+      // 投票用紙
+      const paper = document.createElement('div');
+      paper.style.cssText = `
+        position:absolute;top:0;left:50%;
+        transform:translateX(-50%) translateY(-220px) rotate(-8deg);
+        transform-origin:top center;
+        width:158px;
+        background:white;border:2px solid #ddd;border-radius:6px;
+        padding:12px 10px;text-align:center;
+        box-shadow:0 6px 24px rgba(0,0,0,0.45);
+        font-family:"Hiragino Sans","Meiryo",sans-serif;
+        animation:ballotPaperFall 1.25s 0.35s ease-in forwards;
+      `;
+      paper.innerHTML = `
+        <div style="font-size:9px;color:#aaa;letter-spacing:1px;margin-bottom:5px;padding-bottom:4px;border-bottom:1px dashed #eee;">めいすいくん総選挙</div>
+        <div style="font-size:9px;color:#bbb;margin-bottom:9px;">投 票 用 紙</div>
+        <div style="font-size:19px;font-weight:900;color:${charColor};border:2.5px solid ${charColor};border-radius:6px;padding:7px 4px;">
+          ✔ ${charName}
+        </div>
+      `;
+
+      // 「入りました！」テキスト
+      const doneText = document.createElement('div');
+      doneText.style.cssText = `
+        position:absolute;bottom:205px;left:50%;
+        transform:translateX(-50%) scale(0);
+        white-space:nowrap;font-size:22px;font-weight:900;color:white;
+        font-family:"Hiragino Sans","Meiryo",sans-serif;
+        text-shadow:0 0 18px ${charColor},2px 2px 0 #000;
+        animation:ballotDoneText 0.4s 1.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
+      `;
+      doneText.textContent = '📬 入りました！';
+
+      container.appendChild(paper);
+      container.appendChild(boxEl);
+      container.appendChild(doneText);
+      cutin.appendChild(container);
+      document.body.appendChild(cutin);
+
+      // 2.3秒後にフェードアウト → 感謝画面へ
+      setTimeout(() => {
+        cutin.style.transition = 'opacity 0.35s';
+        cutin.style.opacity = '0';
+        setTimeout(() => cutin.remove(), 350);
+      }, 2300);
+    }
+
+    // 感謝画面を表示（投票用紙カットイン後に表示）
     function showThankYou(type) {
       const meta = charMetadata[type];
       const img = charImages[type];
 
-      const overlay = document.createElement('div');
-      overlay.className = 'thank-overlay';
-      overlay.style.background = `linear-gradient(135deg, ${meta.color}dd, ${meta.color}88)`;
+      // まず投票用紙カットインを再生
+      showBallotCutin(type, meta);
 
-      overlay.innerHTML = `
-        <img src="${img.src}" alt="${meta.name}">
-        <div class="thank-text">
-          ${meta.name}に<br>投票しました！<br>ありがとう！🗳️
-        </div>
-        <div class="thank-next">つぎの人に わたしてね →</div>
-      `;
-
-      document.body.appendChild(overlay);
-
-      // 2秒後に自動で投票画面に戻る
+      // カットイン終了後（2.3s）に感謝オーバーレイを表示
       setTimeout(() => {
-        overlay.style.transition = 'opacity 0.3s';
-        overlay.style.opacity = '0';
+        const overlay = document.createElement('div');
+        overlay.className = 'thank-overlay';
+        overlay.style.background = `linear-gradient(135deg, ${meta.color}dd, ${meta.color}88)`;
+
+        overlay.innerHTML = `
+          <img src="${img.src}" alt="${meta.name}">
+          <div class="thank-text">
+            ${meta.name}に<br>投票しました！<br>ありがとう！🗳️
+          </div>
+          <div class="thank-next">つぎの人に わたしてね →</div>
+        `;
+        document.body.appendChild(overlay);
+
+        // 2秒後に自動で投票画面に戻る
         setTimeout(() => {
-          overlay.remove();
-          voting = false; // 次の人が投票可能に
-        }, 300);
-      }, 2000);
+          overlay.style.transition = 'opacity 0.3s';
+          overlay.style.opacity = '0';
+          setTimeout(() => {
+            overlay.remove();
+            voting = false;
+          }, 300);
+        }, 2000);
+      }, 2300);
     }
 
     // 接続状態の監視
