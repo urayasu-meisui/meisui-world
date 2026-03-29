@@ -236,12 +236,12 @@ h<!DOCTYPE html>
         function showSimpleInteractionEvent(char1, char2, event) {
             // イベント別テーマカラー
             const themes = {
-                'じゃんけん大会': { bg: 'linear-gradient(135deg,rgba(102,126,234,0.52),rgba(118,75,162,0.52))', glow: '#a855f7', deco: '⚡' },
-                'ハイタッチ':     { bg: 'linear-gradient(135deg,rgba(247,151,30,0.52),rgba(255,210,0,0.52))', glow: '#fbbf24', deco: '🌟' },
-                '浦安盆踊り':     { bg: 'linear-gradient(135deg,rgba(249,83,198,0.52),rgba(185,29,115,0.52))', glow: '#ec4899', deco: '🌸' },
-                '記念撮影':       { bg: 'linear-gradient(135deg,rgba(17,153,142,0.52),rgba(56,239,125,0.52))', glow: '#34d399', deco: '✨' },
+                'じゃんけん大会': { bg: 'linear-gradient(135deg,rgba(102,126,234,0.32),rgba(118,75,162,0.32))', glow: '#a855f7', deco: '⚡' },
+                'ハイタッチ':     { bg: 'linear-gradient(135deg,rgba(247,151,30,0.32),rgba(255,210,0,0.32))', glow: '#fbbf24', deco: '🌟' },
+                '浦安盆踊り':     { bg: 'linear-gradient(135deg,rgba(249,83,198,0.32),rgba(185,29,115,0.32))', glow: '#ec4899', deco: '🌸' },
+                '記念撮影':       { bg: 'linear-gradient(135deg,rgba(17,153,142,0.32),rgba(56,239,125,0.32))', glow: '#34d399', deco: '✨' },
             };
-            const theme = themes[event.name] || { bg: 'linear-gradient(135deg,rgba(247,151,30,0.52),rgba(255,210,0,0.52))', glow: '#ffd200', deco: '🎉' };
+            const theme = themes[event.name] || { bg: 'linear-gradient(135deg,rgba(247,151,30,0.32),rgba(255,210,0,0.32))', glow: '#ffd200', deco: '🎉' };
 
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:300;display:flex;align-items:center;justify-content:center;';
