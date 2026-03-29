@@ -1785,32 +1785,6 @@ h<!DOCTYPE html>
                     }
                 }
 
-                // 5票以上で提灯が海岸線に並ぶ
-                if (vA >= 3) {
-                    const lanternCount = Math.min(vA * 3, 30);
-                    for (let i = 0; i < lanternCount; i++) {
-                        const lx = 500 + (i / lanternCount) * 600;
-                        const ly = 850;
-                        const swing = Math.sin(now * 0.002 + i * 0.8) * 3;
-                        // 提灯
-                        ctx.fillStyle = '#ff4500';
-                        ctx.beginPath();
-                        ctx.ellipse(lx, ly + swing, 5, 7, 0, 0, Math.PI * 2);
-                        ctx.fill();
-                        // 光
-                        ctx.fillStyle = 'rgba(255, 140, 0, ' + (0.15 + Math.sin(now * 0.003 + i) * 0.05) + ')';
-                        ctx.beginPath();
-                        ctx.arc(lx, ly + swing, 15, 0, Math.PI * 2);
-                        ctx.fill();
-                        // 紐
-                        ctx.strokeStyle = '#8b4513';
-                        ctx.lineWidth = 0.5;
-                        ctx.beginPath();
-                        ctx.moveTo(lx, ly + swing - 7);
-                        ctx.lineTo(lx, ly - 12);
-                        ctx.stroke();
-                    }
-                }
 
                 // 8票以上で花火
                 if (vA >= 8) {
