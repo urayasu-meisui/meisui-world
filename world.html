@@ -1562,6 +1562,40 @@ h<!DOCTYPE html>
             return positions;
         }
 
+        // ゾーンポリゴン内にランダムなルート中継点を生成
+        function generateRouteWaypoints(polygon, count, seed) {
+            const rng = seededRandom(seed);
+            const xs = polygon.map(p => p.x), ys = polygon.map(p => p.y);
+            const xMin = Math.min(...xs), xMax = Math.max(...xs);
+            const yMin = Math.min(...ys), yMax = Math.max(...ys);
+            const pts = [];
+            let attempts = 0;
+            while (pts.length < count && attempts < count * 40) {
+                attempts++;
+                const x = xMin + rng() * (xMax - xMin);
+                const y = yMin + rng() * (yMax - yMin);
+                if (isPointInZone(x, y, polygon)) {
+                    pts.push({ x: Math.round(x), y: Math.round(y) });
+                }
+            }
+            return pts;
+        }
+
+        // キャラクターのルートをゾーンポリゴンに合わせて再生成
+        function rebuildCharacterRoutes() {
+            // 陸キャラ: 陸ゾーン内を移動
+            characterRoutes.meisui   = generateRouteWaypoints(landZonePolygon, 8, 7001);
+            characterRoutes.tsutsuji = generateRouteWaypoints(landZonePolygon, 8, 7002);
+            // 海キャラ: 海ゾーン内を移動
+            characterRoutes.bekabune = generateRouteWaypoints(seaZonePolygon,  10, 7003);
+            characterRoutes.asari    = generateRouteWaypoints(seaZonePolygon,  10, 7004);
+            characterRoutes.ryoushi  = generateRouteWaypoints(seaZonePolygon,  10, 7005);
+            // ビーナスめいちゃん: 陸ゾーン5点 + 海ゾーン5点を組み合わせ
+            const chanLand = generateRouteWaypoints(landZonePolygon, 5, 7006);
+            const chanSea  = generateRouteWaypoints(seaZonePolygon,  5, 7007);
+            characterRoutes.meisui_chan = [...chanLand, ...chanSea];
+        }
+
         // 全ポジション配列（ゾーンポリゴン変更時に再生成できるよう let で宣言）
         let ginkgoPositions, azaleaPositions, fishMarketPositions, beachPositions;
         let marinePositions, boatPositions, asariClamPositions, noriFramePositions;
@@ -1592,6 +1626,7 @@ h<!DOCTYPE html>
 
         // 初期生成（デフォルトゾーンポリゴンで）
         regenerateAllPositions();
+        rebuildCharacterRoutes();
 
         // fixed-positions.json があれば座標とゾーンポリゴンを上書きして再生成
         fetch('fixed-positions.json').then(r => r.json()).then(data => {
@@ -1613,7 +1648,7 @@ h<!DOCTYPE html>
                 zoneUpdated = true;
             }
             // ゾーンが変わった場合は再生成
-            if (zoneUpdated) regenerateAllPositions();
+            if (zoneUpdated) { regenerateAllPositions(); rebuildCharacterRoutes(); }
             // landmarks配列の座標も上書き（"lm_名前" 形式のキーで管理）
             landmarks.forEach(lm => {
                 const key = 'lm_' + lm.name;
