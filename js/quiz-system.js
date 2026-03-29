@@ -35,7 +35,12 @@ function showQuizModal(charType) {
     const quiz = getRandomQuiz();
     // クイズがまだ読み込まれていないかエラーの場合はスキップ
     if (!quiz) { onEventDone(); return; }
-    const shuffled = [...quiz.choices].sort(() => Math.random() - 0.5);
+    // Fisher-Yates アルゴリズム（sort()方式は偏りが出るため置き換え）
+    const shuffled = [...quiz.choices];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
 
     // クイズデータをグローバルに保存（回答処理用）
     window._currentQuizData = { explanation: quiz.explanation, answer: quiz.a, charType: charType };

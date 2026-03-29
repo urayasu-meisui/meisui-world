@@ -4046,7 +4046,9 @@ h<!DOCTYPE html>
 
             // Firebase書き込み
             votesRef.child(charType).transaction(current => (current || 0) + 1).then(() => {
-                firebaseDb.ref('stats/lastVoteTime').set(Date.now());
+                // update()でまとめて1回のネットワークトリップに削減
+                firebaseDb.ref('stats').update({ lastVoteTime: Date.now() });
+                // totalVoteCountはインクリメントなので transaction が必要
                 firebaseDb.ref('stats/totalVoteCount').transaction(current => (current || 0) + 1);
             }).catch(error => {
                 console.error('Vote transaction failed:', error);

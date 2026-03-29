@@ -305,9 +305,11 @@
       voteRef.transaction(current => (current || 0) + 1)
         .then(result => {
           if (result.committed) {
-            // 大画面側に通知
-            db.ref('stats/lastVoteChar').set(type);
-            db.ref('stats/lastVoteTime').set(Date.now());
+            // 大画面側に通知（update()で1回のネットワークトリップにまとめる）
+            db.ref('stats').update({
+                lastVoteChar: type,
+                lastVoteTime: Date.now()
+            });
             showThankYou(type);
           } else {
             // 投票が競合などで反映されなかった場合はユーザーに伝える
