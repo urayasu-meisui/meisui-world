@@ -310,7 +310,19 @@
             db.ref('stats/lastVoteTime').set(Date.now());
             showThankYou(type);
           } else {
+            // 投票が競合などで反映されなかった場合はユーザーに伝える
             voting = false;
+            const msg = document.createElement('div');
+            msg.textContent = '⚠️ うまく投票できませんでした。もう一度タップしてね！';
+            msg.style.cssText = `
+              position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
+              background:rgba(180,0,0,0.9);color:#fff;padding:16px 28px;
+              border-radius:14px;font-size:16px;font-weight:bold;
+              text-align:center;z-index:9000;pointer-events:none;
+              animation:fadeInUp 0.3s ease;
+            `;
+            document.body.appendChild(msg);
+            setTimeout(() => msg.remove(), 3000);
           }
         })
         .catch(err => {

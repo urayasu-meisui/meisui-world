@@ -3913,8 +3913,10 @@ h<!DOCTYPE html>
             console.log('📡 外部投票検知:', charType);
 
             // 投票前の状態を保存
+            // ※handleVoteSnapshotがlastVoteCharより先に発火してtotalVotesが
+            //   既に更新済みの場合があるため、totalVotes-1 で1票前のレベルを算出する
             const prevVotes = totalVotes - 1;
-            const oldLevel = getCurrentLevel();
+            const oldLevel = getLevelAtTotal(totalVotes - 1);
 
             // キャラお祝いパーティクル
             const char = characters.find(c => c.type === charType);
@@ -4116,10 +4118,9 @@ h<!DOCTYPE html>
                     }
 
                     // イベントキューを再生
+                    // ボタン再有効化は playNextEvent() のキュー空検知時に自動実行
+                    // （万が一詰まった場合は20秒タイムアウトで強制リセット）
                     playEventQueue();
-
-                    // ボタン再有効化はplayEventQueue完了後に移動
-                    // （連続投票でキューが積み上がるのを防止）
                 }, 2000); // ②投票済証の表示時間
             }, 2800); // ①カットイン完了を待つ（2700ms + 余裕100ms）
         }
@@ -4218,7 +4219,7 @@ h<!DOCTYPE html>
                 bottom:50%;
                 left:50%;
                 transform:translateX(-50%);
-                z-index:9000;
+                z-index:9100; /* cutinOverlay(9000)より上 */
                 font-size:28px;
                 font-weight:bold;
                 color:#fff;

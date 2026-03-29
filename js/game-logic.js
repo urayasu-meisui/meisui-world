@@ -97,6 +97,15 @@ function getCurrentLevel() {
     return levelThresholds[0];
 }
 
+// 指定した総投票数時点でのレベルを返す（外部投票検知でoldLevel計算に使用）
+function getLevelAtTotal(total) {
+    const effective = Math.max(0, total - (cycleStartVotes || 0));
+    for (let i = levelThresholds.length - 1; i >= 0; i--) {
+        if (effective >= levelThresholds[i].min) return levelThresholds[i];
+    }
+    return levelThresholds[0];
+}
+
 // エリア別レベル（キャラ投票数ベース）
 function getAreaLevel(key) {
     const v = votes[key] || 0;
