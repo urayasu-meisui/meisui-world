@@ -24,19 +24,6 @@ h<!DOCTYPE html>
     <!-- Firebase connection indicator -->
     <div id="firebaseStatus" style="position:fixed;top:55px;left:50%;transform:translateX(-50%);z-index:9999;padding:4px 16px;border-radius:20px;font-size:11px;font-weight:bold;font-family:sans-serif;display:none;pointer-events:none;"></div>
 
-    <!-- Welcome Screen -->
-    <div id="welcomeScreen">
-        <div class="welcome-content">
-            <h1 style="font-size:3em;line-height:1.3;">浦安めいすいくん総選挙</h1>
-            <p style="font-size:22px;margin:15px 0;color:rgba(255,255,255,0.85);">～あなたの一票で未来が変わる～</p>
-            <div style="text-align:left;background:rgba(255,255,255,0.15);border-radius:12px;padding:15px 20px;margin:15px auto;max-width:360px;font-size:15px;line-height:2;">
-              ① キャラクターに投票しよう<br>
-              ② 投票で浦安の街が変わる！<br>
-              ③ クイズに挑戦して浦安を学ぼう
-            </div>
-            <button id="startButton">スタート</button>
-        </div>
-    </div>
 
     <!-- Sound Toggle Button -->
     <button id="soundToggleBtn" title="音声ON/OFF">🔊</button>
@@ -606,34 +593,9 @@ h<!DOCTYPE html>
             }, 3000);
         }
 
-        // ============================================
-        // Welcome Screen Initialization
-        // ============================================
-        function initWelcome() {
-            const startBtn = document.getElementById('startButton');
-            const welcome = document.getElementById('welcomeScreen');
-            
-            if (startBtn) {
-                startBtn.addEventListener('click', () => {
-                    welcome.style.animation = 'fadeOutWelcome 0.5s ease-out forwards';
-                    setTimeout(() => {
-                        welcome.style.display = 'none';
-                    }, 500);
-                    playSound('vote');
-                    // スタート時にBGM開始（ユーザー操作後でないと再生不可）
-                    initAudioContext();
-                    updateBgm();
-                });
-            }
-        }
-
-        // Add fadeOutWelcome to styles if needed
+        // Add styles
         const style = document.createElement('style');
         style.textContent = `
-            @keyframes fadeOutWelcome {
-                from { opacity: 1; }
-                to { opacity: 0; }
-            }
             @keyframes slideInRight {
                 from {
                     transform: translateX(400px);
@@ -4795,7 +4757,12 @@ h<!DOCTYPE html>
         initClouds();
         initFireflies();
         initAchievements();
-        initWelcome();
+        // BGMはユーザー操作後でないと再生不可のため、最初のクリックで開始
+        document.addEventListener('click', function startBgm() {
+            initAudioContext();
+            updateBgm();
+            document.removeEventListener('click', startBgm);
+        }, { once: true });
         document.getElementById('soundToggleBtn').addEventListener('click', toggleSound);
         fitMapToScreen();
         animate();
