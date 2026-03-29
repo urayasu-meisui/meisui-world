@@ -10,4 +10,9 @@
 | （例）2026-03-26 | 画像サイズを倍率だけで指定して崩れた | 倍率とpx値を両方併記する |
 | （例）2026-03-26 | FAQ内の日付形式が混在した | 日付は必ず YYYY/MM/DD で統一 |
 
+| 2026-03-29 | 年代イベントがCUTIN_BATCH=3の影響で8/22件取りこぼされていた | _checkAndQueueEraEvents()で毎cutin後に全取りこぼしをキャッチ。_MAX_ERA_CATCHUP=4が必須（3だとe=0の1889年を取りこぼす） |
+| 2026-03-29 | エンディングがcutin完了後にしかチェックされず2100年になっても始まらない | handleVoteSnapshot内でも即時チェック。clearTimeout + window._endingTriggerTimeoutで重複防止 |
+| 2026-03-29 | タイムライン事前告知がfind(y > year)で「次のイベント」を表示し10年ズレて見えた | find(y >= year)に変更して「現在年のイベントを事前告知」に。表示に年数も付加 |
+| 2026-03-29 | editor.htmlのEDツアータブが見えなかった | toolbarにflex-wrap:nowrap; overflow-x:autoを設定 |
+
 <!-- 実際のミスパターンをここに追記していく -->

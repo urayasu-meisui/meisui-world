@@ -4013,14 +4013,17 @@ h<!DOCTYPE html>
             if (marker) marker.style.left = pct + '%';
             if (yearEl) yearEl.textContent = year + '年';
 
-            // 次の歴史イベントを検索
+            // 次の歴史イベントを検索（現在年≦対象年：まだ表示していないイベントを事前告知）
             if (nextEl) {
                 const eventYears = Object.keys(historicalEvents).map(Number).sort((a, b) => a - b);
-                const nextEvent = eventYears.find(y => y > year);
+                const nextEvent = eventYears.find(y => y >= year);
                 if (nextEvent) {
                     const votesNeeded = Math.ceil((nextEvent - START_YEAR) / YEARS_PER_VOTE) - getEffectiveVotes();
                     const ev = historicalEvents[nextEvent];
-                    nextEl.textContent = `あと${votesNeeded}票で「${ev.text.split('—')[0].split('！')[0]}」${ev.emoji}`;
+                    const label = votesNeeded <= 0
+                        ? `🔔 ${nextEvent}年「${ev.text.split('—')[0].split('！')[0]}」${ev.emoji}`
+                        : `あと${votesNeeded}票で${nextEvent}年「${ev.text.split('—')[0].split('！')[0]}」${ev.emoji}`;
+                    nextEl.textContent = label;
                 } else {
                     nextEl.textContent = '🌟 2100年到達！';
                 }
@@ -5249,7 +5252,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260329';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 15;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 16;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');

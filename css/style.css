@@ -35,7 +35,7 @@
             left: 0;
             right: 0;
             height: 36px;
-            background: linear-gradient(135deg, rgba(30, 100, 60, 0.3), rgba(20, 80, 120, 0.3));
+            background: linear-gradient(135deg, rgba(30, 100, 60, 0.08), rgba(20, 80, 120, 0.08));
             color: white;
             display: flex;
             align-items: center;
@@ -1159,7 +1159,7 @@
             right: 0;
             z-index: 200;
             height: 34px;
-            background: rgba(0, 0, 30, 0.45);
+            background: rgba(0, 0, 30, 0.1);
             backdrop-filter: blur(6px);
             display: flex;
             align-items: center;
@@ -1174,7 +1174,7 @@
             flex-shrink: 0;
         }
         .tl-track {
-            flex: 1;
+            flex: 0 0 140px;
             height: 6px;
             background: rgba(255, 255, 255, 0.15);
             border-radius: 3px;
@@ -1201,7 +1201,7 @@
             left: 0%;
         }
         .tl-year {
-            font-size: 12px;
+            font-size: 18px;
             font-weight: 900;
             color: #ffd700;
             white-space: nowrap;
@@ -1209,7 +1209,7 @@
             text-shadow: 0 1px 4px rgba(0,0,0,0.5);
         }
         .tl-next {
-            font-size: 12px;
+            font-size: 18px;
             font-weight: 700;
             color: #ffd700;
             white-space: nowrap;
