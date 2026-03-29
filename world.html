@@ -3864,27 +3864,16 @@ h<!DOCTYPE html>
             updateVoteDisplay();
             updateYearDisplay();
 
-            // 初回読み込み時はイベント・エンディングをスキップ（建物は静かにチェック）
+            // 初回読み込み時は建物を静かに同期するだけ
             if (isInitialLoad) {
                 isInitialLoad = false;
-                // 建物の初期同期（通知なしで状態だけ更新）
                 silentBuildingSync();
                 return;
             }
-
-            if (typeof checkBuildingUnlock === 'function') {
-                const decoTotal = Object.values(decorationOffset || {}).reduce((a, b) => a + b, 0);
-                checkBuildingUnlock(totalVotes - decoTotal - 1);
-            }
-            // Queue ending after all other events (endingActive flag prevents double-firing)
-            if (isEndingTrigger() && typeof showEnding === 'function' && !endingActive) {
-                queueEvent(() => showEnding());
-            }
-
-            // If no quiz is active, play queued events immediately
-            if (!window.voteInProgress && eventQueue.length > 0 && !eventQueuePlaying) {
-                setTimeout(() => playEventQueue(), 500);
-            }
+            // ⚠️ ここではイベントキューを一切操作しない。
+            // ビジュアルイベント連鎖の唯一の起動口は stats/lastVoteChar リスナー。
+            // checkBuildingUnlock・playEventQueue をここで呼ぶと
+            // 2つのFirebaseリスナーが競合してポップが同時多発する。
         }
         function attachVoteListener() {
             votesRef.on('value', handleVoteSnapshot, (error) => {
@@ -3974,7 +3963,11 @@ h<!DOCTYPE html>
                     checkBuildingUnlock(prevVotes);
                     // イベントトリガー
                     checkEventTrigger();
-                    // クイズ廃止: イベントキューを直接再生
+                    // エンディングトリガー（2100年到達）
+                    if (getCurrentYear() >= END_YEAR && typeof showEnding === 'function' && !endingActive) {
+                        queueEvent(() => showEnding());
+                    }
+                    // イベントキューを再生
                     playEventQueue();
                 }, 2000); // ②投票済証の表示時間
             }, 2800); // ①カットイン完了を待つ
@@ -4083,13 +4076,18 @@ h<!DOCTYPE html>
                         queueEvent(() => { showLevelUpAnimation(newLevel); playSound('levelup'); });
                     }
 
-                    // 建物アンロック（queueEvent内部で呼ばれる）
+                    // 建物アンロック
                     checkBuildingUnlock(prevVotes);
 
-                    // イベントトリガー（queueEvent内部で呼ばれる）
+                    // イベントトリガー
                     checkEventTrigger();
 
-                    // クイズ廃止: イベントキューを直接再生
+                    // エンディングトリガー（2100年到達）
+                    if (getCurrentYear() >= END_YEAR && typeof showEnding === 'function' && !endingActive) {
+                        queueEvent(() => showEnding());
+                    }
+
+                    // イベントキューを再生
                     playEventQueue();
 
                     // ボタン再有効化はplayEventQueue完了後に移動
