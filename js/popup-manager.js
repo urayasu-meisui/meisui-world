@@ -15,8 +15,15 @@ class PopupManager {
     // type: 'effect' | 'toast' | 'card' | 'modal'
     // contentEl: DOM要素（中身のコンテンツ）
     // options: { duration, onDone, overlay, tapToDismiss, cssClass }
+    // キュー上限: 1層あたり最大20件（投票が連続してもキューが無限に積まれないように）
+    static MAX_QUEUE = 20;
+
     show(type, contentEl, options = {}) {
         if (this.active[type]) {
+            if (this.queues[type].length >= PopupManager.MAX_QUEUE) {
+                console.warn(`⚠️ PopupManager: ${type}キューが上限(${PopupManager.MAX_QUEUE})に達しました。古いエントリを破棄します。`);
+                this.queues[type].shift(); // 最古のものを1件捨てる
+            }
             this.queues[type].push({ contentEl, options });
             return;
         }

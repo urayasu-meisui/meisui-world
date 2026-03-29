@@ -306,9 +306,14 @@
         .then(result => {
           if (result.committed) {
             // 大画面側に通知（update()で1回のネットワークトリップにまとめる）
+            // lastVoteChar に |タイムスタンプ を付けることで
+            // 同じキャラへの連続投票でも on('value') が必ず発火する
             db.ref('stats').update({
-                lastVoteChar: type,
+                lastVoteChar: type + '|' + Date.now(),
                 lastVoteTime: Date.now()
+            }).catch(err => {
+                // 通知失敗してもカウントは記録済みなので画面はそのまま進める
+                console.warn('⚠️ stats通知に失敗（投票自体は記録済み）:', err);
             });
             showThankYou(type);
           } else {

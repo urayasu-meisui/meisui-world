@@ -19,12 +19,16 @@ function esc(str) {
 // ============================================
 const eventQueue = [];
 let eventQueuePlaying = false;
+// キュー完了時に呼ばれるコールバック（リモート投票キュー連携用）
+let _onEventQueueComplete = null;
 
 function queueEvent(showFn) {
     eventQueue.push(showFn);
 }
 
-function playEventQueue() {
+// onComplete: イベントキューが空になったときに呼ぶ任意コールバック
+function playEventQueue(onComplete) {
+    if (onComplete) _onEventQueueComplete = onComplete;
     if (eventQueuePlaying) return;
     if (eventQueue.length === 0) {
         // キューが空でも voteInProgress を確実にリセット
@@ -33,6 +37,12 @@ function playEventQueue() {
         if (voteBtn) {
             voteBtn.style.opacity = '1';
             voteBtn.style.pointerEvents = 'auto';
+        }
+        // 完了コールバック実行
+        if (_onEventQueueComplete) {
+            const cb = _onEventQueueComplete;
+            _onEventQueueComplete = null;
+            cb();
         }
         return;
     }
@@ -49,6 +59,12 @@ function playNextEvent() {
         if (voteBtn) {
             voteBtn.style.opacity = '1';
             voteBtn.style.pointerEvents = 'auto';
+        }
+        // 完了コールバック実行
+        if (_onEventQueueComplete) {
+            const cb = _onEventQueueComplete;
+            _onEventQueueComplete = null;
+            cb();
         }
         return;
     }
@@ -94,17 +110,19 @@ function showVoteEffect(charType) {
     const remaining = nextThreshold ? nextThreshold - charVotes : 0;
     const nextMsg = nextLevelName ? `あと${remaining}票で「${nextLevelName}」！` : '🎉 最高レベル達成！';
 
-    const content = document.createElement('div');
-    content.innerHTML = `
-        <div style="font-size:48px;margin-bottom:8px;">${esc(effect.icon)}</div>
-        <div style="font-size:22px;font-weight:bold;margin-bottom:8px;">${esc(effect.desc)}</div>
-        <div style="font-size:16px;color:#ccc;margin-bottom:4px;">いま：${esc(currentLevelName)}</div>
-        <div style="font-size:20px;letter-spacing:2px;margin:8px 0;color:${esc(meta.color)};">${esc(progressBar)}</div>
-        <div style="font-size:14px;color:#aaa;">${esc(nextMsg)}</div>
-    `;
-
     playSound('event');
-    pm.show('toast', content, { duration: 3000, onDone: onEventDone });
+    // キャラクターの位置付近にフロートポップ表示
+    const pos = (typeof _charScreenPos === 'function')
+        ? _charScreenPos(charType)
+        : { x: window.innerWidth * 0.5, y: window.innerHeight * 0.45 };
+    _floatPop(pos.x, pos.y, [
+        { text: effect.icon,              size: 52, color: '#fff' },
+        { text: effect.desc,              size: 22, color: meta.color },
+        { text: 'いま：' + currentLevelName, size: 14, color: '#ccc' },
+        { text: progressBar,              size: 16, color: meta.color },
+        { text: nextMsg,                  size: 13, color: '#ffd700' },
+    ], 3000);
+    setTimeout(onEventDone, 3000);
 }
 
 // ============================================
@@ -132,24 +150,22 @@ function showEraEvent(year) {
 
     playSound('event');
 
-    const content = document.createElement('div');
-    content.innerHTML = `
-        <div style="font-size:56px;margin-bottom:8px;">${esc(event.emoji)}</div>
-        <div style="font-size:16px;color:${esc(yearColor)};margin-bottom:4px;">${esc(year)}年</div>
-        <div style="font-size:24px;font-weight:bold;">${esc(event.text)}</div>
-    `;
-
     // 黒水イベント時は特殊エフェクトも同時発動
     if (hasBlackWater) {
         showBlackWaterEffect();
     }
 
+    // ランダムキャラ位置付近にフロートポップ表示
+    const pos = (typeof _randomCharScreenPos === 'function')
+        ? _randomCharScreenPos()
+        : { x: window.innerWidth * 0.5, y: window.innerHeight * 0.45 };
     const displayTime = hasBlackWater ? 7000 : 3000;
-    pm.show('card', content, {
-        duration: displayTime,
-        onDone: onEventDone,
-        cssClass: hasBlackWater ? 'popup-card-dark' : ''
-    });
+    _floatPop(pos.x, pos.y, [
+        { text: event.emoji, size: 56, color: '#fff' },
+        { text: year + '年', size: 14, color: yearColor },
+        { text: event.text,  size: 24, color: '#fff' },
+    ], displayTime);
+    setTimeout(onEventDone, displayTime);
 }
 
 // 黒水エフェクト（重複発動防止フラグ）
@@ -412,13 +428,15 @@ function showEventPopup(event) {
         : event.name + '！';
     const emojiIcon = event.emoji || '📢';
 
-    const content = document.createElement('div');
-    content.innerHTML = `
-        <div style="font-size:48px;margin-bottom:8px;">${esc(emojiIcon)}</div>
-        <div style="font-size:24px;font-weight:bold;color:#f57f17;">${esc(eventText)}</div>
-    `;
-
-    pm.show('card', content, { duration: 4000, onDone: onEventDone });
+    // ランダムキャラ位置付近にフロートポップ表示
+    const pos = (typeof _randomCharScreenPos === 'function')
+        ? _randomCharScreenPos()
+        : { x: window.innerWidth * 0.5, y: window.innerHeight * 0.45 };
+    _floatPop(pos.x, pos.y, [
+        { text: emojiIcon,   size: 52, color: '#fff' },
+        { text: eventText,   size: 22, color: '#f57f17' },
+    ], 4000);
+    setTimeout(onEventDone, 4000);
 }
 
 // ============================================

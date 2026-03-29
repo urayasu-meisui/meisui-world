@@ -1,5 +1,6 @@
 /* めいすいくん総選挙 - メインスタイルシート */
 /* world.htmlから分離 */
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&display=swap');
 
 * {
             margin: 0;
@@ -8,7 +9,7 @@
         }
 
         body {
-            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
             background: #0a0e27;
             display: flex;
             flex-direction: column;
@@ -34,7 +35,7 @@
             left: 0;
             right: 0;
             height: 36px;
-            background: linear-gradient(135deg, rgba(30, 100, 60, 0.9), rgba(20, 80, 120, 0.9));
+            background: linear-gradient(135deg, rgba(30, 100, 60, 0.3), rgba(20, 80, 120, 0.3));
             color: white;
             display: flex;
             align-items: center;
@@ -497,6 +498,111 @@
             transform: scale(0.95);
         }
 
+        /* ── iOSトグルスイッチ ── */
+        .ios-toggle {
+            position: relative;
+            display: inline-block;
+            width: 51px;
+            height: 31px;
+            flex-shrink: 0;
+        }
+        .ios-toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+            position: absolute;
+        }
+        .ios-toggle-track {
+            position: absolute;
+            inset: 0;
+            background: #e5e5ea;
+            border-radius: 999px;
+            transition: background 0.25s ease;
+            cursor: pointer;
+        }
+        .ios-toggle input:checked + .ios-toggle-track {
+            background: #34c759;
+        }
+        .ios-toggle-thumb {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            width: 27px;
+            height: 27px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            transition: transform 0.25s ease;
+        }
+        .ios-toggle input:checked + .ios-toggle-track .ios-toggle-thumb {
+            transform: translateX(20px);
+        }
+
+        /* ── iOSスライダー ── */
+        .ios-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            flex: 1;
+            height: 4px;
+            background: #e5e5ea;
+            border-radius: 2px;
+            outline: none;
+            cursor: pointer;
+        }
+        .ios-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            cursor: pointer;
+            transition: box-shadow 0.15s;
+        }
+        .ios-slider::-webkit-slider-thumb:active {
+            box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+        }
+        .ios-slider::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            background: #fff;
+            border-radius: 50%;
+            border: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            cursor: pointer;
+        }
+
+        /* ── iOS設定セル ── */
+        .ios-cell {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: none;
+            border: none;
+            padding: 13px 16px;
+            font-size: 14px;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
+            color: #000;
+            cursor: pointer;
+            text-align: left;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .ios-cell:active {
+            background: rgba(0,0,0,0.06);
+        }
+        /* コンパクト版セル（設定画面のスクロールなし対応） */
+        .ios-cell-sm {
+            padding: 10px 16px;
+        }
+        .ios-cell-destructive {
+            color: #ff3b30;
+        }
+        .ios-cell-destructive span {
+            color: #ff3b30;
+        }
+
         /* Animated Clouds */
         .cloud {
             position: absolute;
@@ -677,7 +783,7 @@
             font-weight: 900;
             color: #fff;
             text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 0 0 20px rgba(0,0,0,0.5);
-            font-family: sans-serif;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
             letter-spacing: 4px;
         }
 
@@ -685,7 +791,7 @@
             font-size: 14px;
             color: #ffd700;
             text-shadow: 1px 1px 0 #000;
-            font-family: sans-serif;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
         }
 
         /* Era Event Notification */
@@ -748,7 +854,7 @@
             border-radius: 16px;
             z-index: 400;
             text-align: center;
-            font-family: sans-serif;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
             animation: eraEventPop 0.4s ease;
             border: 3px solid #ffd700;
             box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
@@ -860,6 +966,11 @@
                 opacity: 0;
             }
         }
+        /* エンディング用フェードイン */
+        @keyframes fadeInUp {
+            0%   { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
         @keyframes colorFlash {
             0% { background: transparent; }
             50% { opacity: 0.4; }
@@ -919,7 +1030,7 @@
         /* 共通ベース */
         .popup {
             position: fixed;
-            font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
             pointer-events: auto;
             touch-action: manipulation;
             cursor: pointer;
@@ -1054,7 +1165,7 @@
             align-items: center;
             padding: 0 16px;
             gap: 10px;
-            font-family: "Hiragino Sans", sans-serif;
+            font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
         }
         .tl-label {
             font-size: 11px;

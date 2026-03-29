@@ -1,580 +1,689 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <title>座標エディタ - めいすいくん総選挙</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: "Hiragino Sans", "Meiryo", sans-serif;
-      background: #1a1a2e; color: #eee;
-      display: flex; flex-direction: column; height: 100vh; overflow: hidden;
-    }
+<meta charset="UTF-8">
+<title>マップ座標エディタ | めいすい世界</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&display=swap');
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: #0d1117; color: #e6edf3; font-family: 'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif; overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
 
-    /* ── タブバー ── */
-    .tabs {
-      display: flex; background: #0d0d1a; border-bottom: 2px solid #333;
-      flex-shrink: 0;
-    }
-    .tab {
-      padding: 10px 22px; font-size: 15px; font-weight: 700; cursor: pointer;
-      border: none; background: transparent; color: #888; transition: all 0.2s;
-      border-bottom: 3px solid transparent; margin-bottom: -2px;
-    }
-    .tab:hover { color: #ccc; background: rgba(255,255,255,0.05); }
-    .tab.active-markers { color: #ffd700; border-color: #ffd700; background: rgba(255,215,0,0.08); }
-    .tab.active-land    { color: #66ff66; border-color: #66ff66; background: rgba(100,255,100,0.08); }
-    .tab.active-sea     { color: #44aaff; border-color: #44aaff; background: rgba(68,170,255,0.08); }
+/* ===== TOOLBAR ===== */
+#toolbar {
+  display: flex; align-items: center; gap: 6px; padding: 7px 12px;
+  background: #161b22; border-bottom: 1px solid #30363d; flex-wrap: nowrap; flex-shrink: 0; z-index: 10;
+  overflow-x: auto; white-space: nowrap;
+}
+.tab-btn {
+  padding: 5px 13px; border-radius: 6px; border: 1px solid #444;
+  background: #21262d; color: #c9d1d9; cursor: pointer; font-size: 13px; transition: background 0.15s;
+}
+.tab-btn:hover { background: #30363d; }
+.tab-btn.active { background: #1f6feb; border-color: #1f6feb; color: #fff; font-weight: bold; }
+.sep { color: #444; font-size: 18px; }
+#saveBtn {
+  padding: 5px 15px; background: #238636; border: 1px solid #2ea043; color: #fff;
+  border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: bold;
+}
+#saveBtn:hover { background: #2ea043; }
+#resetBtn {
+  padding: 5px 11px; background: #da3633; border: 1px solid #f85149; color: #fff;
+  border-radius: 6px; cursor: pointer; font-size: 13px;
+}
+#resetBtn:hover { background: #f85149; }
+#zoomIn, #zoomOut {
+  padding: 4px 10px; background: #21262d; border: 1px solid #444; color: #ccc;
+  border-radius: 6px; cursor: pointer; font-size: 15px;
+}
+#zoomIn:hover, #zoomOut:hover { background: #30363d; }
+#zoomLabel { font-size: 13px; color: #8b949e; min-width: 42px; text-align: center; }
+#modeInfo {
+  margin-left: auto; font-size: 12px; color: #6e7681;
+  background: #21262d; padding: 4px 10px; border-radius: 4px;
+}
 
-    /* ── 操作パネル ── */
-    .panel {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 12px; background: #111; border-bottom: 1px solid #2a2a3a;
-      flex-wrap: wrap; flex-shrink: 0; min-height: 44px;
-    }
-    .panel button {
-      padding: 4px 12px; border: none; border-radius: 5px;
-      font-size: 12px; font-weight: 700; cursor: pointer; color: #fff;
-    }
-    .btn-save   { background: #4caf50; font-size: 13px !important; padding: 6px 18px !important; }
-    .btn-load   { background: #2196f3; }
-    .btn-clear  { background: #c62828; }
-    .btn-reset  { background: #546e7a; }
+/* ===== CANVAS AREA ===== */
+#canvasWrap {
+  flex: 1; overflow: auto; position: relative; background: #090c10;
+}
+#edCanvas {
+  display: block; cursor: crosshair;
+  transform-origin: top left;
+}
 
-    /* ゾーンパネル: 使い方カード */
-    .zone-panel {
-      padding: 8px 16px; background: #0a1a0a; border-bottom: 2px solid #2a4a2a;
-      flex-shrink: 0; display: flex; align-items: center; gap: 20px;
-    }
-    .zone-panel.sea-panel { background: #0a0f1a; border-color: #1a2e4a; }
+/* ===== HINT PANEL ===== */
+#hintPanel {
+  position: fixed; top: 55px; right: 10px;
+  background: rgba(22,27,34,0.95); border: 1px solid #30363d;
+  border-radius: 8px; padding: 12px 14px; font-size: 12px; color: #8b949e;
+  min-width: 200px; z-index: 20; line-height: 1.7;
+}
+#hintPanel h4 { color: #e6edf3; font-size: 13px; margin-bottom: 6px; }
 
-    .howto { display: flex; gap: 16px; font-size: 13px; }
-    .howto-item { display: flex; align-items: center; gap: 5px; }
-    .howto-item .icon { font-size: 16px; }
-
-    .vtx-badge {
-      font-size: 20px; font-weight: 900; padding: 4px 14px;
-      border-radius: 20px; margin-left: auto;
-    }
-    .vtx-badge.land { background: rgba(100,255,100,0.2); color: #66ff66; border: 2px solid #66ff66; }
-    .vtx-badge.sea  { background: rgba(68,170,255,0.2); color: #44aaff; border: 2px solid #44aaff; }
-
-    /* マーカーパネル用グループボタン */
-    .group-label { font-size: 11px; color: #666; margin-left: 6px; }
-    .marker-btn {
-      padding: 3px 8px; font-size: 11px; font-weight: 700;
-      border: 2px solid transparent !important; border-radius: 4px; opacity: 0.6; cursor: pointer;
-    }
-    .marker-btn.active { opacity: 1; border-color: #fff !important; }
-
-    /* ── キャンバスエリア ── */
-    .canvas-wrap {
-      flex: 1; overflow: auto; position: relative;
-      background: #111; display: flex; justify-content: center;
-    }
-    canvas {
-      cursor: crosshair; display: block;
-      /* 画面幅に合わせて縮小（引き伸ばしはしない） */
-      max-width: 100%; height: auto;
-    }
-
-    /* ── ステータスバー ── */
-    .statusbar {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 3px 14px; background: #0d0d1a; border-top: 1px solid #333;
-      font-size: 12px; font-family: monospace; flex-shrink: 0;
-    }
-    .statusbar .coords { color: #ffd700; }
-    .statusbar .msg    { color: #4caf50; }
-
-    #saveMsg {
-      position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-      background: rgba(76,175,80,0.95); color: #fff;
-      padding: 8px 20px; border-radius: 8px; font-size: 14px;
-      display: none; z-index: 999;
-    }
-  </style>
+/* ===== STATUS BAR ===== */
+#statusBar {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: rgba(13,17,23,0.92); border-top: 1px solid #30363d;
+  padding: 4px 12px; font-size: 12px; color: #8b949e; font-family: monospace;
+  display: flex; gap: 20px; z-index: 20;
+}
+#statusBar span b { color: #79c0ff; }
+</style>
 </head>
 <body>
 
-  <!-- ① タブ -->
-  <div class="tabs">
-    <button class="tab active-markers" id="tab-markers" onclick="switchTab('markers')">📍 マーカー配置</button>
-    <button class="tab" id="tab-land"    onclick="switchTab('land')">🌳 陸エリア設定</button>
-    <button class="tab" id="tab-sea"     onclick="switchTab('sea')">🐟 海エリア設定</button>
-    <div style="flex:1"></div>
-    <button class="btn-save" style="margin:6px 8px;" onclick="saveAndApply()">💾 保存</button>
-    <button class="btn-load" style="margin:6px 4px;" onclick="loadJSON()">📂 読込</button>
-    <button class="btn-reset" style="margin:6px 8px 6px 4px;" onclick="resetAll()">↩ リセット</button>
-  </div>
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <button class="tab-btn active" data-mode="fixed">🏗️ 固定座標</button>
+  <button class="tab-btn" data-mode="landmark">📍 ランドマーク</button>
+  <button class="tab-btn" data-mode="zone_land">🌳 陸地ゾーン</button>
+  <button class="tab-btn" data-mode="zone_sea">🌊 海ゾーン</button>
+  <button class="tab-btn" data-mode="ed_tour">🎬 EDツアー</button>
+  <span class="sep">|</span>
+  <button id="zoomOut">－</button>
+  <span id="zoomLabel">100%</span>
+  <button id="zoomIn">＋</button>
+  <span class="sep">|</span>
+  <button id="saveBtn">💾 保存（fixed-positions.json）</button>
+  <button id="resetBtn">↺ リセット</button>
+  <span id="modeInfo">固定座標モード：ドラッグで移動</span>
+</div>
 
-  <!-- ② マーカーパネル（マーカー配置タブ時のみ表示） -->
-  <div class="panel" id="panel-markers">
-    <span class="group-label">ビーナス:</span><div id="grp_meisui_chan"></div>
-    <span class="group-label">海:</span><div id="grp_bekabune"></div>
-    <span class="group-label">屋形船:</span><div id="grp_asari"></div>
-    <span class="group-label">漁師:</span><div id="grp_ryoushi"></div>
-    <span class="group-label">未来:</span><div id="grp_future"></div>
-    <span class="group-label">駅:</span><div id="grp_station"></div>
-    <span class="group-label">施設:</span><div id="grp_facility"></div>
-    <span class="group-label">投票所:</span><div id="grp_vote"></div>
-  </div>
+<!-- CANVAS -->
+<div id="canvasWrap">
+  <canvas id="edCanvas" width="1920" height="1080"></canvas>
+</div>
 
-  <!-- ③ 陸エリアパネル（陸タブ時のみ表示） -->
-  <div class="zone-panel" id="panel-land" style="display:none;">
-    <div>
-      <div style="font-size:14px;font-weight:900;color:#66ff66;margin-bottom:4px;">🌳 陸エリア設定</div>
-      <div style="font-size:11px;color:#aaa;">木・花・建物のランダム配置範囲</div>
-    </div>
-    <div class="howto">
-      <div class="howto-item"><span class="icon">👆</span><span>クリック → 頂点を追加</span></div>
-      <div class="howto-item"><span class="icon">✋</span><span>頂点をドラッグ → 移動</span></div>
-      <div class="howto-item"><span class="icon">🖱️</span><span>頂点を右クリック → 削除</span></div>
-    </div>
-    <div class="vtx-badge land" id="badge-land">頂点 4個</div>
-    <button class="btn-clear" onclick="clearZone('land')" style="margin-left:8px;">✕ 全削除</button>
-  </div>
+<!-- HINT PANEL -->
+<div id="hintPanel">
+  <h4>🖱️ 操作方法</h4>
+  <div id="hintContent">ドットをドラッグ → 移動<br>変更は「保存」でJSON出力</div>
+</div>
 
-  <!-- ④ 海エリアパネル（海タブ時のみ表示） -->
-  <div class="zone-panel sea-panel" id="panel-sea" style="display:none;">
-    <div>
-      <div style="font-size:14px;font-weight:900;color:#44aaff;margin-bottom:4px;">🐟 海エリア設定</div>
-      <div style="font-size:11px;color:#aaa;">魚・あさり・のり・屋形船のランダム配置範囲</div>
-    </div>
-    <div class="howto">
-      <div class="howto-item"><span class="icon">👆</span><span>クリック → 頂点を追加</span></div>
-      <div class="howto-item"><span class="icon">✋</span><span>頂点をドラッグ → 移動</span></div>
-      <div class="howto-item"><span class="icon">🖱️</span><span>頂点を右クリック → 削除</span></div>
-    </div>
-    <div class="vtx-badge sea" id="badge-sea">頂点 4個</div>
-    <button class="btn-clear" onclick="clearZone('sea')" style="margin-left:8px;">✕ 全削除</button>
-  </div>
-
-  <!-- ⑤ キャンバス -->
-  <div class="canvas-wrap" id="canvasWrap">
-    <canvas id="canvas"></canvas>
-  </div>
-
-  <!-- ⑥ ステータスバー -->
-  <div class="statusbar">
-    <span class="coords" id="coordsDisplay">x: 0, y: 0</span>
-    <span id="modeHint" style="color:#888;">マーカーをドラッグして位置を調整 / 右クリックでリセット</span>
-  </div>
-
-  <div id="saveMsg"></div>
-  <input type="file" id="fileInput" accept=".json" style="display:none" onchange="handleFileLoad(event)">
+<!-- STATUS BAR -->
+<div id="statusBar">
+  <span>座標: <b id="coordXY">x:0 y:0</b></span>
+  <span>モード: <b id="modeName">固定座標</b></span>
+  <span>選択中: <b id="selectedItem">なし</b></span>
+  <span id="edZoomArea" style="display:none;">zoom: <input id="edZoomInput" type="number" min="0.5" max="5" step="0.1"
+    style="width:54px;background:#21262d;border:1px solid #444;color:#79c0ff;border-radius:3px;padding:1px 4px;font-size:12px;"
+    value="1.6"> <span style="opacity:0.6;">(選択中のstopに適用)</span></span>
+</div>
 
 <script>
-  const MAP_W = 1920, MAP_H = 1080;
-  const canvas = document.getElementById('canvas');
-  const ctx = canvas.getContext('2d');
-  canvas.width = MAP_W;
-  canvas.height = MAP_H;
+// ====================================
+// 定数・設定
+// ====================================
+const MAP_W = 1920, MAP_H = 1080;
 
-  // ============================================
-  // 現在のタブ
-  // ============================================
-  let currentTab = 'markers'; // 'markers' | 'land' | 'sea'
+const FIXED_KEYS = [
+  'lighthouse','marina','whale',
+  'coral_1','coral_2','coral_3','coral_4','coral_5','coral_6','coral_7',
+  'firework_1','firework_2','firework_3',
+  'fish_market','shopping_arcade','harbor',
+  'kasai_bridge','kasai_bridge_start','kasai_bridge_end',
+  'ropeway_label','ropeway_start','ropeway_end','marine_city'
+];
 
-  function switchTab(tab) {
-    currentTab = tab;
-    document.getElementById('tab-markers').className = 'tab' + (tab === 'markers' ? ' active-markers' : '');
-    document.getElementById('tab-land').className    = 'tab' + (tab === 'land'    ? ' active-land'    : '');
-    document.getElementById('tab-sea').className     = 'tab' + (tab === 'sea'     ? ' active-sea'     : '');
-    document.getElementById('panel-markers').style.display = tab === 'markers' ? 'flex' : 'none';
-    document.getElementById('panel-land').style.display    = tab === 'land'    ? 'flex' : 'none';
-    document.getElementById('panel-sea').style.display     = tab === 'sea'     ? 'flex' : 'none';
+const FIXED_COLORS = {
+  lighthouse:'#ffd700', marina:'#42a5f5', whale:'#4dd0e1',
+  coral_1:'#f48fb1',coral_2:'#f48fb1',coral_3:'#f48fb1',coral_4:'#f48fb1',
+  coral_5:'#f48fb1',coral_6:'#f48fb1',coral_7:'#f48fb1',
+  firework_1:'#ff7043',firework_2:'#ff7043',firework_3:'#ff7043',
+  fish_market:'#aed581',shopping_arcade:'#ce93d8',harbor:'#80cbc4',
+  kasai_bridge:'#ffcc02',kasai_bridge_start:'#ffee58',kasai_bridge_end:'#ffee58',
+  ropeway_label:'#ff8a65',ropeway_start:'#ff8a65',ropeway_end:'#ff8a65',
+  marine_city:'#81d4fa',
+};
 
-    if (tab === 'markers') {
-      document.getElementById('modeHint').textContent = 'マーカーをドラッグして位置を調整 / 右クリックでリセット';
-    } else if (tab === 'land') {
-      document.getElementById('modeHint').textContent = '🌳 陸エリア編集中 — マップをクリックして多角形の頂点を追加してください';
-    } else {
-      document.getElementById('modeHint').textContent = '🐟 海エリア編集中 — マップをクリックして多角形の頂点を追加してください';
-    }
-    updateBadges();
-    draw();
+const MODE_HINTS = {
+  fixed:     'ドットをドラッグ → 移動<br>変更は「保存」でJSON出力',
+  landmark:  'ドットをドラッグ → 移動<br>変更は「保存」でJSON出力',
+  zone_land: '頂点をドラッグ → 移動<br>空き領域クリック → 頂点追加<br>右クリック → 頂点削除',
+  zone_sea:  '頂点をドラッグ → 移動<br>空き領域クリック → 頂点追加<br>右クリック → 頂点削除',
+  ed_tour:   'マーカーをドラッグ → 位置変更<br>下のzoomフィールドで倍率変更<br>「保存」でworld.html用コードをコピー',
+};
+const MODE_NAMES = { fixed:'固定座標', landmark:'ランドマーク', zone_land:'陸地ゾーン', zone_sea:'海ゾーン', ed_tour:'EDツアー' };
+const MODE_INFO  = {
+  fixed:     '固定座標モード：ドラッグで移動',
+  landmark:  'ランドマークモード：ドラッグで移動',
+  zone_land: '陸地ゾーンモード：クリックで頂点追加・右クリックで削除',
+  zone_sea:  '海ゾーンモード：クリックで頂点追加・右クリックで削除',
+  ed_tour:   'EDツアーモード：マーカーをドラッグして位置調整',
+};
+
+// ====================================
+// ED ツアーストップ（world.html の tourStops と対応）
+// ====================================
+const ED_TOUR_DEFAULT = [
+  { x: 770,  y: 490, zoom: 1.6, label: '2100年の浦安全体',          sub: 'みんなの投票でできた未来の街', color: '#ffd700' },
+  { x: 600,  y: 260, zoom: 2.8, label: 'イチョウめいすいくんエリア', sub: 'イチョウ並木と緑の街',         color: '#ffd700' },
+  { x: 1050, y: 400, zoom: 2.8, label: 'ビーナスめいちゃんエリア',   sub: 'ビーチと観光の街',             color: '#ff6b6b' },
+  { x: 740,  y: 730, zoom: 2.8, label: '漁師めいすいくんエリア',     sub: '漁港とにぎわいの街',           color: '#66bb6a' },
+  { x: 430,  y: 560, zoom: 2.6, label: '浦安の海めいすいくんエリア', sub: '三番瀬と海の恵み',             color: '#42a5f5' },
+];
+let edTourStops = ED_TOUR_DEFAULT.map(s => ({ ...s }));
+let edTourSelected = null;  // 選択中のストップindex
+
+// ====================================
+// STATE
+// ====================================
+let mode = 'fixed';
+let data = {};
+let drag = null;      // { type, key|idx }
+let hoveredItem = null;
+let zoom = 1.0;
+let canvas, ctx, mapImg;
+
+// ====================================
+// INIT
+// ====================================
+window.addEventListener('DOMContentLoaded', async () => {
+  canvas = document.getElementById('edCanvas');
+  ctx = canvas.getContext('2d');
+
+  // マップ画像読み込み
+  mapImg = new Image();
+  mapImg.src = 'map_realb.png';
+  mapImg.onload = () => render();
+  mapImg.onerror = () => render();
+
+  // fixed-positions.json 読み込み
+  try {
+    const res = await fetch('fixed-positions.json?t=' + Date.now());
+    data = await res.json();
+  } catch(e) {
+    data = {};
+    console.warn('fixed-positions.json 未検出 - デフォルト値で開始');
   }
 
-  function updateBadges() {
-    document.getElementById('badge-land').textContent = `頂点 ${zones.land.length}個`;
-    document.getElementById('badge-sea').textContent  = `頂点 ${zones.sea.length}個`;
+  // 必要なキーが無ければデフォルト値を補完
+  FIXED_KEYS.forEach(k => {
+    if (!data[k]) data[k] = { x: Math.round(MAP_W/2), y: Math.round(MAP_H/2) };
+  });
+  if (!Array.isArray(data.zone_land) || data.zone_land.length < 3) {
+    data.zone_land = [
+      {x:876,y:84},{x:1069,y:152},{x:1620,y:640},{x:1206,y:935},
+      {x:950,y:915},{x:666,y:906},{x:663,y:775},{x:717,y:676},
+      {x:834,y:589},{x:895,y:362},{x:882,y:246}
+    ];
+  }
+  if (!Array.isArray(data.zone_sea) || data.zone_sea.length < 3) {
+    data.zone_sea = [
+      {x:1358,y:295},{x:1309,y:378},{x:1616,y:637},{x:1425,y:772},
+      {x:1205,y:928},{x:1040,y:837},{x:973,y:977},{x:889,y:973},
+      {x:662,y:902},{x:660,y:769},{x:712,y:686},{x:838,y:588},
+      {x:838,y:543},{x:892,y:366},{x:885,y:282},{x:869,y:259},
+      {x:1486,y:190},{x:1918,y:172},{x:1918,y:1076},{x:601,y:1074}
+    ];
   }
 
-  function clearZone(key) {
-    if (!confirm(`${key === 'land' ? '陸' : '海'}エリアの頂点を全て削除しますか？`)) return;
-    zones[key] = [];
-    updateBadges();
-    draw();
-  }
+  setMode('fixed');
+  render();
 
-  // ============================================
-  // マーカー定義
-  // ============================================
-  const markerDefs = [
-    { id: 'lighthouse',         label: '灯台',         color: '#ffeb3b', group: 'meisui_chan', x: 1020, y: 1051 },
-    { id: 'marina',             label: 'マリーナ',     color: '#00bcd4', group: 'meisui_chan', x: 1037, y: 839  },
-    { id: 'whale',              label: 'クジラ',       color: '#42a5f5', group: 'bekabune',   x: 1000, y: 900  },
-    { id: 'coral_1',            label: 'サンゴ1',      color: '#ff6b6b', group: 'bekabune',   x: 200,  y: 1050 },
-    { id: 'coral_2',            label: 'サンゴ2',      color: '#ff69b4', group: 'bekabune',   x: 563,  y: 910  },
-    { id: 'coral_3',            label: 'サンゴ3',      color: '#ffa500', group: 'bekabune',   x: 791,  y: 998  },
-    { id: 'coral_4',            label: 'サンゴ4',      color: '#da70d6', group: 'bekabune',   x: 1221, y: 1013 },
-    { id: 'coral_5',            label: 'サンゴ5',      color: '#ff6347', group: 'bekabune',   x: 1394, y: 907  },
-    { id: 'coral_6',            label: 'サンゴ6',      color: '#e040fb', group: 'bekabune',   x: 1581, y: 779  },
-    { id: 'coral_7',            label: 'サンゴ7',      color: '#ff4500', group: 'bekabune',   x: 1740, y: 701  },
-    { id: 'firework_1',         label: '花火1',        color: '#ff4444', group: 'asari',      x: 1484, y: 835  },
-    { id: 'firework_2',         label: '花火2',        color: '#ffd700', group: 'asari',      x: 1193, y: 840  },
-    { id: 'firework_3',         label: '花火3',        color: '#ff69b4', group: 'asari',      x: 1517, y: 455  },
-    { id: 'fish_market',        label: '魚市場',       color: '#ff9800', group: 'ryoushi',    x: 778,  y: 660  },
-    { id: 'shopping_arcade',    label: '商店街',       color: '#e040fb', group: 'ryoushi',    x: 978,  y: 158  },
-    { id: 'harbor',             label: '港施設',       color: '#66bb6a', group: 'ryoushi',    x: 1118, y: 813  },
-    { id: 'kasai_bridge',       label: '葛西大橋',     color: '#E65100', group: 'future',     x: 875,  y: 336  },
-    { id: 'kasai_bridge_start', label: '橋起点',       color: '#E65100', group: 'future',     x: 910,  y: 351  },
-    { id: 'kasai_bridge_end',   label: '橋終点',       color: '#E65100', group: 'future',     x: 837,  y: 326  },
-    { id: 'ropeway_label',      label: 'ロープウェイ文字', color: '#9C27B0', group: 'future',     x: 1051, y: 315  },
-    { id: 'ropeway_start',      label: 'ロープウェイ始点', color: '#ce93d8', group: 'future',     x: 608,  y: 132  },
-    { id: 'ropeway_end',        label: 'ロープウェイ終点', color: '#ce93d8', group: 'future',     x: 935,  y: 364  },
-    { id: 'marine_city',        label: '海上都市',     color: '#00BCD4', group: 'future',     x: 938,  y: 988  },
-    { id: 'lm_浦安駅',         label: '浦安駅',       color: '#795548', group: 'station',    x: 973,  y: 185  },
-    { id: 'lm_新浦安駅',       label: '新浦安駅',     color: '#795548', group: 'station',    x: 1233, y: 483  },
-    { id: 'lm_舞浜駅',         label: '舞浜駅',       color: '#795548', group: 'station',    x: 827,  y: 712  },
-    { id: 'lm_中央公園',       label: '中央公園',     color: '#4caf50', group: 'facility',   x: 1126, y: 661  },
-    { id: 'lm_高洲中央公園',   label: '高洲中央公園', color: '#4caf50', group: 'facility',   x: 1273, y: 725  },
-    { id: 'lm_浦安市総合公園', label: '総合公園',     color: '#4caf50', group: 'facility',   x: 1450, y: 739  },
-    { id: 'lm_三番瀬',         label: '三番瀬',       color: '#26c6da', group: 'facility',   x: 1538, y: 560  },
-    { id: 'lm_元町エリア',     label: '元町エリア',   color: '#8d6e63', group: 'facility',   x: 924,  y: 194  },
-    { id: 'lm_中町エリア',     label: '中町エリア',   color: '#8d6e63', group: 'facility',   x: 989,  y: 530  },
-    { id: 'lm_新町エリア',     label: '新町エリア',   color: '#8d6e63', group: 'facility',   x: 1286, y: 529  },
-    { id: 'lm_東京湾',         label: '東京湾',       color: '#1976d2', group: 'facility',   x: 454,  y: 981  },
-    { id: 'lm_舞浜リゾート',   label: '舞浜リゾート', color: '#e91e63', group: 'facility',   x: 690,  y: 882  },
-    { id: 'lm_国道沿い商店',   label: '国道沿い商店', color: '#ff9800', group: 'facility',   x: 1078, y: 462  },
-    { id: 'lm_市役所',         label: '市役所',       color: '#f44336', group: 'vote',       x: 1081, y: 420  },
-    { id: 'lm_中央公民館',     label: '中央公民館',   color: '#f44336', group: 'vote',       x: 957,  y: 237  },
-    { id: 'lm_市民プラザ',     label: '市民プラザ',   color: '#f44336', group: 'vote',       x: 1247, y: 516  },
-    { id: 'lm_日の出公民館',   label: '日の出公民館', color: '#f44336', group: 'vote',       x: 1393, y: 580  },
-    { id: 'lm_高洲公民館',     label: '高洲公民館',   color: '#f44336', group: 'vote',       x: 1329, y: 732  },
-    { id: 'lm_富岡公民館',     label: '富岡公民館',   color: '#f44336', group: 'vote',       x: 1074, y: 619  },
-  ];
-
-  // ============================================
-  // ゾーンポリゴン
-  // ============================================
-  let zones = {
-    land: [ {x:680,y:60}, {x:1750,y:60}, {x:1750,y:850}, {x:680,y:850} ],
-    sea:  [ {x:620,y:600}, {x:1920,y:600}, {x:1920,y:1080}, {x:620,y:1080} ]
-  };
-
-  // ============================================
-  // マーカー状態
-  // ============================================
-  let markers = markerDefs.map(d => ({ ...d }));
-  let selectedId = null;
-  let dragging = null;
-  let dragOffset = { x: 0, y: 0 };
-  let draggingVertex = null;
-  let hasDragged = false;
-  let zoneMouseDownKey = null;
-
-  // ============================================
-  // マップ画像
-  // ============================================
-  const mapImg = new Image();
-  mapImg.onload = () => { loadSaved(); draw(); };
-  mapImg.onerror = () => { loadSaved(); draw(); }; // 画像なくても動く
-  mapImg.src = 'map_real.png';
-  // キャッシュ済みの場合 onload が発火しないブラウザ対策
-  if (mapImg.complete) { loadSaved(); draw(); }
-
-  // ============================================
-  // マーカーボタン生成
-  // ============================================
-  ['meisui_chan','bekabune','asari','ryoushi','future','station','facility','vote'].forEach(grp => {
-    const cont = document.getElementById('grp_' + grp);
-    if (!cont) return;
-    markerDefs.filter(d => d.group === grp).forEach(d => {
-      const btn = document.createElement('button');
-      btn.className = 'marker-btn';
-      btn.textContent = d.label;
-      btn.style.background = d.color;
-      btn.style.color = ['#ffeb3b','#ffa500','#E65100'].includes(d.color) ? '#333' : '#fff';
-      btn.id = 'btn-' + d.id;
-      btn.onclick = () => {
-        selectedId = (selectedId === d.id) ? null : d.id;
-        updateMarkerBtns();
-        draw();
-      };
-      cont.appendChild(btn);
-    });
+  // タブ切り替え
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
 
-  function updateMarkerBtns() {
-    markerDefs.forEach(d => {
-      const b = document.getElementById('btn-' + d.id);
-      if (b) b.classList.toggle('active', selectedId === d.id);
-    });
-  }
+  // ズームボタン
+  document.getElementById('zoomIn').addEventListener('click', () => applyZoom(zoom * 1.3));
+  document.getElementById('zoomOut').addEventListener('click', () => applyZoom(zoom / 1.3));
 
-  // ============================================
-  // 描画
-  // ============================================
-  function drawPolygon(pts, rgb, isActive) {
-    if (pts.length === 0) return;
-    ctx.save();
+  // 保存・リセット
+  document.getElementById('saveBtn').addEventListener('click', saveJson);
+  document.getElementById('resetBtn').addEventListener('click', () => {
+    if (confirm('変更を破棄して再読み込みしますか？')) location.reload();
+  });
 
-    // 塗り
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.closePath();
-    ctx.fillStyle = `rgba(${rgb}, ${isActive ? 0.20 : 0.06})`;
-    ctx.fill();
-
-    // 枠線
-    ctx.strokeStyle = `rgba(${rgb}, ${isActive ? 1.0 : 0.35})`;
-    ctx.lineWidth = isActive ? 3 : 1.5;
-    ctx.setLineDash(isActive ? [] : [12, 6]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-
-    // 頂点の丸
-    pts.forEach((p, i) => {
-      const r = isActive ? 10 : 5;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = isActive ? `rgba(${rgb}, 1)` : `rgba(${rgb}, 0.4)`;
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      if (isActive) {
-        ctx.font = 'bold 12px sans-serif';
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(i + 1, p.x, p.y);
-        ctx.textBaseline = 'alphabetic';
-      }
-    });
-
-    ctx.restore();
-  }
-
-  function draw() {
-    ctx.clearRect(0, 0, MAP_W, MAP_H);
-    if (mapImg.complete && mapImg.naturalWidth > 0) ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
-
-    // ゾーン描画
-    drawPolygon(zones.land, '100,230,100', currentTab === 'land');
-    drawPolygon(zones.sea,  '68,170,255',  currentTab === 'sea');
-
-    // マーカー描画
-    const fade = currentTab !== 'markers' ? 0.25 : 1.0;
-    markers.forEach(m => {
-      const sel = m.id === selectedId;
-      const r = sel ? 15 : 9;
-      ctx.globalAlpha = sel ? 1.0 : fade * 0.8;
-      ctx.beginPath();
-      ctx.arc(m.x, m.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = m.color;
-      ctx.fill();
-      ctx.strokeStyle = '#fff';
-      ctx.lineWidth = sel ? 3 : 1.5;
-      ctx.stroke();
-      if (sel) {
-        ctx.globalAlpha = 1;
-        ctx.font = 'bold 12px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = '#fff';
-        ctx.strokeStyle = '#000';
-        ctx.lineWidth = 3;
-        ctx.strokeText(m.label, m.x, m.y - r - 6);
-        ctx.fillText(m.label, m.x, m.y - r - 6);
-        ctx.font = '10px monospace';
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.strokeText(`(${Math.round(m.x)}, ${Math.round(m.y)})`, m.x, m.y + r + 13);
-        ctx.fillText(`(${Math.round(m.x)}, ${Math.round(m.y)})`, m.x, m.y + r + 13);
-      }
-      ctx.globalAlpha = 1;
-    });
-  }
-
-  // ============================================
-  // 座標変換
-  // ============================================
-  function getMapCoords(e) {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (e.clientX - rect.left) * (MAP_W / rect.width),
-      y: (e.clientY - rect.top)  * (MAP_H / rect.height)
-    };
-  }
-
-  function findMarkerAt(mx, my) {
-    for (let i = markers.length - 1; i >= 0; i--) {
-      const m = markers[i];
-      if ((m.x-mx)**2 + (m.y-my)**2 < 400) return m;
+  // EDツアー zoom入力
+  document.getElementById('edZoomInput').addEventListener('input', () => {
+    if (edTourSelected === null) return;
+    const v = parseFloat(document.getElementById('edZoomInput').value);
+    if (!isNaN(v) && v >= 0.5 && v <= 5) {
+      edTourStops[edTourSelected].zoom = v;
+      render();
     }
-    return null;
-  }
+  });
 
-  function findVertexAt(mx, my, key) {
-    const pts = zones[key];
-    // スクリーン上で 16px 相当のヒット半径
-    const rect = canvas.getBoundingClientRect();
-    const hitR = 16 * (MAP_W / rect.width);
-    for (let i = pts.length - 1; i >= 0; i--) {
-      if ((pts[i].x-mx)**2 + (pts[i].y-my)**2 < hitR*hitR) return i;
-    }
-    return -1;
-  }
-
-  // ============================================
   // マウスイベント
-  // ============================================
-  canvas.addEventListener('mousedown', e => {
-    hasDragged = false;
-    const { x, y } = getMapCoords(e);
+  canvas.addEventListener('mousedown', onMouseDown);
+  canvas.addEventListener('mousemove', onMouseMove);
+  canvas.addEventListener('mouseup',   onMouseUp);
+  canvas.addEventListener('contextmenu', onRightClick);
 
-    if (currentTab === 'markers') {
-      if (e.button === 2) {
-        const hit = findMarkerAt(x, y);
-        if (hit) { const d = markerDefs.find(d=>d.id===hit.id); if(d){hit.x=d.x;hit.y=d.y;draw();} }
+  // ホイールズーム
+  document.getElementById('canvasWrap').addEventListener('wheel', (e) => {
+    e.preventDefault();
+    applyZoom(zoom * (e.deltaY < 0 ? 1.1 : 0.91));
+  }, { passive: false });
+});
+
+// ====================================
+// MODE / ZOOM
+// ====================================
+function setMode(m) {
+  mode = m;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+  document.getElementById('modeInfo').textContent = MODE_INFO[m];
+  document.getElementById('modeName').textContent = MODE_NAMES[m];
+  document.getElementById('hintContent').innerHTML = MODE_HINTS[m];
+  // EDツアーモード専用UI
+  const isEd = (m === 'ed_tour');
+  document.getElementById('edZoomArea').style.display = isEd ? 'inline-flex' : 'none';
+  document.getElementById('saveBtn').textContent = isEd
+    ? '💾 保存（world.html用コードをコピー）'
+    : '💾 保存（fixed-positions.json）';
+  edTourSelected = null;
+  document.getElementById('selectedItem').textContent = 'なし';
+  render();
+}
+
+function applyZoom(z) {
+  zoom = Math.max(0.25, Math.min(5.0, z));
+  canvas.style.transform = `scale(${zoom})`;
+  document.getElementById('zoomLabel').textContent = Math.round(zoom * 100) + '%';
+}
+
+// ====================================
+// RENDER
+// ====================================
+function render() {
+  ctx.clearRect(0, 0, MAP_W, MAP_H);
+
+  // マップ背景
+  if (mapImg && mapImg.complete && mapImg.naturalWidth > 0) {
+    ctx.drawImage(mapImg, 0, 0, MAP_W, MAP_H);
+  } else {
+    ctx.fillStyle = '#1a2a3a';
+    ctx.fillRect(0, 0, MAP_W, MAP_H);
+    ctx.fillStyle = '#778';
+    ctx.font = '40px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('map_realb.png 読み込み中...', MAP_W/2, MAP_H/2);
+  }
+
+  // 軽い暗転オーバーレイ
+  ctx.fillStyle = 'rgba(0,0,0,0.30)';
+  ctx.fillRect(0, 0, MAP_W, MAP_H);
+
+  // ゾーンポリゴン（常に参考表示）
+  drawZonePoly(data.zone_land, '#4caf50', mode === 'zone_land');
+  drawZonePoly(data.zone_sea,  '#42a5f5', mode === 'zone_sea');
+
+  // ゾーン頂点（編集モード時のみ）
+  if (mode === 'zone_land') drawZoneVerts(data.zone_land, '#4caf50', 'zone_land');
+  if (mode === 'zone_sea')  drawZoneVerts(data.zone_sea,  '#42a5f5', 'zone_sea');
+
+  // 固定座標
+  if (mode === 'fixed') {
+    FIXED_KEYS.forEach(k => {
+      if (!data[k]) return;
+      const isHov = hoveredItem && hoveredItem.type === 'fixed' && hoveredItem.key === k;
+      drawDot(data[k].x, data[k].y, FIXED_COLORS[k] || '#fff', k, 10, isHov);
+    });
+  }
+
+  // ランドマーク
+  if (mode === 'landmark') {
+    Object.keys(data).forEach(k => {
+      if (!k.startsWith('lm_')) return;
+      const isHov = hoveredItem && hoveredItem.type === 'lm' && hoveredItem.key === k;
+      drawDot(data[k].x, data[k].y, '#ffb74d', k.replace('lm_',''), 9, isHov);
+    });
+  }
+
+  // EDツアーストップ
+  if (mode === 'ed_tour') {
+    edTourStops.forEach((stop, i) => {
+      const isHov = hoveredItem && hoveredItem.type === 'ed_tour' && hoveredItem.idx === i;
+      const isSel = edTourSelected === i;
+      const r = (isHov || isSel) ? 18 : 14;
+
+      // 選択中は外側リング
+      if (isSel) {
+        ctx.beginPath();
+        ctx.arc(stop.x, stop.y, r + 5, 0, Math.PI * 2);
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      // メインドット
+      ctx.beginPath();
+      ctx.arc(stop.x, stop.y, r, 0, Math.PI * 2);
+      ctx.fillStyle = (isHov || isSel) ? '#fff' : stop.color;
+      ctx.fill();
+      ctx.strokeStyle = stop.color;
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      // 番号
+      ctx.font = `bold ${r > 14 ? 16 : 14}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = (isHov || isSel) ? stop.color : '#000';
+      ctx.fillText(i + 1, stop.x, stop.y);
+
+      // ラベル
+      const lx = stop.x + r + 7;
+      const ly = stop.y - 7;
+      ctx.font = 'bold 13px sans-serif';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'top';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+      ctx.strokeText(stop.label, lx, ly);
+      ctx.fillStyle = isSel ? '#ffd700' : '#fff';
+      ctx.fillText(stop.label, lx, ly);
+
+      // zoom値
+      ctx.font = '11px monospace';
+      ctx.strokeStyle = 'rgba(0,0,0,0.85)';
+      ctx.strokeText(`zoom: ${stop.zoom}`, lx, ly + 16);
+      ctx.fillStyle = isSel ? '#79c0ff' : '#aaa';
+      ctx.fillText(`zoom: ${stop.zoom}`, lx, ly + 16);
+    });
+  }
+}
+
+function drawZonePoly(polygon, color, isActive) {
+  if (!Array.isArray(polygon) || polygon.length < 2) return;
+  ctx.beginPath();
+  ctx.moveTo(polygon[0].x, polygon[0].y);
+  for (let i = 1; i < polygon.length; i++) ctx.lineTo(polygon[i].x, polygon[i].y);
+  ctx.closePath();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = isActive ? 3 : 1.5;
+  ctx.setLineDash(isActive ? [] : [10, 5]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  if (isActive) {
+    ctx.fillStyle = color + '28';
+    ctx.fill();
+  }
+}
+
+function drawZoneVerts(polygon, color, modeKey) {
+  if (!Array.isArray(polygon)) return;
+  polygon.forEach((p, i) => {
+    const isHov = hoveredItem && hoveredItem.type === modeKey && hoveredItem.idx === i;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, isHov ? 12 : 8, 0, Math.PI * 2);
+    ctx.fillStyle = isHov ? '#fff' : color;
+    ctx.fill();
+    ctx.strokeStyle = isHov ? color : 'rgba(0,0,0,0.8)';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = isHov ? color : '#000';
+    ctx.font = `bold ${isHov ? 12 : 10}px sans-serif`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i, p.x, p.y);
+  });
+}
+
+function drawDot(x, y, color, label, r, isHov) {
+  const rr = isHov ? r + 4 : r;
+  ctx.beginPath();
+  ctx.arc(x, y, rr, 0, Math.PI * 2);
+  ctx.fillStyle = isHov ? '#fff' : color;
+  ctx.fill();
+  ctx.strokeStyle = isHov ? color : 'rgba(0,0,0,0.75)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if (label) {
+    ctx.font = `bold ${isHov ? 13 : 11}px sans-serif`;
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = 'rgba(0,0,0,0.9)';
+    ctx.strokeText(label, x + rr + 4, y);
+    ctx.fillStyle = isHov ? '#ffd700' : '#fff';
+    ctx.fillText(label, x + rr + 4, y);
+  }
+}
+
+// ====================================
+// HIT TEST
+// ====================================
+const HIT_R = 16;
+
+function hitTest(mx, my) {
+  if (mode === 'fixed') {
+    for (const k of FIXED_KEYS) {
+      if (!data[k]) continue;
+      if (dist(mx, my, data[k].x, data[k].y) < HIT_R) return { type:'fixed', key:k };
+    }
+  } else if (mode === 'landmark') {
+    for (const k of Object.keys(data)) {
+      if (!k.startsWith('lm_')) continue;
+      if (dist(mx, my, data[k].x, data[k].y) < HIT_R) return { type:'lm', key:k };
+    }
+  } else if (mode === 'zone_land') {
+    for (let i = 0; i < data.zone_land.length; i++) {
+      if (dist(mx, my, data.zone_land[i].x, data.zone_land[i].y) < HIT_R)
+        return { type:'zone_land', idx:i };
+    }
+  } else if (mode === 'zone_sea') {
+    for (let i = 0; i < data.zone_sea.length; i++) {
+      if (dist(mx, my, data.zone_sea[i].x, data.zone_sea[i].y) < HIT_R)
+        return { type:'zone_sea', idx:i };
+    }
+  } else if (mode === 'ed_tour') {
+    for (let i = 0; i < edTourStops.length; i++) {
+      if (dist(mx, my, edTourStops[i].x, edTourStops[i].y) < HIT_R + 4)
+        return { type:'ed_tour', idx:i };
+    }
+  }
+  return null;
+}
+
+function dist(x1, y1, x2, y2) {
+  return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+}
+
+// マウス座標 → キャンバス座標（zoom transform 対応）
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = MAP_W / rect.width;
+  const scaleY = MAP_H / rect.height;
+  return {
+    x: Math.round((e.clientX - rect.left) * scaleX),
+    y: Math.round((e.clientY - rect.top)  * scaleY)
+  };
+}
+
+// ====================================
+// MOUSE EVENTS
+// ====================================
+function onMouseDown(e) {
+  if (e.button !== 0) return;
+  const { x, y } = getCanvasPos(e);
+  const hit = hitTest(x, y);
+  if (hit) {
+    drag = hit;
+    canvas.style.cursor = 'grabbing';
+    // ステータスバー更新
+    if (hit.type === 'fixed' || hit.type === 'lm') {
+      document.getElementById('selectedItem').textContent = hit.key;
+    } else if (hit.type === 'ed_tour') {
+      edTourSelected = hit.idx;
+      const stop = edTourStops[hit.idx];
+      document.getElementById('selectedItem').textContent = `Stop ${hit.idx + 1}: ${stop.label}`;
+      document.getElementById('edZoomInput').value = stop.zoom;
+      render();
+    } else {
+      document.getElementById('selectedItem').textContent = `頂点 #${hit.idx}`;
+    }
+  } else if (mode === 'zone_land' || mode === 'zone_sea') {
+    // 空きエリアクリック → 最近傍エッジに頂点追加
+    const poly = data[mode];
+    const idx = findBestInsertIdx(poly, x, y);
+    poly.splice(idx + 1, 0, { x, y });
+    render();
+  }
+}
+
+function onMouseMove(e) {
+  const { x, y } = getCanvasPos(e);
+  document.getElementById('coordXY').textContent = `x:${x}  y:${y}`;
+
+  if (!drag) {
+    const prev = hoveredItem;
+    hoveredItem = hitTest(x, y);
+    if (hoveredItem !== prev) {
+      canvas.style.cursor = hoveredItem ? 'grab' : 'crosshair';
+      render();
+    }
+    return;
+  }
+
+  // 範囲クランプ
+  const cx = Math.max(0, Math.min(MAP_W, x));
+  const cy = Math.max(0, Math.min(MAP_H, y));
+
+  if (drag.type === 'fixed')     { data[drag.key] = { x: cx, y: cy }; }
+  else if (drag.type === 'lm')   { data[drag.key] = { x: cx, y: cy }; }
+  else if (drag.type === 'zone_land') { data.zone_land[drag.idx] = { x: cx, y: cy }; }
+  else if (drag.type === 'zone_sea')  { data.zone_sea[drag.idx]  = { x: cx, y: cy }; }
+  else if (drag.type === 'ed_tour') {
+    edTourStops[drag.idx].x = cx;
+    edTourStops[drag.idx].y = cy;
+  }
+  render();
+}
+
+function onMouseUp() {
+  drag = null;
+  canvas.style.cursor = hoveredItem ? 'grab' : 'crosshair';
+}
+
+function onRightClick(e) {
+  e.preventDefault();
+  const { x, y } = getCanvasPos(e);
+  if (mode === 'zone_land' || mode === 'zone_sea') {
+    const poly = data[mode];
+    for (let i = 0; i < poly.length; i++) {
+      if (dist(x, y, poly[i].x, poly[i].y) < HIT_R) {
+        if (poly.length <= 3) { alert('頂点は最低3つ必要です'); return; }
+        poly.splice(i, 1);
+        render();
         return;
       }
-      const hit = findMarkerAt(x, y);
-      if (hit) {
-        dragging = hit;
-        dragOffset = { x: hit.x - x, y: hit.y - y };
-        selectedId = hit.id;
-        updateMarkerBtns();
-        draw();
-      }
-    } else {
-      // ゾーンタブ
-      const key = currentTab; // 'land' または 'sea'
-      zoneMouseDownKey = key;
+    }
+  }
+}
 
-      if (e.button === 2) {
-        // 右クリック → 頂点削除
-        const vi = findVertexAt(x, y, key);
-        if (vi >= 0) { zones[key].splice(vi, 1); updateBadges(); draw(); }
-        return;
-      }
-      // 左クリック: 既存頂点の上ならドラッグ準備
-      const vi = findVertexAt(x, y, key);
-      if (vi >= 0) draggingVertex = { key, index: vi };
-      // そうでなければ mouseup で頂点追加
+// ====================================
+// ヘルパー：最適挿入インデックス
+// ====================================
+function findBestInsertIdx(poly, x, y) {
+  let best = 0, bestDist = Infinity;
+  for (let i = 0; i < poly.length; i++) {
+    const next = (i + 1) % poly.length;
+    const mx = (poly[i].x + poly[next].x) / 2;
+    const my = (poly[i].y + poly[next].y) / 2;
+    const d = dist(x, y, mx, my);
+    if (d < bestDist) { bestDist = d; best = i; }
+  }
+  return best;
+}
+
+// ====================================
+// 保存（JSON ダウンロード / ED tour コードコピー）
+// ====================================
+function saveJson() {
+  if (mode === 'ed_tour') { saveEdTour(); return; }
+
+  // 座標を整数に丸める
+  const clean = {};
+  Object.entries(data).forEach(([k, v]) => {
+    if (Array.isArray(v)) {
+      clean[k] = v.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
+    } else if (v && typeof v === 'object') {
+      clean[k] = { x: Math.round(v.x), y: Math.round(v.y) };
     }
   });
 
-  canvas.addEventListener('mousemove', e => {
-    const { x, y } = getMapCoords(e);
-    document.getElementById('coordsDisplay').textContent = `x: ${Math.round(x)}, y: ${Math.round(y)}`;
+  const json = JSON.stringify(clean, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'fixed-positions.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(a.href);
 
-    if (dragging) {
-      hasDragged = true;
-      dragging.x = Math.round(x + dragOffset.x);
-      dragging.y = Math.round(y + dragOffset.y);
-      draw();
-    } else if (draggingVertex) {
-      hasDragged = true;
-      zones[draggingVertex.key][draggingVertex.index] = { x: Math.round(x), y: Math.round(y) };
-      draw();
-    }
+  // フィードバック
+  const btn = document.getElementById('saveBtn');
+  const orig = btn.textContent;
+  btn.textContent = '✅ 保存完了！';
+  btn.style.background = '#1a7f37';
+  setTimeout(() => { btn.textContent = orig; btn.style.background = '#238636'; }, 2500);
+}
+
+// ====================================
+// ED ツアー保存（world.html 貼り付け用コード）
+// ====================================
+function saveEdTour() {
+  const lines = edTourStops.map((s, i) => {
+    const charKeys = [null, 'meisui', 'meisui_chan', 'ryoushi', 'bekabune'];
+    const ck = charKeys[i];
+    const labelExpr = ck
+      ? `charMetadata.${ck}?.name + 'エリア'`
+      : `'${s.label}'`;
+    const colorExpr = ck
+      ? `charMetadata.${ck}?.color || '${s.color}'`
+      : `'${s.color}'`;
+    return `                { x: ${s.x}, y: ${s.y}, zoom: ${s.zoom},\n` +
+           `                  label: ${labelExpr},\n` +
+           `                  sub:  '${s.sub}',\n` +
+           `                  color: ${colorExpr} }`;
   });
+  const code = `            const tourStops = [\n${lines.join(',\n')}\n            ];`;
 
-  canvas.addEventListener('mouseup', e => {
-    // ゾーンタブで左クリック（ドラッグなし）→ 頂点追加
-    if (e.button === 0 && !hasDragged && zoneMouseDownKey) {
-      const { x, y } = getMapCoords(e);
-      zones[zoneMouseDownKey].push({ x: Math.round(x), y: Math.round(y) });
-      updateBadges();
-      draw();
-    }
-    dragging = null;
-    draggingVertex = null;
-    zoneMouseDownKey = null;
-    hasDragged = false;
+  const btn = document.getElementById('saveBtn');
+  const orig = btn.textContent;
+
+  navigator.clipboard.writeText(code).then(() => {
+    btn.textContent = '✅ コードをコピーしました！';
+    btn.style.background = '#1a7f37';
+    setTimeout(() => { btn.textContent = orig; btn.style.background = '#238636'; }, 3000);
+  }).catch(() => {
+    // フォールバック: テキストエリアで表示してユーザーが手動コピー
+    showCodeDialog(code);
   });
+}
 
-  canvas.addEventListener('mouseleave', () => {
-    dragging = null;
-    draggingVertex = null;
-    zoneMouseDownKey = null;
-    hasDragged = false;
-  });
-
-  canvas.addEventListener('contextmenu', e => e.preventDefault());
-
-  // ============================================
-  // 保存・読込
-  // ============================================
-  function saveAndApply() {
-    const data = {};
-    markers.forEach(m => { data[m.id] = { x: Math.round(m.x), y: Math.round(m.y) }; });
-    data.zone_land = zones.land.map(p => ({ x: Math.round(p.x), y: Math.round(p.y) }));
-    data.zone_sea  = zones.sea.map(p  => ({ x: Math.round(p.x), y: Math.round(p.y) }));
-    const json = JSON.stringify(data, null, 2);
-
-    const blob = new Blob([json], { type: 'application/json' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'fixed-positions.json';
-    a.click();
-
-    localStorage.setItem('meisui_fixed_positions', json);
-    showMsg('保存しました！ fixed-positions.json をプロジェクトフォルダに上書きしてください');
-  }
-
-  function loadSaved() {
-    const saved = localStorage.getItem('meisui_fixed_positions');
-    if (saved) {
-      try { applyData(JSON.parse(saved)); } catch(e) {}
-    } else {
-      fetch('fixed-positions.json').then(r => r.json()).then(data => {
-        applyData(data); draw();
-      }).catch(() => {});
-    }
-  }
-
-  function applyData(data) {
-    markers.forEach(m => { if (data[m.id]) { m.x = data[m.id].x; m.y = data[m.id].y; } });
-    if (Array.isArray(data.zone_land) && data.zone_land.length > 0)
-      zones.land = data.zone_land.map(p => ({ x: p.x, y: p.y }));
-    if (Array.isArray(data.zone_sea) && data.zone_sea.length > 0)
-      zones.sea = data.zone_sea.map(p => ({ x: p.x, y: p.y }));
-    updateBadges();
-  }
-
-  function loadJSON() { document.getElementById('fileInput').click(); }
-  function handleFileLoad(e) {
-    const file = e.target.files[0]; if (!file) return;
-    const r = new FileReader();
-    r.onload = ev => {
-      try { applyData(JSON.parse(ev.target.result)); draw(); showMsg('読み込みました'); }
-      catch(err) { alert('読み込み失敗: ' + err.message); }
-    };
-    r.readAsText(file);
-  }
-
-  function resetAll() {
-    if (!confirm('全マーカーとゾーンを初期位置に戻しますか？')) return;
-    markers = markerDefs.map(d => ({ ...d }));
-    zones = {
-      land: [ {x:680,y:60},{x:1750,y:60},{x:1750,y:850},{x:680,y:850} ],
-      sea:  [ {x:620,y:600},{x:1920,y:600},{x:1920,y:1080},{x:620,y:1080} ]
-    };
-    localStorage.removeItem('meisui_fixed_positions');
-    updateBadges();
-    draw();
-  }
-
-  function showMsg(msg) {
-    const el = document.getElementById('saveMsg');
-    el.textContent = msg;
-    el.style.display = 'block';
-    setTimeout(() => { el.style.display = 'none'; }, 3500);
-  }
+function showCodeDialog(code) {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9998;display:flex;align-items:center;justify-content:center;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#0d1117;border:1px solid #30363d;border-radius:10px;padding:20px;width:80%;max-width:860px;';
+  box.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+      <span style="color:#e6edf3;font-weight:bold;font-size:14px;">world.html の tourStops を下のコードで置き換えてください</span>
+      <button id="_codeClose" style="background:#da3633;color:#fff;border:none;padding:5px 14px;border-radius:5px;cursor:pointer;">✕ 閉じる</button>
+    </div>
+    <textarea id="_codeTa" style="width:100%;height:300px;background:#161b22;color:#c9d1d9;border:1px solid #30363d;border-radius:5px;padding:10px;font-family:monospace;font-size:12px;resize:vertical;"></textarea>
+    <div style="margin-top:8px;text-align:right;">
+      <button id="_codeCopy" style="background:#238636;color:#fff;border:none;padding:5px 16px;border-radius:5px;cursor:pointer;">📋 コピー</button>
+    </div>`;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+  document.getElementById('_codeTa').value = code;
+  document.getElementById('_codeClose').onclick = () => overlay.remove();
+  document.getElementById('_codeCopy').onclick = () => {
+    document.getElementById('_codeTa').select();
+    document.execCommand('copy');
+    document.getElementById('_codeCopy').textContent = '✅ コピー完了！';
+    setTimeout(() => { document.getElementById('_codeCopy').textContent = '📋 コピー'; }, 2000);
+  };
+}
 </script>
 </body>
 </html>

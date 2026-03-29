@@ -22,11 +22,11 @@ h<!DOCTYPE html>
 </head>
 <body>
     <!-- Firebase connection indicator -->
-    <div id="firebaseStatus" style="position:fixed;top:55px;left:50%;transform:translateX(-50%);z-index:9999;padding:4px 16px;border-radius:20px;font-size:11px;font-weight:bold;font-family:sans-serif;display:none;pointer-events:none;"></div>
+    <div id="firebaseStatus" style="position:fixed;top:55px;left:50%;transform:translateX(-50%);z-index:9999;padding:4px 16px;border-radius:20px;font-size:11px;font-weight:bold;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;display:none;pointer-events:none;"></div>
 
 
-    <!-- Sound Toggle Button -->
-    <button id="soundToggleBtn" title="音声ON/OFF">🔊</button>
+    <!-- Sound Toggle Button（設定画面に移行済みのため非表示） -->
+    <button id="soundToggleBtn" title="音声ON/OFF" style="display:none;">🔊</button>
 
     <!-- Ambient Overlay for Day/Night Cycle -->
     <div id="ambientOverlay"></div>
@@ -37,8 +37,8 @@ h<!DOCTYPE html>
 
     <!-- Year Display (1889-2100) — compact, top-center below title -->
     <div id="yearDisplay" style="position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:150;text-align:center;pointer-events:none;background:rgba(0,0,0,0.4);border-radius:0 0 12px 12px;padding:2px 16px 4px;">
-        <div id="yearText" style="font-size:28px;font-weight:900;color:#fff;text-shadow:2px 2px 0 #000;font-family:sans-serif;letter-spacing:3px;">1889年</div>
-        <div id="worldLineText" style="font-size:11px;color:#ffd700;text-shadow:1px 1px 0 #000;font-family:sans-serif;">第1世界線</div>
+        <div id="yearText" style="font-size:28px;font-weight:900;color:#fff;text-shadow:2px 2px 0 #000;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;letter-spacing:3px;">1889年</div>
+        <div id="worldLineText" style="font-size:11px;color:#ffd700;text-shadow:1px 1px 0 #000;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">第1世界線</div>
     </div>
 
     <canvas id="canvas"></canvas>
@@ -59,30 +59,158 @@ h<!DOCTYPE html>
         </div>
     </div>
 
-    <!-- 左サイドパネル -->
-    <div id="leftPanel" style="position:fixed;top:36px;left:0;bottom:34px;z-index:200;width:340px;display:flex;flex-direction:column;background:rgba(255,255,255,0.95);backdrop-filter:blur(10px);border-radius:0 14px 0 0;box-shadow:2px 0 20px rgba(0,0,0,0.15);font-family:'Hiragino Sans','Meiryo',sans-serif;">
-        <!-- 投票速報ヘッダー -->
-        <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:10px 14px;color:#fff;flex-shrink:0;">
-            <div style="font-weight:900;font-size:18px;text-align:center;letter-spacing:3px;">📊 投票速報</div>
-        </div>
-        <!-- ランキング本体 -->
-        <div id="barGraph" style="padding:6px 12px;font-size:14px;flex:1;min-height:0;overflow:hidden;">
+    <!-- 左サイドパネル：iPhone フレーム -->
+    <div id="leftPanel" style="position:fixed;top:36px;left:0;bottom:34px;z-index:200;width:318px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:transparent;padding:4px 5px 4px 0;">
+
+      <!-- ── iPhone フレーム本体 ── -->
+      <div id="phoneFrame" style="position:relative;width:308px;height:624px;background:#1c1c1e;border-radius:46px;flex-shrink:0;box-shadow:0 0 0 1.5px #48484a,0 0 0 3.5px #2c2c2e,inset 0 0 0 1px rgba(255,255,255,0.07),0 28px 56px rgba(0,0,0,0.9),0 6px 18px rgba(0,0,0,0.5);">
+
+        <!-- サイドボタン装飾（右：電源） -->
+        <div style="position:absolute;right:-3px;top:124px;width:3.5px;height:74px;background:#3a3a3c;border-radius:0 3px 3px 0;"></div>
+        <!-- サイドボタン装飾（左：マナーモード） -->
+        <div style="position:absolute;left:-3px;top:62px;width:3.5px;height:24px;background:#3a3a3c;border-radius:3px 0 0 3px;"></div>
+        <!-- サイドボタン装飾（左：音量＋） -->
+        <div style="position:absolute;left:-3px;top:96px;width:3.5px;height:38px;background:#3a3a3c;border-radius:3px 0 0 3px;"></div>
+        <!-- サイドボタン装飾（左：音量－） -->
+        <div style="position:absolute;left:-3px;top:146px;width:3.5px;height:38px;background:#3a3a3c;border-radius:3px 0 0 3px;"></div>
+
+        <!-- ── スクリーン ── -->
+        <div id="phoneScreen" style="position:absolute;inset:12px;border-radius:35px;overflow:hidden;background:#000;display:flex;flex-direction:column;">
+
+          <!-- Dynamic Island -->
+          <div style="position:absolute;top:10px;left:50%;transform:translateX(-50%);width:92px;height:30px;background:#1c1c1e;border-radius:22px;z-index:25;pointer-events:none;"></div>
+
+          <!-- ステータスバー -->
+          <div style="background:#000;padding:14px 18px 5px;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;min-height:48px;">
+            <span id="phoneTime" style="font-size:16px;font-weight:700;color:#fff;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;letter-spacing:-0.4px;"></span>
+            <div style="display:flex;align-items:center;gap:6px;">
+              <!-- 電波 -->
+              <svg width="16" height="12" viewBox="0 0 16 12" fill="white"><rect x="0" y="7.5" width="2.5" height="4.5" rx="0.5"/><rect x="4.5" y="5" width="2.5" height="7" rx="0.5"/><rect x="9" y="2.5" width="2.5" height="9.5" rx="0.5"/><rect x="13.5" y="0" width="2.5" height="12" rx="0.5"/></svg>
+              <!-- Wi-Fi -->
+              <svg width="15" height="11" viewBox="0 0 15 11" fill="none"><circle cx="7.5" cy="10.2" r="1.3" fill="white"/><path d="M4.1 7.1Q7.5 4 10.9 7.1" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/><path d="M1.2 4.2Q7.5 -0.5 13.8 4.2" stroke="white" stroke-width="1.5" stroke-linecap="round" fill="none"/></svg>
+              <!-- バッテリー -->
+              <div style="display:flex;align-items:center;">
+                <div style="width:22px;height:11px;border:1.5px solid rgba(255,255,255,0.65);border-radius:3px;padding:1.5px;">
+                  <div style="width:100%;height:100%;background:#4cd964;border-radius:1.5px;"></div>
+                </div>
+                <div style="width:2px;height:5px;background:rgba(255,255,255,0.45);border-radius:0 1.5px 1.5px 0;margin-left:-0.5px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 投票速報ヘッダー（縦10%細め） -->
+          <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:5px 10px 4px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+            <div style="font-weight:900;font-size:14px;letter-spacing:2px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">📊 投票速報</div>
+            <div style="font-size:11px;font-weight:bold;opacity:0.9;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;white-space:nowrap;">総計 <span id="totalVotesDisplay" style="font-size:14px;font-weight:900;">0</span><span style="font-size:10px;font-weight:normal;">票</span></div>
+          </div>
+
+          <!-- ランキング本体 -->
+          <div id="barGraph" style="padding:10px 10px 6px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;background:#ffffff;">
             <div id="barGraphBars"></div>
-        </div>
-        <!-- 下部固定エリア -->
-        <div style="flex-shrink:0;border-top:2px solid rgba(0,0,0,0.1);padding:8px 10px 8px;">
-            <div style="display:flex;gap:6px;margin-bottom:6px;">
-                <button onclick="openRankPopup()" style="flex:1;font-size:13px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;padding:8px 0;border-radius:8px;cursor:pointer;font-weight:bold;">🏆 街ランク</button>
-                <button onclick="showTutorial()" style="flex:1;font-size:13px;color:#fff;background:linear-gradient(135deg,#42a5f5,#7e57c2);border:none;padding:8px 0;border-radius:8px;cursor:pointer;font-weight:bold;">📖 あそびかた</button>
-                <button onclick="resetAllData()" style="flex:1;font-size:11px;color:#fff;background:#78909c;border:none;padding:5px 0;border-radius:6px;cursor:pointer;font-weight:bold;">🔄 リセット</button>
+          </div>
+
+          <!-- 下部ボタンエリア -->
+          <div style="flex-shrink:0;background:#f2f2f7;padding:7px 9px 6px;border-top:0.5px solid rgba(0,0,0,0.13);">
+            <div style="display:flex;gap:5px;">
+              <button onclick="openRankPopup()" style="flex:1;font-size:10px;color:#fff;background:linear-gradient(135deg,#f7971e,#ffd200);border:none;padding:9px 0;border-radius:11px;cursor:pointer;font-weight:bold;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">🏆 街ランク</button>
+              <button onclick="showTutorial()" style="flex:1;font-size:10px;color:#fff;background:linear-gradient(135deg,#42a5f5,#7e57c2);border:none;padding:9px 0;border-radius:11px;cursor:pointer;font-weight:bold;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">📖 あそびかた</button>
+              <button onclick="openSettings()" style="flex:1;font-size:10px;color:#fff;background:linear-gradient(135deg,#636366,#2c2c2e);border:none;padding:9px 0;border-radius:11px;cursor:pointer;font-weight:bold;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">⚙️ 設定</button>
             </div>
-            <div style="display:flex;gap:3px;">
-                <button onclick="debugAddVotes(1)" style="flex:1;font-size:10px;color:#fff;background:#e53935;border:none;padding:4px 0;border-radius:5px;cursor:pointer;font-weight:bold;">+10年</button>
-                <button onclick="debugAddVotes(2)" style="flex:1;font-size:10px;color:#fff;background:#d32f2f;border:none;padding:4px 0;border-radius:5px;cursor:pointer;font-weight:bold;">+20年</button>
-                <button onclick="debugAddVotes(5)" style="flex:1;font-size:10px;color:#fff;background:#b71c1c;border:none;padding:4px 0;border-radius:5px;cursor:pointer;font-weight:bold;">+50年</button>
+          </div>
+
+          <!-- ホームインジケーター -->
+          <div style="background:#000;padding:6px 0 8px;display:flex;justify-content:center;flex-shrink:0;">
+            <div style="width:108px;height:4px;background:rgba(255,255,255,0.27);border-radius:2px;"></div>
+          </div>
+
+          <!-- ── 設定スクリーン（スライドイン） ── -->
+          <div id="settingsScreen" style="position:absolute;inset:0;background:#f2f2f7;z-index:30;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);display:flex;flex-direction:column;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">
+
+            <!-- iOSナビゲーションバー -->
+            <div style="background:rgba(242,242,247,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:36px 14px 7px;display:flex;align-items:center;border-bottom:0.5px solid rgba(60,60,67,0.18);flex-shrink:0;">
+              <button onclick="closeSettings()" style="background:none;border:none;color:#007aff;font-size:15px;cursor:pointer;padding:4px 10px 4px 0;display:flex;align-items:center;gap:1px;font-family:inherit;">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="#007aff" stroke-width="2.2" stroke-linecap="round"><path d="M8 1L2 8l6 7"/></svg>
+                戻る
+              </button>
+              <span style="flex:1;text-align:center;font-weight:600;font-size:16px;color:#000;margin-right:54px;">設定</span>
             </div>
-        </div>
-    </div>
+
+            <!-- 設定コンテンツ（スクロールなし・flex均等配置） -->
+            <div style="flex:1;overflow:hidden;display:flex;flex-direction:column;padding:8px 14px 6px;gap:0;">
+
+              <!-- セクション：サウンド -->
+              <div style="font-size:10px;font-weight:600;color:#6c6c70;padding:0 6px 4px;text-transform:uppercase;letter-spacing:0.5px;">サウンド</div>
+              <div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:8px;">
+                <!-- ON / OFF トグル -->
+                <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 16px;">
+                  <span style="font-size:14px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">🔊 サウンド</span>
+                  <label class="ios-toggle">
+                    <input type="checkbox" id="settingsSoundToggle" checked onchange="toggleSound()">
+                    <span class="ios-toggle-track"><span class="ios-toggle-thumb"></span></span>
+                  </label>
+                </div>
+                <div style="height:0.5px;background:#e5e5ea;margin-left:16px;"></div>
+                <!-- 音量スライダー -->
+                <div style="padding:8px 16px 10px;">
+                  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:7px;">
+                    <span style="font-size:14px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">🎚️ 音量</span>
+                    <span id="volumeLabel" style="font-size:13px;color:#6c6c70;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;min-width:36px;text-align:right;">80%</span>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:8px;">
+                    <span style="font-size:12px;opacity:0.4;">🔈</span>
+                    <input type="range" id="volumeSlider" min="0" max="100" value="80"
+                      class="ios-slider"
+                      oninput="setMasterVolume(this.value/100)">
+                    <span style="font-size:12px;opacity:0.4;">🔊</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- セクション：デバッグ -->
+              <div style="font-size:10px;font-weight:600;color:#6c6c70;padding:0 6px 4px;text-transform:uppercase;letter-spacing:0.5px;">デバッグ・テスト</div>
+              <div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:8px;">
+                <button onclick="debugAddVotes(1);closeSettings();" class="ios-cell ios-cell-sm">
+                  <span>⏩ ＋10年進める</span>
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#c7c7cc" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5-5 5"/></svg>
+                </button>
+                <div style="height:0.5px;background:#e5e5ea;margin-left:16px;"></div>
+                <button onclick="debugAddVotes(2);closeSettings();" class="ios-cell ios-cell-sm">
+                  <span>⏩ ＋20年進める</span>
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#c7c7cc" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5-5 5"/></svg>
+                </button>
+                <div style="height:0.5px;background:#e5e5ea;margin-left:16px;"></div>
+                <button onclick="debugAddVotes(5);closeSettings();" class="ios-cell ios-cell-sm">
+                  <span>⏩ ＋50年進める</span>
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#c7c7cc" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5-5 5"/></svg>
+                </button>
+              </div>
+
+              <!-- セクション：データ管理 -->
+              <div style="font-size:10px;font-weight:600;color:#6c6c70;padding:0 6px 4px;text-transform:uppercase;letter-spacing:0.5px;">データ管理</div>
+              <div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:8px;">
+                <button onclick="resetAllData()" class="ios-cell ios-cell-sm ios-cell-destructive">
+                  <span>🔄 全データリセット</span>
+                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#c7c7cc" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5-5 5"/></svg>
+                </button>
+              </div>
+
+              <!-- バージョン情報（残りスペースを埋める） -->
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#aeaeb2;font-size:11px;padding:2px 0;">
+                めいすいくん総選挙<br>
+                <span id="versionDisplay" style="font-size:12px;font-weight:600;color:#8e8e93;font-family:monospace;letter-spacing:0.5px;">v--------</span><br>
+                <span style="font-size:10px;">浦安市明るい選挙推進協議会</span>
+              </div>
+            </div>
+
+            <!-- 設定画面ホームバー -->
+            <div style="background:#f2f2f7;padding:5px 0 7px;display:flex;justify-content:center;flex-shrink:0;">
+              <div style="width:108px;height:4px;background:rgba(0,0,0,0.14);border-radius:2px;"></div>
+            </div>
+          </div><!-- / settingsScreen -->
+
+        </div><!-- / phoneScreen -->
+      </div><!-- / phoneFrame -->
+    </div><!-- / leftPanel -->
 
     <!-- タイムラインバー（大画面下部に常時表示） -->
     <div id="timelineBar">
@@ -99,7 +227,7 @@ h<!DOCTYPE html>
     <!-- 街ランクポップアップ -->
     <div id="rankPopup" style="display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:550;align-items:center;justify-content:center;">
         <div onclick="closeRankPopup()" style="position:absolute;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);"></div>
-        <div id="rankCard" style="position:relative;background:#fff;border-radius:20px;padding:30px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:'Hiragino Sans',sans-serif;">
+        <div id="rankCard" style="position:relative;background:#fff;border-radius:20px;padding:30px;max-width:520px;width:90%;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">
             <button onclick="closeRankPopup()" style="position:absolute;top:12px;right:16px;background:none;border:none;font-size:22px;cursor:pointer;color:#999;">✕</button>
             <div id="rankContent"></div>
         </div>
@@ -116,15 +244,15 @@ h<!DOCTYPE html>
 
         // Load real map image (MAP_2009- = real Urayasu map)
         const mapImage = new Image();
-        mapImage.src = 'map_real.png';
+        mapImage.src = 'map_realb.png';
         mapImage.onerror = function() {
             this.src = 'urayasu_map.webp'; // fallback to old map
         };
 
         // Sea overlay images for reclamation stages
-        const seaStage1 = new Image(); seaStage1.src = 'sea_stage1.png'; // 1889-1959: 元町のみ
-        const seaStage2 = new Image(); seaStage2.src = 'sea_stage2.png'; // 1969-1978: 元町+中町
-        const seaStage3 = new Image(); seaStage3.src = 'sea_stage3.png'; // 1979-1988: +舞浜+新町
+        const seaStage1 = new Image(); seaStage1.src = 'sea_stage1b.png'; // 1889-1959: 元町のみ
+        const seaStage2 = new Image(); seaStage2.src = 'sea_stage2b.png'; // 1969-1978: 元町+中町
+        const seaStage3 = new Image(); seaStage3.src = 'sea_stage3b.png'; // 1979-1988: +舞浜+新町
 
         // Initialize voting grid
         function initVoteGrid() {
@@ -197,7 +325,7 @@ h<!DOCTYPE html>
                 color: #d32f2f;
                 text-shadow: 2px 2px 0 #fff, -2px -2px 0 #fff, 2px -2px 0 #fff, -2px 2px 0 #fff, 0 0 20px #ffd700;
                 animation: mikoshiBounce 0.5s ease infinite;
-                font-family: sans-serif;
+                font-family: 'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
             `;
             mikoshi.innerHTML = '🏮 まいだ！まいだ！🏮<br><span style="font-size:16px;color:#ff6f00;">' + char1.type.replace('_', ' ') + ' × ' + char2.type.replace('_', ' ') + '</span>';
             overlay.appendChild(mikoshi);
@@ -233,101 +361,125 @@ h<!DOCTYPE html>
         // ============================================
         // Simple Interaction Event (for 4 other events)
         // ============================================
-        function showSimpleInteractionEvent(char1, char2, event) {
-            // イベント別テーマカラー
-            const themes = {
-                'じゃんけん大会': { bg: 'linear-gradient(135deg,rgba(102,126,234,0.32),rgba(118,75,162,0.32))', glow: '#a855f7', deco: '⚡' },
-                'ハイタッチ':     { bg: 'linear-gradient(135deg,rgba(247,151,30,0.32),rgba(255,210,0,0.32))', glow: '#fbbf24', deco: '🌟' },
-                '浦安盆踊り':     { bg: 'linear-gradient(135deg,rgba(249,83,198,0.32),rgba(185,29,115,0.32))', glow: '#ec4899', deco: '🌸' },
-                '記念撮影':       { bg: 'linear-gradient(135deg,rgba(17,153,142,0.32),rgba(56,239,125,0.32))', glow: '#34d399', deco: '✨' },
-            };
-            const theme = themes[event.name] || { bg: 'linear-gradient(135deg,rgba(247,151,30,0.32),rgba(255,210,0,0.32))', glow: '#ffd200', deco: '🎉' };
+        // ============================================
+        // フロートポップ共通ヘルパー（まいだまいだスタイル）
+        // ============================================
 
-            const overlay = document.createElement('div');
-            overlay.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:300;display:flex;align-items:center;justify-content:center;';
+        // マップ座標 → スクリーン座標
+        function _mapToScreen(mx, my) {
+            const zx = camera ? camera.zoomX : 1;
+            const zy = camera ? camera.zoomY : 1;
+            return { x: mx * zx, y: my * zy + 36 };
+        }
 
-            // メインカード（画面中央）
-            const card = document.createElement('div');
-            card.style.cssText = `
-                position:relative;
-                width:260px;
-                text-align:center;
-                background:${theme.bg};
-                backdrop-filter:blur(4px);
-                -webkit-backdrop-filter:blur(4px);
-                border-radius:24px;
-                padding:28px 20px 22px;
-                box-shadow:0 0 0 3px rgba(255,255,255,0.3), 0 0 30px ${theme.glow}88, 0 8px 24px rgba(0,0,0,0.3);
-                animation:popScale 0.35s cubic-bezier(0.34,1.56,0.64,1);
-                font-family:sans-serif;
-                border:1px solid rgba(255,255,255,0.25);
+        // キャラタイプのスクリーン位置
+        function _charScreenPos(charType) {
+            if (typeof characters !== 'undefined') {
+                const c = characters.find(ch => ch.type === charType);
+                if (c) return _mapToScreen(c.x, c.y);
+            }
+            return { x: window.innerWidth * 0.5, y: window.innerHeight * 0.45 };
+        }
+
+        // ランダムキャラのスクリーン位置
+        function _randomCharScreenPos() {
+            if (typeof characters !== 'undefined' && characters.length > 0) {
+                const c = characters[Math.floor(Math.random() * characters.length)];
+                return _mapToScreen(c.x, c.y);
+            }
+            return { x: window.innerWidth * 0.5, y: window.innerHeight * 0.45 };
+        }
+
+        // フロートポップ表示（背景なし・文字絵文字のみ）
+        // lines: [{text, size, color}] の配列
+        function _floatPop(sx, sy, lines, durationMs) {
+            const dur = durationMs || 2800;
+            // 画面外に出ないようクランプ
+            const cx = Math.max(220, Math.min(window.innerWidth - 220, sx));
+            const cy = Math.max(80,  Math.min(window.innerHeight - 180, sy));
+
+            const wrap = document.createElement('div');
+            wrap.style.cssText = `
+                position:fixed; left:${cx}px; top:${cy}px;
+                transform:translate(-50%,-60%) scale(0.5);
+                pointer-events:none; z-index:305;
+                text-align:center; font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+                opacity:0;
+                transition:transform 0.35s cubic-bezier(0.34,1.56,0.64,1), opacity 0.25s ease;
             `;
+            lines.forEach(({ text, size, color }) => {
+                const c = color || '#fff';
+                const el = document.createElement('div');
+                el.style.cssText = `
+                    font-size:${size || 24}px; font-weight:900; color:${c};
+                    text-shadow:2px 2px 0 #000,-2px -2px 0 #000,2px -2px 0 #000,-2px 2px 0 #000,0 0 18px ${c};
+                    line-height:1.35; white-space:nowrap;
+                `;
+                el.textContent = text;
+                wrap.appendChild(el);
+            });
+            document.body.appendChild(wrap);
 
-            // デコ飾り（四隅）
-            const corners = ['top:8px;left:12px', 'top:8px;right:12px', 'bottom:8px;left:12px', 'bottom:8px;right:12px'];
-            corners.forEach(pos => {
-                const d = document.createElement('span');
-                d.style.cssText = `position:absolute;${pos};font-size:18px;opacity:0.85;`;
-                d.textContent = theme.deco;
-                card.appendChild(d);
+            // ポップイン
+            requestAnimationFrame(() => {
+                wrap.style.transform = 'translate(-50%,-60%) scale(1)';
+                wrap.style.opacity = '1';
             });
 
-            // 絵文字（大）
-            const emojiEl = document.createElement('div');
-            emojiEl.style.cssText = 'font-size:64px;line-height:1.1;margin-bottom:8px;filter:drop-shadow(0 2px 8px rgba(0,0,0,0.3));';
-            emojiEl.textContent = event.emoji;
-            card.appendChild(emojiEl);
-
-            // イベント名
-            const nameEl = document.createElement('div');
-            nameEl.style.cssText = 'font-size:26px;font-weight:900;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.4);letter-spacing:2px;margin-bottom:10px;';
-            nameEl.textContent = event.name;
-            card.appendChild(nameEl);
-
-            // キャラ名
-            const charsEl = document.createElement('div');
-            charsEl.style.cssText = 'font-size:13px;color:rgba(255,255,255,0.85);background:rgba(0,0,0,0.2);border-radius:20px;padding:4px 14px;display:inline-block;';
-            charsEl.textContent = `${char1.name} × ${char2.name}`;
-            card.appendChild(charsEl);
-
-            overlay.appendChild(card);
-
-            // 紙吹雪パーティクル
-            const confettiColors = ['#ff1744','#ffd600','#ff6d00','#ff4081','#ffab00','#00e5ff','#76ff03','#e040fb'];
-            const vw = window.innerWidth, vh = window.innerHeight;
-            for (let i = 0; i < 40; i++) {
-                const p = document.createElement('div');
-                const size = 6 + Math.random() * 8;
-                const startX = vw * 0.2 + Math.random() * vw * 0.6;
-                const startY = vh * 0.3 + Math.random() * vh * 0.2;
-                const tx = (Math.random() - 0.5) * 600;
-                const ty = (Math.random() - 1.0) * 400 - 100;
-                const rot = Math.random() * 720;
-                p.style.cssText = `
-                    position:absolute;
-                    width:${size}px;height:${size * (Math.random() > 0.5 ? 1 : 2.5)}px;
-                    background:${confettiColors[Math.floor(Math.random() * confettiColors.length)]};
-                    border-radius:${Math.random() > 0.5 ? '50%' : '2px'};
-                    left:${startX}px;top:${startY}px;
-                    opacity:0.75;
-                    transition:transform ${1.5 + Math.random()}s ease-out, opacity ${1 + Math.random()}s ease-out ${0.5 + Math.random()}s;
-                `;
-                overlay.appendChild(p);
-                // アニメーション開始
-                requestAnimationFrame(() => {
-                    p.style.transform = `translate(${tx}px,${ty}px) rotate(${rot}deg)`;
-                    p.style.opacity = '0';
-                });
-            }
-
-            document.body.appendChild(overlay);
-
+            // バウンス（mikoshiBounce アニメを遅延で付与）
             setTimeout(() => {
-                card.style.transition = 'transform 0.4s ease, opacity 0.4s ease';
-                card.style.transform = 'scale(0.85)';
-                card.style.opacity = '0';
-                setTimeout(() => overlay.remove(), 400);
-            }, 2800);
+                wrap.style.transition = 'none';
+                wrap.style.animation = 'mikoshiBounce 0.55s ease 3';
+            }, 380);
+
+            // フェードアウト
+            const fadeAt = dur - 700;
+            setTimeout(() => {
+                wrap.style.animation = 'none';
+                wrap.style.transition = 'transform 0.7s ease-out, opacity 0.7s ease-out';
+                wrap.style.transform = 'translate(-50%, calc(-60% - 70px))';
+                wrap.style.opacity = '0';
+            }, fadeAt);
+            setTimeout(() => wrap.remove(), dur);
+        }
+
+        function showSimpleInteractionEvent(char1, char2, event) {
+            const themes = {
+                'じゃんけん大会': { color: '#c084fc', deco: '⚡' },
+                'ハイタッチ':     { color: '#fbbf24', deco: '🌟' },
+                '浦安盆踊り':     { color: '#f472b6', deco: '🌸' },
+                '記念撮影':       { color: '#34d399', deco: '✨' },
+            };
+            const theme = themes[event.name] || { color: '#ffd700', deco: '🎉' };
+
+            // キャラ中間点のスクリーン座標
+            const mx = (char1.x + char2.x) / 2;
+            const my = (char1.y + char2.y) / 2;
+            const { x: sx, y: sy } = _mapToScreen(mx, my);
+
+            _floatPop(sx, sy, [
+                { text: theme.deco + ' ' + event.emoji + ' ' + theme.deco, size: 52, color: '#fff' },
+                { text: event.name + '！', size: 28, color: theme.color },
+                { text: char1.name + ' × ' + char2.name, size: 15, color: 'rgba(255,255,255,0.9)' },
+            ], 3000);
+
+            // 紙吹雪パーティクル（キャラ周辺）
+            const confetti = ['#ff1744','#ffd600','#ff6d00','#ff4081','#ffab00','#00e5ff','#76ff03','#e040fb'];
+            const pLayer = document.createElement('div');
+            pLayer.style.cssText = 'position:fixed;inset:0;pointer-events:none;z-index:304;';
+            const cx = Math.max(220, Math.min(window.innerWidth - 220, sx));
+            const cy = Math.max(80,  Math.min(window.innerHeight - 180, sy));
+            for (let i = 0; i < 30; i++) {
+                const p = document.createElement('div');
+                const s = 5 + Math.random() * 8;
+                const tx = (Math.random() - 0.5) * 400, ty = -(100 + Math.random() * 260);
+                const rot = Math.random() * 720;
+                p.style.cssText = `position:absolute;width:${s}px;height:${s*(Math.random()>.5?1:2.5)}px;background:${confetti[Math.floor(Math.random()*confetti.length)]};border-radius:${Math.random()>.5?'50%':'2px'};left:${cx+(Math.random()-.5)*80}px;top:${cy+(Math.random()-.5)*40}px;opacity:0.9;transition:transform ${1.2+Math.random()}s ease-out,opacity ${0.8+Math.random()}s ease-out ${0.6+Math.random()}s;`;
+                pLayer.appendChild(p);
+                requestAnimationFrame(() => { p.style.transform=`translate(${tx}px,${ty}px) rotate(${rot}deg)`; p.style.opacity='0'; });
+            }
+            document.body.appendChild(pLayer);
+            setTimeout(() => pLayer.remove(), 2800);
         }
 
         // ============================================
@@ -581,7 +733,7 @@ h<!DOCTYPE html>
                 color: #333;
                 box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
                 animation: slideInRight 0.5s ease-out;
-                font-family: sans-serif;
+                font-family: 'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
             `;
             notif.innerHTML = `<div style="font-size: 32px; margin-bottom: 8px;">${emoji}</div><div>${title}</div>`;
             document.body.appendChild(notif);
@@ -652,6 +804,7 @@ h<!DOCTYPE html>
             targetZoom: 2.5,    // ズーム倍率
             animState: 'idle',  // idle / zoom_in / hold / zoom_out
             animTimer: 0,
+            endingLock: false,  // エンディングツアー中は通常アニメを停止
         };
 
         // イージング関数（加減速が自然）
@@ -661,6 +814,7 @@ h<!DOCTYPE html>
 
         // カメラズームアニメーション更新
         function updateCameraAnimation(deltaTime) {
+            if (camera.endingLock) return; // エンディングツアー中は操作しない
             if (camera.animState === 'idle') return;
             camera.animTimer -= deltaTime;
 
@@ -3268,8 +3422,10 @@ h<!DOCTYPE html>
                         }
                     } else {
                         const speed = char.speed;
-                        char.x += (dx / dist) * speed;
-                        char.y += (dy / dist) * speed;
+                        // オーバーシュート防止: 目標まで残り距離を超えて移動しない
+                        const moveAmount = Math.min(dist, speed);
+                        char.x += (dx / dist) * moveAmount;
+                        char.y += (dy / dist) * moveAmount;
                         // 海キャラはパネル左端まで移動可、陸キャラはパネル右側に制限
                         const terrain = charTerrain[char.type];
                         const minX = (terrain === 'sea') ? 350 : 620;
@@ -3332,7 +3488,8 @@ h<!DOCTYPE html>
         function animate() {
           try {
             const now = Date.now();
-            const deltaTime = now - lastTime;
+            // バックグラウンド復帰時に一気に動くのを防ぐため100msでクランプ
+            const deltaTime = Math.min(now - lastTime, 100);
             lastTime = now;
 
             // Update
@@ -3577,6 +3734,9 @@ h<!DOCTYPE html>
         let cachedCanvasRect = null;
         function updateCanvasRect() { cachedCanvasRect = canvas.getBoundingClientRect(); }
         window.addEventListener('resize', updateCanvasRect);
+        // 画面回転・スクロール時もキャンバス位置が変わるため再計算
+        window.addEventListener('orientationchange', () => setTimeout(updateCanvasRect, 200));
+        window.addEventListener('scroll', updateCanvasRect, { passive: true });
         updateCanvasRect();
 
         // Convert screen coords to map coords
@@ -3688,6 +3848,9 @@ h<!DOCTYPE html>
             firebaseDb.ref('stats/cycleStartVotes').set(0);
             firebaseDb.ref('stats/decorationOffset').set(zeroVotes);
             endingActive = false;
+            _lastEraEventEffective = -1;
+            if (typeof lastEventVotes !== 'undefined') lastEventVotes = 0;
+            clearTimeout(window._endingTriggerTimeout);
             builtBuildings = [];
             localStorage.setItem('meisui_builtBuildings', '[]');
         }
@@ -3706,7 +3869,15 @@ h<!DOCTYPE html>
                 return current;
             }).then(() => {
                 // 1フレーム後にフラグ戻す（表示更新は済んでいる）
-                setTimeout(() => { isInitialLoad = false; }, 100);
+                setTimeout(() => {
+                    isInitialLoad = false;
+                    // デバッグジャンプ分の年代イベントはスキップ
+                    _lastEraEventEffective = getEffectiveVotes();
+                    // デバッグで2100年に到達した場合もエンディングを起動
+                    if (getCurrentYear() >= END_YEAR && typeof showEnding === 'function' && !endingActive) {
+                        setTimeout(() => { if (!endingActive) showEnding(); }, 1200);
+                    }
+                }, 100);
             }).catch(err => {
                 isInitialLoad = false;
                 console.error('Debug vote failed:', err);
@@ -3751,7 +3922,7 @@ h<!DOCTYPE html>
                 z-index: 350;
                 overflow: hidden;
                 animation: popScale 0.3s ease;
-                font-family: sans-serif;
+                font-family: 'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
             `;
 
             const headerColor = meta.color || '#2d5016';
@@ -3862,6 +4033,9 @@ h<!DOCTYPE html>
 
         // Listen for real-time vote updates from Firebase
         // isInitialLoad は js/firebase.js で定義済み
+        // バッチカウント用：前回の各キャラ票数を保存
+        let _prevVoteCounts = Object.fromEntries(CHAR_TYPES.map(t => [t, 0]));
+
         function handleVoteSnapshot(snapshot) {
             const data = snapshot.val() || {};
             votes = Object.fromEntries(CHAR_TYPES.map(t => [t, data[t] || 0]));
@@ -3870,15 +4044,61 @@ h<!DOCTYPE html>
             updateYearDisplay();
 
             // 初回読み込み時は建物を静かに同期するだけ
+            // ★ _prevVoteCounts を現在値で初期化して次回比較できるようにする
             if (isInitialLoad) {
                 isInitialLoad = false;
+                _prevVoteCounts = { ...votes };
                 silentBuildingSync();
                 return;
             }
-            // ⚠️ ここではイベントキューを一切操作しない。
-            // ビジュアルイベント連鎖の唯一の起動口は stats/lastVoteChar リスナー。
-            // checkBuildingUnlock・playEventQueue をここで呼ぶと
-            // 2つのFirebaseリスナーが競合してポップが同時多発する。
+
+            // ============================================
+            // ★ バッチカウンター更新（votes増分で確実に検知）
+            // Date.now()の衝突や同一値スキップに依存しないため
+            // lastVoteCharリスナーよりも確実
+            // ============================================
+            CHAR_TYPES.forEach(t => {
+                const prev = _prevVoteCounts[t] || 0;
+                const curr = votes[t] || 0;
+                const diff = curr - prev;
+                if (diff <= 0) return;
+
+                for (let i = 0; i < diff; i++) {
+                    if (typeof _cutinBatchCount === 'undefined') break;
+                    _cutinBatchCount[t] = (_cutinBatchCount[t] || 0) + 1;
+                    if (_cutinBatchCount[t] >= CUTIN_BATCH) {
+                        _cutinBatchCount[t] = 0;
+                        // カットイン発火（処理中ならキュー待機）
+                        if (typeof _remoteVoteQueue !== 'undefined') {
+                            if (window.voteInProgress || _remoteVoteActive) {
+                                _remoteVoteQueue.push(t);
+                            } else {
+                                _remoteVoteQueue.push(t);
+                                // 次フレームに遅らせて他の処理と競合しないようにする
+                                setTimeout(() => _drainRemoteVoteQueue(), 0);
+                            }
+                        }
+                    }
+                }
+            });
+            _prevVoteCounts = { ...votes };
+
+            // バーグラフのバッチドット更新
+            if (typeof _updateBatchCounterUI === 'function') _updateBatchCounterUI();
+
+            // ============================================
+            // ★ エンディング即時検知（カットインを待たない）
+            // 2100年到達をFirebase更新のたびに直接チェック。
+            // カットインバッチ境界や4800ms遅延に関係なく確実に起動する。
+            // ============================================
+            if (getCurrentYear() >= END_YEAR && typeof showEnding === 'function' && !endingActive) {
+                // カットインが再生中なら少し待つ（アニメーション衝突を避ける）
+                const endingDelay = (window.voteInProgress || _remoteVoteActive) ? 6000 : 800;
+                clearTimeout(window._endingTriggerTimeout);
+                window._endingTriggerTimeout = setTimeout(() => {
+                    if (!endingActive) showEnding();
+                }, endingDelay);
+            }
         }
         function attachVoteListener() {
             votesRef.on('value', handleVoteSnapshot, (error) => {
@@ -3892,47 +4112,137 @@ h<!DOCTYPE html>
 
         // ============================================
         // 外部投票検知（iPadからの投票をモニターで演出再生）
+        // リモート投票キュー：処理中でも捨てずに積んで順番に再生
         // ============================================
         let lastVoteCharProcessed = null;
         let remoteVoteInitialLoad = true;
-        firebaseDb.ref('stats/lastVoteChar').on('value', snap => {
-            const charType = snap.val();
-            if (!charType) return;
+        const _remoteVoteQueue = [];    // カットインシーケンス待ちキュー
+        let _remoteVoteActive = false;  // リモート投票シーケンス実行中フラグ
 
-            // 初回ロードはスキップ
-            if (remoteVoteInitialLoad) {
-                remoteVoteInitialLoad = false;
-                lastVoteCharProcessed = charType + '_' + Date.now();
+        // 年代イベント取りこぼし防止：最後にチェックしたeffective値を記録
+        let _lastEraEventEffective = -1;
+        // 一度に遡る最大件数。CUTIN_BATCH(3)+1=4 にすることで
+        // 初回カットイン(eff=3, from=0, gap=4)でも e=0(1889年)を確実に捕捉できる。
+        // バースト投票(5票一気)でも最大4件に絞り、キューが長くなりすぎない。
+        const _MAX_ERA_CATCHUP = 4;
+
+        function _checkAndQueueEraEvents() {
+            const eff = getEffectiveVotes();
+
+            // ① エンディング年に達したらイベントをすべてスキップ → 即エンディングへ
+            if (getCurrentYear() >= END_YEAR) {
+                _lastEraEventEffective = eff;
                 return;
             }
 
-            // この端末で投票中（castVote経由）なら無視（二重再生防止）
-            if (window.voteInProgress) return;
+            // ② 前回チェック(last)の次から今回(eff)まで遡る
+            //    gap が _MAX_ERA_CATCHUP を超えた場合は直近N件のみ（古すぎるものは省略）
+            const from = _lastEraEventEffective + 1;
+            const effectiveFrom = (eff - from + 1 > _MAX_ERA_CATCHUP)
+                ? (eff - _MAX_ERA_CATCHUP + 1)
+                : from;
+            for (let e = effectiveFrom; e <= eff; e++) {
+                const yr = START_YEAR + e * YEARS_PER_VOTE;
+                if (historicalEvents[yr]) {
+                    const y = yr;
+                    queueEvent(() => showEraEvent(y));
+                }
+            }
+            _lastEraEventEffective = eff;
+        }
 
-            // 同じ投票を二重処理しない
-            const voteKey = charType + '_' + Date.now();
-            if (lastVoteCharProcessed === voteKey) return;
-            lastVoteCharProcessed = voteKey;
+        // ============================================
+        // バッチカウンター（キャラ別・3票溜まったらカットイン）
+        // ============================================
+        const CUTIN_BATCH = 3;   // 何票でカットインするか
+        // キャラ別の現在バッチ溜まり票数
+        const _cutinBatchCount = Object.fromEntries(
+            CHAR_TYPES.map(t => [t, 0])
+        );
 
-            console.log('📡 外部投票検知:', charType);
+        // バッチカウント変化時にバーグラフのドット表示を更新
+        function _updateBatchCounterUI() {
+            if (typeof updateBarGraph === 'function') updateBarGraph();
+        }
+
+        // 1票ごとの軽量演出（パーティクル＋音のみ、カットインなし）
+        function _playLightVoteEffect(charType) {
+            playSound('vote');
+            lastVotedCharType = charType;
+            lastVoteHighlightTime = Date.now();
+            const char = characters.find(c => c.type === charType);
+            if (char) {
+                for (let i = 0; i < 30; i++) {
+                    particles.push({
+                        x: char.x + (Math.random() - 0.5) * 50,
+                        y: char.y - 20,
+                        vx: (Math.random() - 0.5) * 2.5,
+                        vy: -0.8 - Math.random() * 2,
+                        rotation: Math.random() * Math.PI * 2,
+                        rotSpeed: (Math.random() - 0.5) * 0.1,
+                        size: 3 + Math.random() * 4, alpha: 1,
+                        color: ['#ff6b6b','#ffa500','#ffd700','#ff69b4','#87ceeb'][Math.floor(Math.random()*5)],
+                        type: 'confetti', life: 80
+                    });
+                }
+            }
+        }
+
+        // キューの先頭を取り出して演出を実行する（再帰呼び出しで連鎖）
+        function _drainRemoteVoteQueue() {
+            if (_remoteVoteActive || _remoteVoteQueue.length === 0) return;
+            _remoteVoteActive = true;
+            const charType = _remoteVoteQueue.shift();
+            console.log('📡 リモート投票処理開始:', charType, '残りキュー:', _remoteVoteQueue.length);
+            _runRemoteVoteSequence(charType);
+        }
+
+        firebaseDb.ref('stats/lastVoteChar').on('value', snap => {
+            const raw = snap.val();
+            if (!raw) return;
+            // vote.html 側が "charType|timestamp" 形式で書き込む
+            // 同じキャラへの連続投票でも on('value') が発火するための対策
+            const charType = raw.split('|')[0];
+            if (!charType) return;
+
+            // 初回ロードはスキップ（ページ開いた瞬間の古い値で演出が流れないように）
+            if (remoteVoteInitialLoad) {
+                remoteVoteInitialLoad = false;
+                lastVoteCharProcessed = raw;
+                return;
+            }
+
+            // 同じシグナルを二重処理しない（rawにはタイムスタンプが含まれるので重複しない）
+            if (lastVoteCharProcessed === raw) return;
+            lastVoteCharProcessed = raw;
+
+            // 1票ごとの軽量演出（パーティクル＋音）のみ
+            // ★ バッチカウントは handleVoteSnapshot 側で votes 増分から行う
+            _playLightVoteEffect(charType);
+        }, err => {
+            console.error('❌ stats/lastVoteChar リスナーエラー:', err);
+        });
+
+        // リモート投票バッチ分の大演出シーケンス（3票ごとに発火）
+        // カットイン→証明書→イベントキュー
+        function _runRemoteVoteSequence(charType) {
+            console.log('🎆 カットイン発火（3票バッチ）:', charType);
 
             // 投票前の状態を保存
-            // ※handleVoteSnapshotがlastVoteCharより先に発火してtotalVotesが
-            //   既に更新済みの場合があるため、totalVotes-1 で1票前のレベルを算出する
             const prevVotes = totalVotes - 1;
             const oldLevel = getLevelAtTotal(totalVotes - 1);
 
-            // キャラお祝いパーティクル
+            // キャラお祝いパーティクル（カットイン時は大量に）
             const char = characters.find(c => c.type === charType);
             if (char) {
-                for (let i = 0; i < 60; i++) {
+                for (let i = 0; i < 80; i++) {
                     particles.push({
-                        x: char.x + (Math.random() - 0.5) * 60, y: char.y - 20,
-                        vx: (Math.random() - 0.5) * 3, vy: -1 - Math.random() * 3,
-                        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.1,
-                        size: 4 + Math.random() * 4, alpha: 1,
+                        x: char.x + (Math.random() - 0.5) * 80, y: char.y - 20,
+                        vx: (Math.random() - 0.5) * 4, vy: -1.5 - Math.random() * 3.5,
+                        rotation: Math.random() * Math.PI * 2, rotSpeed: (Math.random() - 0.5) * 0.12,
+                        size: 5 + Math.random() * 5, alpha: 1,
                         color: ['#ff6b6b', '#ffa500', '#ffd700', '#ff69b4', '#87ceeb'][Math.floor(Math.random() * 5)],
-                        type: 'confetti', life: 120
+                        type: 'confetti', life: 150
                     });
                 }
                 char.celebrating = true;
@@ -3945,16 +4255,19 @@ h<!DOCTYPE html>
 
             playSound('vote');
             window.voteInProgress = true;
-            // 安全タイムアウト: 20秒でフラグ強制リセット
+            // 安全タイムアウト: 20秒でフラグ強制リセット＋リモートキューを再開
             clearTimeout(window._voteProgressTimeout);
             window._voteProgressTimeout = setTimeout(() => {
-                if (window.voteInProgress) {
+                if (window.voteInProgress || _remoteVoteActive) {
                     console.warn('⚠️ voteInProgress 20秒タイムアウト（外部投票）→ 強制リセット');
                     eventQueue.length = 0;
                     eventQueuePlaying = false;
                     window.voteInProgress = false;
+                    _remoteVoteActive = false;
                     const voteBtn = document.getElementById('voteBtn');
                     if (voteBtn) { voteBtn.style.opacity = '1'; voteBtn.style.pointerEvents = 'auto'; }
+                    // キューに残った投票を再開
+                    _drainRemoteVoteQueue();
                 }
             }, 20000);
 
@@ -3968,11 +4281,8 @@ h<!DOCTYPE html>
                 setTimeout(() => {
                     // 投票効果フィードバック（最初に表示）
                     queueEvent(() => showVoteEffect(charType));
-                    // 年代イベントをキューに積む
-                    const newYear = getCurrentYear();
-                    if (historicalEvents[newYear]) {
-                        queueEvent(() => showEraEvent(newYear));
-                    }
+                    // 年代イベントをキューに積む（前回チェック以降の全年度を遡って確認）
+                    _checkAndQueueEraEvents();
                     // レベルアップチェック
                     const newLevel = getCurrentLevel();
                     if (newLevel.min > oldLevel.min) {
@@ -3987,10 +4297,14 @@ h<!DOCTYPE html>
                         queueEvent(() => showEnding());
                     }
                     // イベントキューを再生
-                    playEventQueue();
+                    // 完了コールバック: _remoteVoteActive を解除して次のキューを処理
+                    playEventQueue(() => {
+                        _remoteVoteActive = false;
+                        _drainRemoteVoteQueue();
+                    });
                 }, 2000); // ②投票済証の表示時間
             }, 2800); // ①カットイン完了を待つ
-        });
+        }
 
         // Character metadata for voting modal
 
@@ -4100,11 +4414,8 @@ h<!DOCTYPE html>
                     // 投票効果フィードバック（最初に表示）
                     queueEvent(() => showVoteEffect(charType));
 
-                    // 年代イベント
-                    const newYear = getCurrentYear();
-                    if (historicalEvents[newYear]) {
-                        queueEvent(() => showEraEvent(newYear));
-                    }
+                    // 年代イベント（前回チェック以降の全年度を遡って確認）
+                    _checkAndQueueEraEvents();
 
                     // レベルアップチェック
                     const newLevel = getCurrentLevel();
@@ -4124,56 +4435,345 @@ h<!DOCTYPE html>
                     }
 
                     // イベントキューを再生
-                    // ボタン再有効化は playNextEvent() のキュー空検知時に自動実行
-                    // （万が一詰まった場合は20秒タイムアウトで強制リセット）
-                    playEventQueue();
+                    // 完了コールバック: タブレット投票が溜まっていれば次を処理
+                    playEventQueue(() => {
+                        _drainRemoteVoteQueue();
+                    });
                 }, 2000); // ②投票済証の表示時間
             }, 2800); // ①カットイン完了を待つ（2700ms + 余裕100ms）
         }
 
         // ========== ENDING SEQUENCE (2100) ==========
         let activeFwInterval = null;
+        // EDタイムアウトIDを追跡（複数回発火しても旧タイムアウトをキャンセルできる）
+        const _edTimers = [];
+        // 連続呼び出し防止：最後にED開始した時刻（ms）
+        let _endingLastCall = 0;
+
+        // 世界タイプ定義（最多得票キャラで決まる）
+        const endingWorldTypes = {
+            meisui:      { title: '緑あふれる\n自然の浦安',      emoji: '🌳', color: '#ffd700',  desc: 'イチョウ並木が街を彩る、自然豊かな浦安になりました！' },
+            tsutsuji:    { title: '花と子育ての\n浦安',          emoji: '🌺', color: '#e040fb',  desc: '花畑と公園が広がる、子どもたちの笑顔があふれる浦安！' },
+            meisui_chan:  { title: 'にぎやか\nリゾートの浦安',   emoji: '🏖️', color: '#ff6b6b',  desc: 'ビーチとホテルが立ち並ぶ、観光客でにぎわう浦安！' },
+            bekabune:    { title: 'きれいな海の\n浦安',          emoji: '🌊', color: '#42a5f5',  desc: '三番瀬の海が輝く、豊かな自然が守られた浦安！' },
+            asari:       { title: '伝統と祭りの\n浦安',          emoji: '🏮', color: '#ff8a65',  desc: '浦安三社祭が続く、歴史と伝統を大切にする浦安！' },
+            ryoushi:     { title: 'にぎわう\n漁港の浦安',        emoji: '🐟', color: '#66bb6a',  desc: '活気ある魚市場と漁港、豊かな食文化が根づく浦安！' },
+        };
+
         function showEnding() {
-            if (endingActive) return;
+            const _now = Date.now();
+            // endingActiveフラグ + タイムスタンプ二重ガード（500ms以内の連続呼び出しを全てブロック）
+            if (endingActive || _now - _endingLastCall < 500) return;
+            _endingLastCall = _now;
             endingActive = true;
-            console.log('🎆 ENDING! Year:', getCurrentYear(), 'WL:', getWorldLine());
+            console.log('🎆 ENDING START WL:', getWorldLine());
 
-            playSound('levelup');
+            // 旧EDタイマーを全キャンセル＋旧オーバーレイ要素を削除
+            _edTimers.forEach(id => clearTimeout(id));
+            _edTimers.length = 0;
+            document.querySelectorAll('.ed-overlay').forEach(el => el.remove());
 
-            // Show a brief congratulations banner (non-blocking, map still visible)
-            const banner = document.createElement('div');
-            banner.style.cssText = `
-                position:fixed;top:60px;left:50%;transform:translateX(-50%);z-index:8500;
-                text-align:center;font-family:sans-serif;pointer-events:none;
-                background:rgba(0,0,30,0.8);backdrop-filter:blur(8px);
-                border-radius:20px;padding:24px 48px;
-                border:3px solid rgba(255,215,0,0.6);
-                box-shadow:0 0 40px rgba(255,215,0,0.3);
-                animation:popScale 0.6s cubic-bezier(0.34,1.56,0.64,1);
-            `;
+            // エンディングBGM開始
+            if (typeof playEndingBgm === 'function') playEndingBgm();
+
+            // カメラをエンディングモードにロック
+            camera.endingLock = true;
+            camera.animState = 'idle';
+
             const worldLine = getWorldLine();
-            banner.innerHTML = `
-                <div style="font-size:40px;margin-bottom:8px;">🎆🎇🎆</div>
-                <div style="font-size:36px;font-weight:900;color:#ffd700;text-shadow:0 0 20px rgba(255,215,0,0.8);">2100年 到達！</div>
-                <div style="font-size:20px;color:white;margin-top:8px;">第${worldLine}世界線 クリア！おめでとう！</div>
-                <div style="font-size:14px;color:rgba(255,255,255,0.5);margin-top:8px;">10秒後に次の世界線へのボタンが表示されます</div>
-            `;
-            document.body.appendChild(banner);
 
-            // 10秒間2100年の世界を触れる → その後ボタン表示
-            setTimeout(() => {
-                banner.style.transition = 'opacity 1s';
-                banner.style.opacity = '0';
-                setTimeout(() => banner.remove(), 1000);
-                showNextWorldLineButton();
-                onEventDone();
-            }, 10000);
+            // ── Phase 1: 白フラッシュ + 花火 + タイトルカード（4秒）──
+            const flash = document.createElement('div');
+            flash.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;
+                z-index:8000;background:white;pointer-events:none;
+                animation:colorFlash 1s ease-out forwards;`;
+            document.body.appendChild(flash);
+            setTimeout(() => flash.remove(), 1000);
+
+            // 花火パーティクル
+            for (let i = 0; i < 100; i++) {
+                setTimeout(() => {
+                    const fw = document.createElement('div');
+                    const x = Math.random() * window.innerWidth;
+                    const y = Math.random() * window.innerHeight * 0.75;
+                    const cs = ['#ffd700','#ff6b6b','#42a5f5','#e040fb','#66bb6a','#ff8a65','#ffffff'];
+                    const c = cs[Math.floor(Math.random() * cs.length)];
+                    fw.style.cssText = `position:fixed;left:${x}px;top:${y}px;width:10px;height:10px;
+                        background:${c};border-radius:50%;z-index:8050;pointer-events:none;
+                        box-shadow:0 0 8px ${c};
+                        animation:rainbowConfetti ${1.5 + Math.random() * 1.5}s ease-out forwards;`;
+                    document.body.appendChild(fw);
+                    setTimeout(() => fw.remove(), 3000);
+                }, Math.random() * 2500);
+            }
+
+            // タイトルカード
+            const titleCard = document.createElement('div');
+            titleCard.className = 'ed-overlay';
+            titleCard.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;
+                z-index:8100;display:flex;flex-direction:column;align-items:center;
+                justify-content:center;pointer-events:none;
+                background:rgba(0,0,20,0.65);font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+                animation:fadeInUp 0.8s ease forwards;`;
+            titleCard.innerHTML = `
+                <div style="font-size:80px;margin-bottom:12px;filter:drop-shadow(0 0 20px gold);">🎆</div>
+                <div style="font-size:52px;font-weight:900;color:#ffd700;letter-spacing:6px;
+                    text-shadow:0 0 30px rgba(255,215,0,0.9),0 4px 0 rgba(0,0,0,0.5);">2100年 到達！</div>
+                <div style="font-size:26px;color:#fff;margin-top:14px;
+                    text-shadow:0 2px 8px rgba(0,0,0,0.8);">第${worldLine}世界線 完成！おめでとう！🎉</div>
+            `;
+            document.body.appendChild(titleCard);
+
+            // 4秒後 → タイトルフェードアウト → ツアー開始
+            _edTimers.push(setTimeout(() => {
+                titleCard.style.transition = 'opacity 1.2s';
+                titleCard.style.opacity = '0';
+                _edTimers.push(setTimeout(() => {
+                    titleCard.remove();
+                    _startEndingTour();
+                }, 1200));
+            }, 4000));
+        }
+
+        // ── エンディングマップツアー ──
+        function _startEndingTour() {
+            // この世界線の各キャラ得票数
+            const cycleVotes = {};
+            CHAR_TYPES.forEach(t => {
+                cycleVotes[t] = Math.max(0, (votes[t] || 0) - (decorationOffset[t] || 0));
+            });
+            // 最多得票キャラを確定
+            const dominant = CHAR_TYPES.reduce((a, b) => cycleVotes[a] >= cycleVotes[b] ? a : b);
+
+            // ツアー巡回スポット（focusX/Y はマップ座標、zoom は倍率）
+            const tourStops = [
+                { x: 1396, y: 778, zoom: 1.6,
+                  label: '2100年の浦安全体',
+                  sub:  'みんなの投票でできた未来の街',
+                  color: '#ffd700' },
+                { x: 1020, y: 303, zoom: 2.8,
+                  label: charMetadata.meisui?.name + 'エリア',
+                  sub:  'イチョウ並木と緑の街',
+                  color: charMetadata.meisui?.color || '#ffd700' },
+                { x: 1045, y: 938, zoom: 2.8,
+                  label: charMetadata.meisui_chan?.name + 'エリア',
+                  sub:  'ビーチと観光の街',
+                  color: charMetadata.meisui_chan?.color || '#ff6b6b' },
+                { x: 870, y: 417, zoom: 2.8,
+                  label: charMetadata.ryoushi?.name + 'エリア',
+                  sub:  '漁港とにぎわいの街',
+                  color: charMetadata.ryoushi?.color || '#66bb6a' },
+                { x: 1499, y: 510, zoom: 2.6,
+                  label: charMetadata.bekabune?.name + 'エリア',
+                  sub:  '三番瀬と海の恵み',
+                  color: charMetadata.bekabune?.color || '#42a5f5' },
+            ];
+
+            // テキストオーバーレイ（下部中央に固定）
+            const textBox = document.createElement('div');
+            textBox.className = 'ed-overlay';
+            textBox.style.cssText = `position:fixed;bottom:70px;left:50%;
+                transform:translateX(-50%);z-index:8200;
+                text-align:center;pointer-events:none;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+                transition:opacity 0.6s;`;
+            document.body.appendChild(textBox);
+
+            let stopIdx = 0;
+
+            function goToStop(idx) {
+                if (idx >= tourStops.length) {
+                    // ツアー完了 → カメラを全体に戻してサマリーへ
+                    textBox.style.opacity = '0';
+                    _animateCameraTo(MAP_W / 2, MAP_H / 2, 1.0, 1200, () => {
+                        camera.animProgress = 0;
+                        camera.endingLock = false;
+                        _edTimers.push(setTimeout(() => {
+                            textBox.remove();
+                            _showEndingSummary(dominant, cycleVotes);
+                        }, 600));
+                    });
+                    return;
+                }
+
+                const stop = tourStops[idx];
+
+                // カメラをスポットへスムーズ移動
+                _animateCameraTo(stop.x, stop.y, stop.zoom, 1400, () => {});
+
+                // テキスト更新
+                textBox.style.opacity = '0';
+                _edTimers.push(setTimeout(() => {
+                    textBox.innerHTML = `
+                        <div style="background:rgba(0,0,0,0.62);border-radius:18px;
+                            padding:14px 36px;
+                            border:2px solid ${stop.color};
+                            box-shadow:0 0 24px ${stop.color}55;
+                            backdrop-filter:blur(6px);">
+                            <div style="font-size:26px;font-weight:900;color:${stop.color};
+                                text-shadow:0 0 12px ${stop.color};">${stop.label}</div>
+                            <div style="font-size:15px;color:rgba(255,255,255,0.88);
+                                margin-top:5px;">${stop.sub}</div>
+                        </div>`;
+                    textBox.style.opacity = '1';
+                }, 400));
+
+                // 5秒後に次のスポットへ
+                _edTimers.push(setTimeout(() => goToStop(idx + 1), 5000));
+            }
+
+            goToStop(0);
+        }
+
+        // カメラをなめらかに指定座標・ズームへ移動するヘルパー
+        function _animateCameraTo(targetX, targetY, targetZoom, duration, onComplete) {
+            const startX = camera.focusX;
+            const startY = camera.focusY;
+            const startZoom = camera.targetZoom;
+            const startProgress = camera.animProgress;
+            const startTime = Date.now();
+
+            function tick() {
+                const elapsed = Date.now() - startTime;
+                const t = Math.min(1, elapsed / duration);
+                const e = easeInOutCubic(t);
+                camera.focusX = startX + (targetX - startX) * e;
+                camera.focusY = startY + (targetY - startY) * e;
+                camera.targetZoom = startZoom + (targetZoom - startZoom) * e;
+                camera.animProgress = startProgress + (1 - startProgress) * e;
+                if (t < 1) {
+                    requestAnimationFrame(tick);
+                } else {
+                    camera.focusX = targetX;
+                    camera.focusY = targetY;
+                    camera.targetZoom = targetZoom;
+                    if (onComplete) onComplete();
+                }
+            }
+            requestAnimationFrame(tick);
+        }
+
+        // ── エンディングサマリー（ツアー後）──
+        function _showEndingSummary(dominant, cycleVotes) {
+            const wt = endingWorldTypes[dominant] || endingWorldTypes.meisui;
+            const worldLine = getWorldLine();
+
+            // ①世界タイプ発表（5秒）
+            const typeCard = document.createElement('div');
+            typeCard.className = 'ed-overlay';
+            typeCard.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;
+                z-index:8300;display:flex;flex-direction:column;align-items:center;
+                justify-content:center;pointer-events:none;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+                background:rgba(0,0,20,0.72);animation:fadeInUp 0.8s ease forwards;`;
+            typeCard.innerHTML = `
+                <div style="font-size:16px;color:rgba(255,255,255,0.6);letter-spacing:4px;
+                    margin-bottom:12px;">第${worldLine}世界線の浦安は…</div>
+                <div style="font-size:90px;margin:8px 0;
+                    filter:drop-shadow(0 0 24px ${wt.color});">${wt.emoji}</div>
+                <div style="font-size:44px;font-weight:900;color:${wt.color};white-space:pre-line;
+                    text-align:center;text-shadow:0 0 24px ${wt.color},0 4px 0 rgba(0,0,0,0.5);
+                    line-height:1.3;margin-bottom:16px;">${wt.title}</div>
+                <div style="font-size:20px;color:rgba(255,255,255,0.88);max-width:600px;
+                    text-align:center;line-height:1.7;">${wt.desc}</div>
+            `;
+            document.body.appendChild(typeCard);
+
+            // 5秒後 → ②得票ランキングへ
+            _edTimers.push(setTimeout(() => {
+                typeCard.style.transition = 'opacity 0.8s';
+                typeCard.style.opacity = '0';
+                _edTimers.push(setTimeout(() => { typeCard.remove(); _showEndingRanking(dominant, cycleVotes, worldLine); }, 800));
+            }, 5000));
+        }
+
+        function _showEndingRanking(dominant, cycleVotes, worldLine) {
+            // 投票速報と同じ累計票数で表示（cycleVotesは優勝キャラ判定のみに使用）
+            const sorted = CHAR_TYPES.map(t => ({
+                type: t,
+                name: charMetadata[t]?.name || t,
+                color: charMetadata[t]?.color || '#fff',
+                votes: votes[t] || 0,  // ← 累計票数（投票速報と同じ値）
+            })).sort((a, b) => b.votes - a.votes);
+
+            const medals = ['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'];
+
+            let rowsHTML = sorted.map((c, i) => `
+                <div style="display:flex;align-items:center;gap:14px;padding:10px 0;
+                    border-bottom:1px solid rgba(255,255,255,0.12);
+                    ${i === 0 ? 'background:rgba(255,215,0,0.08);border-radius:8px;padding:10px 8px;' : ''}">
+                    <span style="font-size:24px;width:32px;text-align:center;">${medals[i]}</span>
+                    <span style="font-size:20px;font-weight:bold;color:${c.color};
+                        text-shadow:0 0 8px ${c.color};flex:1;">${c.name}</span>
+                    <span style="font-size:22px;font-weight:900;color:#fff;">${c.votes}票</span>
+                </div>`).join('');
+
+            const rankCard = document.createElement('div');
+            rankCard.className = 'ed-overlay';
+            rankCard.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;
+                z-index:8300;display:flex;flex-direction:column;align-items:center;
+                justify-content:center;pointer-events:none;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+                background:rgba(0,0,20,0.80);animation:fadeInUp 0.8s ease forwards;`;
+            rankCard.innerHTML = `
+                <div style="font-size:15px;color:rgba(255,255,255,0.55);letter-spacing:4px;
+                    margin-bottom:16px;">第${worldLine}世界線 最終結果</div>
+                <div style="font-size:32px;font-weight:900;color:#ffd700;margin-bottom:20px;">
+                    🗳️ 投票ランキング</div>
+                <div style="width:380px;max-width:90vw;">${rowsHTML}</div>
+            `;
+            document.body.appendChild(rankCard);
+
+            // 6秒後 → ③選挙委員会メッセージへ
+            _edTimers.push(setTimeout(() => {
+                rankCard.style.transition = 'opacity 0.8s';
+                rankCard.style.opacity = '0';
+                _edTimers.push(setTimeout(() => { rankCard.remove(); _showElectionMessage(worldLine); }, 800));
+            }, 6000));
+        }
+
+        function _showElectionMessage(worldLine) {
+            const msgCard = document.createElement('div');
+            msgCard.className = 'ed-overlay';
+            msgCard.style.cssText = `position:fixed;top:0;left:0;width:100%;height:100%;
+                z-index:8300;display:flex;flex-direction:column;align-items:center;
+                justify-content:center;pointer-events:none;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+                background:rgba(0,20,10,0.85);animation:fadeInUp 0.8s ease forwards;`;
+            msgCard.innerHTML = `
+                <div style="font-size:56px;margin-bottom:20px;">🗳️</div>
+                <div style="font-size:32px;font-weight:900;color:#ffd700;margin-bottom:24px;
+                    text-align:center;line-height:1.5;
+                    text-shadow:0 0 20px rgba(255,215,0,0.6);">
+                    本物の選挙も<br>あなたの一票が<br>浦安を変える！
+                </div>
+                <div style="font-size:17px;color:rgba(255,255,255,0.82);text-align:center;
+                    line-height:1.9;max-width:500px;">
+                    18歳になったら投票しよう！<br>
+                    みんなの意見が集まるから<br>
+                    街はよくなっていく。
+                </div>
+                <div style="margin-top:28px;font-size:13px;color:rgba(255,255,255,0.4);
+                    letter-spacing:2px;">浦安市選挙管理委員会</div>
+            `;
+            document.body.appendChild(msgCard);
+
+            // 6秒後 → 次の世界線ボタン表示
+            _edTimers.push(setTimeout(() => {
+                msgCard.style.transition = 'opacity 0.8s';
+                msgCard.style.opacity = '0';
+                _edTimers.push(setTimeout(() => {
+                    msgCard.remove();
+                    // エンディングBGMをフェードアウトして通常BGMへ戻す
+                    if (typeof stopEndingBgm === 'function') stopEndingBgm();
+                    showNextWorldLineButton();
+                    onEventDone();
+                }, 800));
+            }, 6000));
         }
 
         // World line offset stored in Firebase (does not change vote counts)
         firebaseDb.ref('worldLineOffset').on('value', snap => {
             worldLineOffset = snap.val() || 0;
             updateYearDisplay();
+        }, err => {
+            console.error('❌ worldLineOffset リスナーエラー:', err);
         });
 
         // cycleStartVotes: この世界線が始まった時の累計票数
@@ -4188,6 +4788,8 @@ h<!DOCTYPE html>
                 firebaseDb.ref('stats/cycleStartVotes').set(totalVotes);
             }
             updateYearDisplay();
+        }, err => {
+            console.error('❌ stats/cycleStartVotes リスナーエラー:', err);
         });
 
         // Decoration offset: per-character vote offsets to reset trees/fish/buildings on world line change
@@ -4210,6 +4812,8 @@ h<!DOCTYPE html>
             } catch(e) {
                 console.warn('decorationOffset listener early fire:', e.message);
             }
+        }, err => {
+            console.error('❌ stats/decorationOffset リスナーエラー:', err);
         });
 
         function showNextWorldLineButton() {
@@ -4234,7 +4838,7 @@ h<!DOCTYPE html>
                 border-radius:20px;
                 padding:20px 50px;
                 cursor:pointer;
-                font-family:sans-serif;
+                font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
                 box-shadow:0 0 30px rgba(102,126,234,0.5), 0 8px 30px rgba(0,0,0,0.3);
                 animation:voteBtnPulse 2s ease-in-out infinite;
             `;
@@ -4247,6 +4851,9 @@ h<!DOCTYPE html>
                 // Immediate local update (don't wait for Firebase roundtrip)
                 worldLineOffset = (worldLineOffset || 0) + 1;
                 cycleStartVotes = totalVotes; // 現在の票数を新世界線の起点にする
+                _lastEraEventEffective = -1;  // 年代イベントチェックをリセット（新世界線開始）
+                if (typeof lastEventVotes !== 'undefined') lastEventVotes = totalVotes; // ランダムイベントカウンターもリセット
+                clearTimeout(window._endingTriggerTimeout);  // エンディング重複起動タイマーをキャンセル
                 decorationOffset = {
                     meisui: votes.meisui || 0,
                     tsutsuji: votes.tsutsuji || 0,
@@ -4505,26 +5112,41 @@ h<!DOCTYPE html>
                 const meta = charMetadata[type];
                 if (!meta) return;
                 const pct = Math.round((count / maxVotes) * 100);
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `<span style="font-size:15px;color:#999;">${idx + 1}</span>`;
+
+                // キャラ別バッチドット（●=溜まり済み ○=未）
+                const bCount = (typeof _cutinBatchCount !== 'undefined' && _cutinBatchCount[type]) || 0;
+                let dotsHtml = '';
+                for (let d = 0; d < CUTIN_BATCH; d++) {
+                    const filled = d < bCount;
+                    dotsHtml += `<span style="display:inline-block;width:10px;height:10px;border-radius:50%;margin-left:3px;background:${filled ? esc(meta.color) : '#ddd'};border:1.5px solid ${esc(meta.color)};${filled ? `box-shadow:0 0 5px ${esc(meta.color)}` : ''}"></span>`;
+                }
+
                 html += `
-                <div style="margin-bottom:6px;">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
-                        <span style="font-weight:bold;font-size:13px;">${esc(medal)} ${esc(meta.name)}</span>
-                        <span style="font-size:13px;color:#555;">${esc(count)}票</span>
+                <div style="padding:7px 0 6px;border-bottom:1px solid #f0f0f0;">
+                    <!-- 1行目：メダル＋キャラ名（全幅使って見切れない） -->
+                    <div style="display:flex;align-items:center;gap:4px;margin-bottom:3px;">
+                        <span style="font-size:18px;flex-shrink:0;line-height:1;">${medal}</span>
+                        <span style="font-weight:900;font-size:17px;line-height:1.2;">${esc(meta.name)}</span>
                     </div>
-                    <div style="background:#e0e0e0;border-radius:4px;height:8px;overflow:hidden;">
-                        <div style="background:${esc(meta.color)};height:100%;width:${pct}%;transition:width 0.4s ease;border-radius:4px;"></div>
+                    <!-- 2行目：バー＋ドット＋票数 -->
+                    <div style="display:flex;align-items:center;gap:4px;">
+                        <div style="flex:1;background:#e8e8e8;border-radius:4px;height:9px;overflow:hidden;">
+                            <div style="background:${esc(meta.color)};height:100%;width:${pct}%;transition:width 0.5s ease;border-radius:4px;"></div>
+                        </div>
+                        <div style="display:flex;align-items:center;flex-shrink:0;gap:2px;">
+                            ${dotsHtml}
+                        </div>
+                        <span style="font-size:22px;font-weight:900;color:${esc(meta.color)};flex-shrink:0;min-width:46px;text-align:right;">${esc(count)}<span style="font-size:13px;font-weight:normal;color:#999;">票</span></span>
                     </div>
                 </div>`;
             });
 
-            // 総投票数
-            html += `<div style="text-align:center;padding:8px 0 4px;border-top:1px solid #e0e0e0;margin-top:4px;">
-                <span style="font-size:13px;color:#888;">総投票数: </span>
-                <span style="font-size:18px;font-weight:900;color:#1a237e;">${totalVotes}票</span>
-            </div>`;
-
             barsEl.innerHTML = html;
+
+            // 総投票数ヘッダー更新
+            const tvEl = document.getElementById('totalVotesDisplay');
+            if (tvEl) tvEl.textContent = totalVotes || 0;
         }
 
         // 投票UIはiPad(vote.html)に移行済み。リスナーはnullチェック付きで残す
@@ -4566,6 +5188,74 @@ h<!DOCTYPE html>
         // getAreaLevel は js/game-logic.js に分離済み
 
         // ============================================
+        // ============================================
+        // iPhoneパネル：設定スクリーン開閉 & 時計
+        // ============================================
+        function openSettings() {
+            const s = document.getElementById('settingsScreen');
+            if (!s) return;
+            // UI状態を最新に同期してから表示
+            const cb = document.getElementById('settingsSoundToggle');
+            if (cb) cb.checked = (typeof soundEnabled !== 'undefined') ? soundEnabled : true;
+            const vol = (typeof masterVolume !== 'undefined') ? masterVolume : 0.8;
+            const slider = document.getElementById('volumeSlider');
+            if (slider) slider.value = Math.round(vol * 100);
+            const label = document.getElementById('volumeLabel');
+            if (label) label.textContent = Math.round(vol * 100) + '%';
+            s.style.display = 'flex';
+            // reflow を挟んでトランジションを確実に起動
+            s.getBoundingClientRect();
+            s.style.transform = 'translateX(0)';
+        }
+
+        function closeSettings() {
+            const s = document.getElementById('settingsScreen');
+            if (!s) return;
+            s.style.transform = 'translateX(100%)';
+            setTimeout(() => { s.style.display = 'none'; }, 340);
+        }
+
+        // ステータスバーの時計を毎分更新
+        function _updatePhoneClock() {
+            const el = document.getElementById('phoneTime');
+            if (!el) return;
+            const now = new Date();
+            const h = now.getHours();
+            const m = String(now.getMinutes()).padStart(2, '0');
+            el.textContent = h + ':' + m;
+        }
+        _updatePhoneClock();
+        setInterval(_updatePhoneClock, 10000);  // 10秒ごとに更新（負荷軽減）
+
+        // フォンフレームの高さをビューポートに合わせてスケール調整
+        function _fitPhoneFrame() {
+            const frame = document.getElementById('phoneFrame');
+            if (!frame) return;
+            const available = window.innerHeight - 36 - 34 - 12; // title + timeline + margin
+            const frameH = 624;
+            if (available < frameH) {
+                const s = available / frameH;
+                frame.style.transform = `scale(${s})`;
+                frame.style.transformOrigin = 'center center';
+            } else {
+                frame.style.transform = '';
+            }
+        }
+        _fitPhoneFrame();
+        window.addEventListener('resize', _fitPhoneFrame);
+
+        // ============================================
+        // バージョン表示（v修正日.修正回数）
+        // ※ Claude が修正を行うたびに手動でインクリメントする定数
+        // ============================================
+        const BUILD_DATE = '20260329';  // 最終修正日（YYYYMMDD）
+        const BUILD_REV  = 15;          // 修正回数（この会話での変更セッション数）
+        (function _initVersion() {
+            const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
+            const el = document.getElementById('versionDisplay');
+            if (el) el.textContent = ver;
+        })();
+
         // チュートリアル（あそびかた）
         // ============================================
         function showTutorial() {
@@ -4586,7 +5276,7 @@ h<!DOCTYPE html>
             panel.style.cssText = `
                 background:white;border-radius:20px;padding:30px;max-width:520px;width:90%;
                 max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);
-                font-family:'Hiragino Sans','Meiryo',sans-serif;position:relative;
+                font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;position:relative;
             `;
             panel.innerHTML = `
                 <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
@@ -4635,6 +5325,18 @@ h<!DOCTYPE html>
                         2100年に到達すると「次の世界線」へ！<br>
                         1889年に戻って何度でもあそべるよ<br>
                         <span style="color:#7b1fa2;font-weight:bold;">世界線ごとにランクが記録される！</span>
+                    </div>
+                </div>
+
+                <div style="background:#f5f5f5;border-radius:12px;padding:14px 16px;margin-bottom:16px;border-left:4px solid #bdbdbd;">
+                    <div style="font-size:13px;font-weight:bold;color:#616161;margin-bottom:6px;">📝 ご注意</div>
+                    <div style="font-size:13px;color:#757575;line-height:1.8;">
+                        本物の選挙では、だれに投票したかは<br>
+                        <span style="font-weight:bold;color:#424242;">絶対に分かりません（秘密投票）。</span><br>
+                        <br>
+                        このゲームのキャラクターや物語は<br>
+                        <span style="font-weight:bold;color:#424242;">めいすいワールドのフィクション</span>です。<br>
+                        楽しみながら選挙に興味をもってね！
                     </div>
                 </div>
 
