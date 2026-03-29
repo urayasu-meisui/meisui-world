@@ -48,7 +48,14 @@ function showQuizModal(charType) {
     let buttonsHTML = '';
     shuffled.forEach((choice, idx) => {
         const isCorrect = choice === quiz.a;
-        const escapedChoice = choice.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        // & → &amp; を先に変換してから他のエスケープ（順序が重要）
+        // " と ' も onclick 属性の破損防止のためエスケープ
+        const escapedChoice = choice
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#x27;');
         buttonsHTML += `<button style="
             width:100%;padding:16px;margin:8px 0;
             background:linear-gradient(135deg,#ffc9c9,#ffb3b3);
@@ -59,11 +66,17 @@ function showQuizModal(charType) {
         " data-correct="${isCorrect}" onclick="handleQuizAnswer(this, ${isCorrect})">${escapedChoice}</button>`;
     });
 
+    // 問題文もエスケープ
+    const safeQ = (quiz.q || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
     const content = document.createElement('div');
     content.id = 'quizModal';
     content.innerHTML = `
         <h2 style="color:#d32f2f;margin-bottom:20px;font-size:24px;text-align:center;">クイズ！</h2>
-        <p style="font-size:20px;color:#333;margin-bottom:20px;text-align:center;line-height:1.6;">${quiz.q}</p>
+        <p style="font-size:20px;color:#333;margin-bottom:20px;text-align:center;line-height:1.6;">${safeQ}</p>
         <div style="display:flex;flex-direction:column;gap:8px;">
             ${buttonsHTML}
         </div>

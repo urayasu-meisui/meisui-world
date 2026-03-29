@@ -109,9 +109,17 @@ function getBgmKeyForYear(year) {
     return 'future';  // 2051年以降
 }
 
+// フェード用interval管理（連続呼び出しでintervalが重ならないよう追跡）
+let _bgmFadeOutInterval = null;
+let _bgmFadeInInterval = null;
+
 function updateBgm() {
     if (!bgmEnabled || !soundEnabled) {
-        // BGMまたはサウンドが無効 → 全停止
+        // BGMまたはサウンドが無効 → 全停止（フェードintervalも止める）
+        clearInterval(_bgmFadeOutInterval);
+        clearInterval(_bgmFadeInInterval);
+        _bgmFadeOutInterval = null;
+        _bgmFadeInInterval = null;
         Object.values(bgmTracks).forEach(a => { a.pause(); });
         currentBgmKey = null;
         return;
@@ -121,17 +129,24 @@ function updateBgm() {
     const newKey = getBgmKeyForYear(year);
     if (newKey === currentBgmKey) return;
 
+    // 以前のフェードintervalを必ずクリア（連続呼び出しでの重複防止）
+    clearInterval(_bgmFadeOutInterval);
+    clearInterval(_bgmFadeInInterval);
+    _bgmFadeOutInterval = null;
+    _bgmFadeInInterval = null;
+
     // 現在の曲をフェードアウト
     if (currentBgmKey && bgmTracks[currentBgmKey]) {
         const oldTrack = bgmTracks[currentBgmKey];
-        const fadeOut = setInterval(() => {
+        _bgmFadeOutInterval = setInterval(() => {
             if (oldTrack.volume > 0.05) {
                 oldTrack.volume = Math.max(0, oldTrack.volume - 0.05);
             } else {
                 oldTrack.pause();
                 oldTrack.volume = 0.3;
                 oldTrack.currentTime = 0;
-                clearInterval(fadeOut);
+                clearInterval(_bgmFadeOutInterval);
+                _bgmFadeOutInterval = null;
             }
         }, 100);
     }
@@ -141,11 +156,12 @@ function updateBgm() {
     const newTrack = bgmTracks[newKey];
     newTrack.volume = 0;
     newTrack.play().then(() => {
-        const fadeIn = setInterval(() => {
+        _bgmFadeInInterval = setInterval(() => {
             if (newTrack.volume < 0.25) {
                 newTrack.volume = Math.min(0.3, newTrack.volume + 0.05);
             } else {
-                clearInterval(fadeIn);
+                clearInterval(_bgmFadeInInterval);
+                _bgmFadeInInterval = null;
             }
         }, 100);
     }).catch(() => {

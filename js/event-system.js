@@ -372,6 +372,7 @@ function canTriggerEvent(event) {
     if (event.trigger === 'random') return Math.random() < prob;
     if (event.trigger.includes('votes>')) {
         const threshold = parseInt(event.trigger.split('>')[1]);
+        if (isNaN(threshold)) return false; // フォーマット不正は安全に無効化
         return getEffectiveVotes() > threshold && Math.random() < prob;
     }
     if (event.trigger.startsWith('char_')) {
@@ -379,6 +380,7 @@ function canTriggerEvent(event) {
         if (match) {
             const charType = match[1];
             const threshold = parseInt(match[2]);
+            if (isNaN(threshold)) return false;
             const charVotes = Math.max(0, (votes[charType] || 0) - (decorationOffset[charType] || 0));
             return charVotes > threshold && Math.random() < prob;
         }

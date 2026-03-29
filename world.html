@@ -4827,6 +4827,8 @@ h<!DOCTYPE html>
             oc.width = img.naturalWidth;
             oc.height = img.naturalHeight;
             const octx = oc.getContext('2d');
+            // getContext が null になる環境（メモリ不足・セキュリティ制限等）では元画像をそのまま返す
+            if (!octx) { console.warn('fillInnerTransparency: getContext failed, skipping'); return img; }
             octx.drawImage(img, 0, 0);
             const id = octx.getImageData(0, 0, oc.width, oc.height);
             const d = id.data;
