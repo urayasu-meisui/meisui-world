@@ -105,12 +105,16 @@
       margin-top: 8px;
       color: #333;
     }
-    .char-preview {
-      font-size: 0.7em;
-      font-weight: 600;
-      margin-top: 4px;
-      min-height: 1.2em;
+    .char-name-line1 {
+      font-size: 0.85em;
+      font-weight: 700;
       color: #888;
+      line-height: 1.2;
+    }
+    .char-name-line2 {
+      font-size: 1.15em;
+      font-weight: 900;
+      line-height: 1.2;
     }
 
     /* 感謝オーバーレイ */
@@ -247,21 +251,8 @@
       return null; // 最高レベル
     }
 
-    // 予告テキストを更新
-    function updatePreviews() {
-      CHAR_TYPES.forEach(type => {
-        const el = document.getElementById('preview-' + type);
-        if (!el) return;
-        const ms = getNextMilestone(type);
-        if (ms) {
-          el.textContent = `あと${ms.remaining}票で「${ms.label}」！`;
-          el.style.color = charMetadata[type].color;
-        } else {
-          el.textContent = '🎉 最高レベル！';
-          el.style.color = '#ffd700';
-        }
-      });
-    }
+    // 予告テキスト → 削除済み
+    function updatePreviews() { /* no-op */ }
 
     // キャラカードを生成（config.jsのCHAR_TYPES/charMetadata/charImagesを使用）
     function renderGrid() {
@@ -279,17 +270,21 @@
         imgEl.alt = meta.name;
         card.appendChild(imgEl);
 
-        const name = document.createElement('div');
-        name.className = 'char-name';
-        name.textContent = meta.name;
-        name.style.color = meta.color;
-        card.appendChild(name);
-
-        // 予告テキスト
-        const preview = document.createElement('div');
-        preview.className = 'char-preview';
-        preview.id = 'preview-' + type;
-        card.appendChild(preview);
+        // 名前を2段で表示
+        const nameMap = {
+            meisui:      ['イチョウ', 'めいすいくん'],
+            tsutsuji:    ['ツツジ', 'めいちゃん'],
+            meisui_chan:  ['ビーナス', 'めいちゃん'],
+            bekabune:    ['浦安の海', 'めいすいくん'],
+            asari:       ['屋形船', 'めいすいくん'],
+            ryoushi:     ['漁師', 'めいすいくん'],
+        };
+        const lines = nameMap[type] || [meta.name, ''];
+        const nameWrap = document.createElement('div');
+        nameWrap.className = 'char-name';
+        nameWrap.style.color = meta.color;
+        nameWrap.innerHTML = '<div class="char-name-line1">' + lines[0] + '</div><div class="char-name-line2">' + lines[1] + '</div>';
+        card.appendChild(nameWrap);
 
         card.addEventListener('click', () => vote(type));
         grid.appendChild(card);
