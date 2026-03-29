@@ -3230,6 +3230,22 @@ h<!DOCTYPE html>
                     const dy = char.targetY - char.y;
                     const dist = Math.sqrt(dx * dx + dy * dy);
 
+                    // スタック検出: 10秒以上walkingで距離が縮まらない場合は強制リセット
+                    if (!char._lastDist) char._lastDist = dist;
+                    if (!char._stuckTimer) char._stuckTimer = 0;
+                    if (Math.abs(dist - char._lastDist) < 0.5) {
+                        char._stuckTimer += deltaTime;
+                        if (char._stuckTimer > 10000) {
+                            char.state = 'idle';
+                            char.stateTimer = 0;
+                            char._stuckTimer = 0;
+                            char._lastDist = null;
+                        }
+                    } else {
+                        char._stuckTimer = 0;
+                    }
+                    char._lastDist = dist;
+
                     if (dist < 15) {
                         char.state = 'idle';
                         char.stateTimer = 0;
@@ -3253,8 +3269,10 @@ h<!DOCTYPE html>
                         // 海キャラはパネル左端まで移動可、陸キャラはパネル右側に制限
                         const terrain = charTerrain[char.type];
                         const minX = (terrain === 'sea') ? 350 : 620;
+                        // y上限: 海キャラはMAP_H-5（海ゾーン下端のウェイポイントに届くよう余裕を持たせる）
+                        const maxY = (terrain === 'sea') ? MAP_H - 5 : MAP_H - 50;
                         char.x = Math.max(minX, Math.min(MAP_W - 50, char.x));
-                        char.y = Math.max(80, Math.min(MAP_H - 50, char.y));
+                        char.y = Math.max(80, Math.min(maxY, char.y));
                     }
                 }
             });
