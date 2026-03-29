@@ -3457,63 +3457,69 @@ h<!DOCTYPE html>
                 // ── ケーブル本線（往路・復路 2本） ──
                 const rdx = rex - rsx, rdy = rey - rsy;
                 const rlen = Math.hypot(rdx, rdy);
-                const rnx = -rdy / rlen * 5, rny = rdx / rlen * 5; // 法線オフセット5px
+                const rnx = -rdy / rlen * 6, rny = rdx / rlen * 6; // 法線オフセット6px
                 ctx.lineWidth = 1.5;
                 ctx.setLineDash([]);
                 [[rnx, rny], [-rnx, -rny]].forEach(([ox, oy]) => {
-                    ctx.strokeStyle = 'rgba(120,40,180,0.7)';
+                    ctx.strokeStyle = 'rgba(160,30,30,0.75)';
                     ctx.beginPath();
                     ctx.moveTo(rsx + ox, rsy + oy);
                     ctx.lineTo(rex + ox, rey + oy);
                     ctx.stroke();
                 });
 
-                // ── 乗り物（ゴンドラ）3個がぐるぐる周回 ──
-                // t=0〜1 で往路、t=1〜2 で復路のループ（周期 20秒）
+                // ── 乗り物（ゴンドラ）3個：赤・白・緑 ──
+                // 各ゴンドラが独立して始点↔終点を往復（周期24秒、1/3ずつ位相ずれ）
                 const GONDOLA_N = 3;
-                const PERIOD = 20000; // 20秒で1往復
+                const PERIOD = 24000; // 24秒で1往復
+                const gondolaColors = [
+                    { fill: '#e53935', stroke: '#7f0000', window: 'rgba(255,255,255,0.9)' }, // 赤
+                    { fill: '#f5f5f5', stroke: '#9e9e9e', window: 'rgba(200,200,255,0.9)' }, // 白
+                    { fill: '#43a047', stroke: '#1b5e20', window: 'rgba(255,255,255,0.9)' }, // 緑
+                ];
                 for (let g = 0; g < GONDOLA_N; g++) {
-                    // 各ゴンドラは等間隔にずらす
+                    // 各ゴンドラは1/3ずつ位相をずらす
                     const phase = ((now / PERIOD) + g / GONDOLA_N) % 1; // 0〜1
-                    // 0〜0.5: 始点→終点、0.5〜1: 終点→始点
+                    // 0〜0.5: 始点→終点（往路）、0.5〜1: 終点→始点（復路）
                     const goingForward = phase < 0.5;
-                    const t = goingForward ? phase * 2 : (phase - 0.5) * 2; // 0〜1
-                    // 往路・復路でオフセット方向を変える
+                    const t = goingForward ? phase * 2 : 1 - (phase - 0.5) * 2; // 0→1→0
+                    // 往路は上側ケーブル、復路は下側ケーブル
                     const [ox, oy] = goingForward ? [rnx, rny] : [-rnx, -rny];
                     const gx = rsx + ox + (rex - rsx) * t;
                     const gy = rsy + oy + (rey - rsy) * t;
 
-                    // ゴンドラ本体（吊り下げロープ付き）
+                    const col = gondolaColors[g];
                     const ropeLen = 10;
+                    const gw = 16, gh = 11;
+
                     // 吊りロープ
-                    ctx.strokeStyle = 'rgba(80,0,120,0.8)';
+                    ctx.strokeStyle = 'rgba(100,10,10,0.9)';
                     ctx.lineWidth = 1;
                     ctx.beginPath();
                     ctx.moveTo(gx, gy);
                     ctx.lineTo(gx, gy + ropeLen);
                     ctx.stroke();
-                    // ゴンドラ箱（小さな丸角四角）
-                    const gw = 14, gh = 10;
-                    ctx.fillStyle = '#ce93d8';
-                    ctx.strokeStyle = '#7b1fa2';
+                    // ゴンドラ箱
+                    ctx.fillStyle = col.fill;
+                    ctx.strokeStyle = col.stroke;
                     ctx.lineWidth = 1.5;
                     ctx.beginPath();
                     ctx.roundRect(gx - gw / 2, gy + ropeLen, gw, gh, 3);
                     ctx.fill();
                     ctx.stroke();
-                    // 窓（小さな白丸）
-                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    // 窓（白丸2個）
+                    ctx.fillStyle = col.window;
                     ctx.beginPath();
-                    ctx.arc(gx - 3, gy + ropeLen + gh / 2, 2, 0, Math.PI * 2);
+                    ctx.arc(gx - 4, gy + ropeLen + gh / 2, 2, 0, Math.PI * 2);
                     ctx.fill();
                     ctx.beginPath();
-                    ctx.arc(gx + 3, gy + ropeLen + gh / 2, 2, 0, Math.PI * 2);
+                    ctx.arc(gx + 4, gy + ropeLen + gh / 2, 2, 0, Math.PI * 2);
                     ctx.fill();
                 }
 
                 // ── 駅舎マーク（始点・終点） ──
                 [{ x: rsx, y: rsy }, { x: rex, y: rey }].forEach(p => {
-                    ctx.fillStyle = '#7b1fa2';
+                    ctx.fillStyle = '#c62828';
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
@@ -3526,9 +3532,9 @@ h<!DOCTYPE html>
                     ctx.fillText('R', p.x, p.y + 4);
                 });
 
-                // ── ラベル ──
-                ctx.fillStyle = '#9C27B0';
-                ctx.strokeStyle = 'rgba(255,255,255,0.9)';
+                // ── ラベル（赤） ──
+                ctx.fillStyle = '#cc0000';
+                ctx.strokeStyle = 'rgba(255,255,255,0.95)';
                 ctx.lineWidth = 3;
                 ctx.font = 'bold 14px sans-serif';
                 ctx.textAlign = 'center';
