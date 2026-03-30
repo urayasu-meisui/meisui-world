@@ -4324,6 +4324,8 @@ h<!DOCTYPE html>
 
         // 年代イベント取りこぼし防止：最後にチェックしたステップ数を記録
         let _lastEraEventStep = -1;
+        // レベルアップ二重発火防止: 前回表示したレベルを記録
+        let _lastShownLevelMin = -1;
         // 一度に遡る最大件数
         const _MAX_ERA_CATCHUP = 4;
 
@@ -4433,9 +4435,8 @@ h<!DOCTYPE html>
         function _runRemoteVoteSequence(charType) {
             console.log('🎆 カットイン発火（3票バッチ）:', charType);
 
-            // 投票前の状態を保存
+            // 投票前の状態を保存（_lastShownLevelMinで二重発火防止）
             const prevVotes = totalVotes - 1;
-            const oldLevel = getLevelAtTotal(totalVotes - 1);
 
             // キャラお祝いパーティクル（カットイン時は大量に）
             const char = characters.find(c => c.type === charType);
@@ -4488,9 +4489,10 @@ h<!DOCTYPE html>
                     queueEvent(() => showVoteEffect(charType));
                     // 年代イベントをキューに積む（前回チェック以降の全年度を遡って確認）
                     _checkAndQueueEraEvents();
-                    // レベルアップチェック
+                    // レベルアップチェック（_lastShownLevelMinで二重発火防止）
                     const newLevel = getCurrentLevel();
-                    if (newLevel.min > oldLevel.min) {
+                    if (newLevel.min > _lastShownLevelMin) {
+                        _lastShownLevelMin = newLevel.min;
                         queueEvent(() => { showLevelUpAnimation(newLevel); playSound('levelup'); });
                     }
                     // 建物アンロック
@@ -4561,7 +4563,6 @@ h<!DOCTYPE html>
 
             // 投票前の票数を保存（建物アンロック判定用）
             const prevVotes = totalVotes;
-            const oldLevel = getCurrentLevel();
 
             // Firebase書き込み
             votesRef.child(charType).transaction(current => (current || 0) + 1).then(() => {
@@ -4622,9 +4623,10 @@ h<!DOCTYPE html>
                     // 年代イベント（前回チェック以降の全年度を遡って確認）
                     _checkAndQueueEraEvents();
 
-                    // レベルアップチェック
+                    // レベルアップチェック（_lastShownLevelMinで二重発火防止）
                     const newLevel = getCurrentLevel();
-                    if (newLevel.min > oldLevel.min) {
+                    if (newLevel.min > _lastShownLevelMin) {
+                        _lastShownLevelMin = newLevel.min;
                         queueEvent(() => { showLevelUpAnimation(newLevel); playSound('levelup'); });
                     }
 
@@ -5059,117 +5061,127 @@ h<!DOCTYPE html>
             const existing = document.getElementById('nextWorldLineBtn');
             if (existing) existing.remove();
 
-            const nextWL = getWorldLine() + 1;
-            const btn = document.createElement('button');
-            btn.id = 'nextWorldLineBtn';
-            btn.innerHTML = '🌀 第' + nextWL + '世界線へ →';
-            btn.style.cssText = `
-                position:fixed;
-                bottom:50%;
-                left:50%;
-                transform:translateX(-50%);
-                z-index:9100; /* cutinOverlay(9000)より上 */
-                font-size:28px;
-                font-weight:bold;
-                color:#fff;
-                background:linear-gradient(135deg, #667eea, #764ba2);
-                border:3px solid #ffd700;
-                border-radius:20px;
-                padding:20px 50px;
-                cursor:pointer;
+            // カウントダウン表示（10秒）
+            const COUNTDOWN_SEC = 10;
+            const overlay = document.createElement('div');
+            overlay.id = 'nextWorldLineBtn';
+            overlay.style.cssText = `
+                position:fixed;top:0;left:0;width:100%;height:100%;
+                z-index:9100;display:flex;flex-direction:column;
+                align-items:center;justify-content:center;
+                pointer-events:none;
                 font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
-                box-shadow:0 0 30px rgba(102,126,234,0.5), 0 8px 30px rgba(0,0,0,0.3);
-                animation:voteBtnPulse 2s ease-in-out infinite;
             `;
-            btn.onclick = function() {
-                console.log('🌀 World line button clicked! Current WL:', getWorldLine());
-                btn.remove();
-                // Clean up any remaining fireworks interval
-                if (activeFwInterval) { clearInterval(activeFwInterval); activeFwInterval = null; }
 
-                // Immediate local update (don't wait for Firebase roundtrip)
-                worldLineOffset = (worldLineOffset || 0) + 1;
-                cycleStartVotes = totalVotes; // 現在の票数を新世界線の起点にする
-                // キャラ別の世界線開始票数を記録
-                CHAR_TYPES.forEach(t => { cycleStartPerChar[t] = votes[t] || 0; });
-                _lastEraEventStep = -1;  // 年代イベントチェックをリセット（新世界線開始）
-                CHAR_TYPES.forEach(t => { _cutinBatchCount[t] = 0; }); // カットインバッチカウンターリセット
-                _prevVoteCounts = { ...votes }; // バッチ検知用の前回票数もリセット
-                if (typeof lastEventVotes !== 'undefined') lastEventVotes = totalVotes; // ランダムイベントカウンターもリセット
-                clearTimeout(window._endingTriggerTimeout);  // エンディング重複起動タイマーをキャンセル
-                decorationOffset = {
+            const countEl = document.createElement('div');
+            countEl.style.cssText = 'font-size:80px;font-weight:900;color:#ffd700;text-shadow:0 0 30px rgba(255,215,0,0.8),0 4px 0 rgba(0,0,0,0.5);';
+            countEl.textContent = COUNTDOWN_SEC;
+
+            const msgEl = document.createElement('div');
+            msgEl.style.cssText = 'font-size:28px;color:#fff;margin-top:16px;text-shadow:0 2px 8px rgba(0,0,0,0.8);';
+            msgEl.textContent = COUNTDOWN_SEC + '秒後 つぎのはじまりへ';
+
+            overlay.appendChild(countEl);
+            overlay.appendChild(msgEl);
+            document.body.appendChild(overlay);
+
+            let remaining = COUNTDOWN_SEC;
+            const countdownInterval = setInterval(() => {
+                remaining--;
+                if (remaining > 0) {
+                    countEl.textContent = remaining;
+                    msgEl.textContent = remaining + '秒後 つぎのはじまりへ';
+                } else {
+                    clearInterval(countdownInterval);
+                    overlay.remove();
+                    _transitionToNextWorldLine();
+                }
+            }, 1000);
+        }
+
+        // 世界線遷移処理（カウントダウン完了後に実行）
+        function _transitionToNextWorldLine() {
+            console.log('🌀 World line transition! Current WL:', getWorldLine());
+            // Clean up any remaining fireworks interval
+            if (activeFwInterval) { clearInterval(activeFwInterval); activeFwInterval = null; }
+
+            // Immediate local update (don't wait for Firebase roundtrip)
+            worldLineOffset = (worldLineOffset || 0) + 1;
+            cycleStartVotes = totalVotes;
+            CHAR_TYPES.forEach(t => { cycleStartPerChar[t] = votes[t] || 0; });
+            _lastEraEventStep = -1;
+            CHAR_TYPES.forEach(t => { _cutinBatchCount[t] = 0; });
+            _lastShownLevelMin = -1;
+            _prevVoteCounts = { ...votes };
+            if (typeof lastEventVotes !== 'undefined') lastEventVotes = totalVotes;
+            clearTimeout(window._endingTriggerTimeout);
+            decorationOffset = {
+                meisui: votes.meisui || 0,
+                tsutsuji: votes.tsutsuji || 0,
+                meisui_chan: votes.meisui_chan || 0,
+                bekabune: votes.bekabune || 0,
+                asari: votes.asari || 0,
+                ryoushi: votes.ryoushi || 0
+            };
+            updateYearDisplay();
+            updateVoteDisplay();
+
+            // Save finished world line's rank data to Firebase
+            const finishedWLDisplay = worldLineOffset;
+            const rankInfo = getOverallRank();
+            const wlTurnout = ((totalVotes * 17) / 171322 * 100).toFixed(1);
+            const wlRecord = {
+                worldLine: finishedWLDisplay,
+                rank: rankInfo.current.rank,
+                title: rankInfo.current.title,
+                star: rankInfo.current.star,
+                totalVotesAtEnd: totalVotes,
+                turnoutPercent: wlTurnout,
+                votes: {
                     meisui: votes.meisui || 0,
                     tsutsuji: votes.tsutsuji || 0,
                     meisui_chan: votes.meisui_chan || 0,
                     bekabune: votes.bekabune || 0,
                     asari: votes.asari || 0,
                     ryoushi: votes.ryoushi || 0
-                };
-                updateYearDisplay();
-                updateVoteDisplay();
-
-                // Save finished world line's rank data to Firebase
-                // (worldLineOffset was already +1, so finished WL display number = worldLineOffset)
-                const finishedWLDisplay = worldLineOffset; // e.g. was WL11, now offset=11, display=11
-                const rankInfo = getOverallRank();
-                const wlTurnout = ((totalVotes * 17) / 171322 * 100).toFixed(1);
-                const wlRecord = {
-                    worldLine: finishedWLDisplay,
-                    rank: rankInfo.current.rank,
-                    title: rankInfo.current.title,
-                    star: rankInfo.current.star,
-                    totalVotesAtEnd: totalVotes,
-                    turnoutPercent: wlTurnout,
-                    votes: {
-                        meisui: votes.meisui || 0,
-                        tsutsuji: votes.tsutsuji || 0,
-                        meisui_chan: votes.meisui_chan || 0,
-                        bekabune: votes.bekabune || 0,
-                        asari: votes.asari || 0,
-                        ryoushi: votes.ryoushi || 0
-                    },
-                    areas: {},
-                    timestamp: Date.now()
-                };
-                areaRanks.forEach(area => {
-                    const lv = getAreaLevel(area.key);
-                    wlRecord.areas[area.key] = {
-                        name: area.name,
-                        level: lv,
-                        levelName: area.levels[lv],
-                        votes: votes[area.key] || 0
-                    };
-                });
-                firebaseDb.ref('stats/worldLineHistory/' + finishedWLDisplay).set(wlRecord).catch(err => {
-                    console.error('Failed to save world line history:', err);
-                });
-
-                // Persist to Firebase
-                firebaseDb.ref('worldLineOffset').set(worldLineOffset);
-                firebaseDb.ref('stats/cycleStartVotes').set(cycleStartVotes);
-                firebaseDb.ref('stats/decorationOffset').set(decorationOffset).catch(err => {
-                    console.error('World line transition failed:', err);
-                });
-                firebaseDb.ref('stats/cycleStartPerChar').set(cycleStartPerChar);
-
-                // Reset built buildings
-                builtBuildings = [];
-                localStorage.setItem('meisui_builtBuildings', '[]');
-                saveBuildingsToFirebase();
-                endingActive = false;
-
-                // 世界線遷移後の最初の lastVoteChar 変化を「初回」として扱う
-                // （遷移直前の古い値で演出が発火するのを防ぐ）
-                remoteVoteInitialLoad = true;
-
-                // イベントキューとフラグもリセット
-                eventQueue.length = 0;
-                eventQueuePlaying = false;
-                window.voteInProgress = false;
-
-                playSound('vote');
+                },
+                areas: {},
+                timestamp: Date.now()
             };
-            document.body.appendChild(btn);
+            areaRanks.forEach(area => {
+                const lv = getAreaLevel(area.key);
+                wlRecord.areas[area.key] = {
+                    name: area.name,
+                    level: lv,
+                    levelName: area.levels[lv],
+                    votes: votes[area.key] || 0
+                };
+            });
+            firebaseDb.ref('stats/worldLineHistory/' + finishedWLDisplay).set(wlRecord).catch(err => {
+                console.error('Failed to save world line history:', err);
+            });
+
+            // Persist to Firebase
+            firebaseDb.ref('worldLineOffset').set(worldLineOffset);
+            firebaseDb.ref('stats/cycleStartVotes').set(cycleStartVotes);
+            firebaseDb.ref('stats/decorationOffset').set(decorationOffset).catch(err => {
+                console.error('World line transition failed:', err);
+            });
+            firebaseDb.ref('stats/cycleStartPerChar').set(cycleStartPerChar);
+
+            // Reset built buildings
+            builtBuildings = [];
+            localStorage.setItem('meisui_builtBuildings', '[]');
+            saveBuildingsToFirebase();
+            endingActive = false;
+
+            remoteVoteInitialLoad = true;
+
+            eventQueue.length = 0;
+            eventQueuePlaying = false;
+            window.voteInProgress = false;
+
+            playSound('vote');
         }
 
         function updateVoteDisplay() {
