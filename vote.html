@@ -97,14 +97,47 @@
     .char-name {
       font-weight: 900;
       margin-top: 4px;
-      line-height: 1.3;
+      line-height: 1.2;
       flex-shrink: 0;
+      font-size: 1.3em;
+      white-space: nowrap;
     }
-    .char-name-line1,
-    .char-name-line2 {
-      font-size: 1em;
-      font-weight: 900;
-      line-height: 1.25;
+
+    /* 確認ダイアログ */
+    .confirm-overlay {
+      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 400; display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.5);
+      animation: thankIn 0.2s ease-out;
+    }
+    .confirm-card {
+      background: white; border-radius: 20px; padding: 28px 32px;
+      text-align: center; max-width: 360px; width: 85%;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+    }
+    .confirm-card img {
+      width: 120px; height: auto; margin-bottom: 12px;
+    }
+    .confirm-name {
+      font-size: 1.4em; font-weight: 900; margin-bottom: 6px;
+    }
+    .confirm-msg {
+      font-size: 1.1em; color: #555; margin-bottom: 20px;
+    }
+    .confirm-btns {
+      display: flex; gap: 12px; justify-content: center;
+    }
+    .confirm-btns button {
+      font-size: 1.1em; font-weight: bold; padding: 12px 32px;
+      border-radius: 30px; border: none; cursor: pointer;
+      font-family: inherit;
+    }
+    .confirm-yes {
+      background: linear-gradient(135deg, #42a5f5, #1565c0); color: white;
+      box-shadow: 0 4px 12px rgba(21,101,192,0.4);
+    }
+    .confirm-no {
+      background: #e0e0e0; color: #666;
     }
 
     /* 感謝オーバーレイ */
@@ -260,29 +293,58 @@
         imgEl.alt = meta.name;
         card.appendChild(imgEl);
 
-        // 名前を2段で表示
-        const nameMap = {
-            meisui:      ['イチョウ', 'めいすいくん'],
-            tsutsuji:    ['ツツジ', 'めいちゃん'],
-            meisui_chan:  ['ビーナス', 'めいちゃん'],
-            bekabune:    ['浦安の海', 'めいすいくん'],
-            asari:       ['屋形船', 'めいすいくん'],
-            ryoushi:     ['漁師', 'めいすいくん'],
+        // 名前を1行で大きく表示
+        const shortNames = {
+            meisui: 'イチョウめいすいくん',
+            tsutsuji: 'ツツジめいちゃん',
+            meisui_chan: 'ビーナスめいちゃん',
+            bekabune: '浦安の海めいすいくん',
+            asari: '屋形船めいすいくん',
+            ryoushi: '漁師めいすいくん',
         };
-        const lines = nameMap[type] || [meta.name, ''];
-        const nameWrap = document.createElement('div');
-        nameWrap.className = 'char-name';
-        nameWrap.style.color = meta.color;
-        nameWrap.innerHTML = '<div class="char-name-line1">' + lines[0] + '</div><div class="char-name-line2">' + lines[1] + '</div>';
-        card.appendChild(nameWrap);
+        const nameEl = document.createElement('div');
+        nameEl.className = 'char-name';
+        nameEl.style.color = meta.color;
+        nameEl.textContent = shortNames[type] || meta.name;
+        card.appendChild(nameEl);
 
         card.addEventListener('click', () => vote(type));
         grid.appendChild(card);
       });
     }
 
-    // 投票処理
+    // 確認ダイアログを表示してから投票
     function vote(type) {
+      if (voting) return;
+      const meta = charMetadata[type];
+      const img = charImages[type];
+
+      const overlay = document.createElement('div');
+      overlay.className = 'confirm-overlay';
+      overlay.innerHTML = `
+        <div class="confirm-card">
+          ${img?.src ? '<img src="' + img.src + '" alt="' + meta.name + '">' : ''}
+          <div class="confirm-name" style="color:${meta.color};">${meta.name}</div>
+          <div class="confirm-msg">に投票しますか？</div>
+          <div class="confirm-btns">
+            <button class="confirm-no" id="confirmNo">いいえ</button>
+            <button class="confirm-yes" id="confirmYes">はい</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(overlay);
+
+      overlay.querySelector('#confirmNo').addEventListener('click', () => {
+        overlay.remove();
+      });
+      overlay.querySelector('#confirmYes').addEventListener('click', () => {
+        overlay.remove();
+        doVote(type);
+      });
+    }
+
+    // 実際の投票処理
+    function doVote(type) {
       if (voting) return;
       voting = true;
 
