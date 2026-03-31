@@ -347,45 +347,46 @@ const locationDialogues = {
 };
 
 const characters = [
-    { name: 'イチョウめいすいくん', type: 'meisui', x: 793, y: 412, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['投票に行こう！', 'みんなの一票が大事！', 'イチョウの木を植えるぞ！', '浦安を愛してます！'] },
-    { name: 'ツツジめいちゃん', type: 'tsutsuji', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.75, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['お花を植えよう！', '子どもたちの笑顔が好き', 'きれいな花壇にするよ'] },
-    { name: 'ビーナスめいちゃん', type: 'meisui_chan', x: 935, y: 364, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['選挙ってステキ💕', '観光で浦安を元気に！', 'みんなで作る未来'] },
-    { name: '浦安の海めいすいくん', type: 'bekabune', x: 1150, y: 500, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['三番瀬を守ろう！', '海をきれいにするよ', 'お魚さん元気？'] },
-    { name: '屋形船めいすいくん', type: 'asari', x: 850, y: 870, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね'] },
-    { name: '漁師めいすいくん', type: 'ryoushi', x: 730, y: 650, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝'] },
+    { name: 'イチョウめいすいくん', type: 'meisui', x: 793, y: 412, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['投票に行こう！', 'みんなの一票が大事！', 'イチョウの木を植えるぞ！', '浦安を愛してます！', 'ごっそんなんべ（ごちそうさま）！', '浦安は「うらやすの国」だよ'] },
+    { name: 'ツツジめいちゃん', type: 'tsutsuji', x: 660, y: 200, targetX: 0, targetY: 0, speed: 0.75, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['お花を植えよう！', '子どもたちの笑顔が好き', 'きれいな花壇にするよ', 'フラワー通りを花でいっぱいに！'] },
+    { name: 'ビーナスめいちゃん', type: 'meisui_chan', x: 935, y: 364, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['選挙ってステキ💕', '観光で浦安を元気に！', 'みんなで作る未来', '舞浜の由来はマイアミじゃないよ💡'] },
+    { name: '浦安の海めいすいくん', type: 'bekabune', x: 1150, y: 500, targetX: 0, targetY: 0, speed: 0.8, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['三番瀬を守ろう！', '海をきれいにするよ', 'お魚さん元気？', '黒い水事件を忘れないで'] },
+    { name: '屋形船めいすいくん', type: 'asari', x: 850, y: 870, targetX: 0, targetY: 0, speed: 0.7, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['屋形船に乗ろうよ！', '浦安の伝統を守る！', '提灯がきれいだね', 'おいは祭りが好きだよ。まえだー！', '焼きあさり食べてかねえ？'] },
+    { name: '漁師めいすいくん', type: 'ryoushi', x: 730, y: 650, targetX: 0, targetY: 0, speed: 0.65, state: 'idle', stateTimer: 0, currentLandmark: null, targetLandmark: 0, routeIndex: 0, thoughts: ['きょうも大漁だ！', '魚市場をにぎやかに！', '海の恵みに感謝', 'はええとこ投票しねと干上がっちゃに！', 'べか舟は東京湾で一番ちいせえ舟だよ'] },
 ];
 
 const eraLandPolygons = {
-    // 1889-1963: Just the old fishing village (元町 only)
+    // 1889: 元町のみ
     1889: [
-        [540, 100], [660, 80], [720, 100], [740, 200],
-        [730, 350], [700, 450], [650, 500], [580, 480],
-        [520, 400], [500, 300], [510, 200]
+        [862, 83], [883, 149], [881, 237], [887, 334], [899, 347],
+        [893, 381], [868, 446], [848, 519], [838, 568], [860, 603],
+        [883, 654], [892, 664], [967, 473], [990, 441], [1066, 409],
+        [1098, 396], [1121, 322], [1150, 258], [1170, 231], [1193, 214],
+        [1073, 97], [1031, 134], [959, 93], [960, 79]
     ],
-    // 1968: First reclamation (東野・富岡・今川 added)
+    // 1968: 東野・富岡・今川
     1968: [
-        [540, 100], [660, 80], [750, 90], [850, 120],
-        [880, 250], [870, 400], [830, 500], [750, 550],
-        [650, 520], [580, 480], [520, 400], [500, 300], [510, 200]
+        [1063, 413], [989, 440], [968, 464], [890, 664],
+        [1002, 564], [1074, 636], [1166, 532], [1063, 426]
     ],
-    // 1971: Second reclamation (海楽・美浜・入船)
+    // 1971: 海楽・美浜・入船
     1971: [
-        [540, 100], [660, 80], [800, 80], [950, 120],
-        [970, 300], [950, 450], [900, 550], [800, 580],
-        [700, 560], [600, 500], [520, 400], [500, 300], [510, 200]
+        [1194, 220], [1160, 241], [1143, 271], [1118, 337],
+        [1096, 397], [1067, 412], [1088, 436], [1180, 524],
+        [1327, 388], [1231, 290]
     ],
-    // 1975: Maihama added
+    // 1975: 舞浜
     1975: [
-        [490, 100], [660, 80], [800, 80], [950, 120],
-        [970, 300], [950, 450], [900, 580], [800, 620],
-        [650, 650], [530, 600], [480, 500], [470, 350], [480, 200]
+        [839, 587], [724, 670], [662, 773], [661, 911],
+        [879, 970], [946, 919], [1034, 824], [873, 659]
     ],
-    // 1981: All reclamation complete (高洲・日の出・明海・港・千鳥)
+    // 1981: 新町全域（高洲・日の出・明海・港・千鳥）
     1981: [
-        [490, 100], [660, 80], [850, 60], [1050, 80],
-        [1150, 150], [1170, 350], [1150, 500], [1100, 620],
-        [950, 700], [800, 720], [650, 700], [530, 650],
-        [480, 550], [470, 400], [480, 200]
+        [1320, 396], [1076, 639], [998, 569], [891, 670],
+        [970, 747], [1050, 833], [958, 913], [996, 1036],
+        [1028, 1071], [1127, 974], [1148, 956], [1054, 856],
+        [1072, 823], [1087, 830], [1131, 780], [1156, 813],
+        [1122, 849], [1212, 919], [1619, 637]
     ],
     // 2026+: Use real map image (no polygon needed)
 };

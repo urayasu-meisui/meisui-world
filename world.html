@@ -6,7 +6,7 @@ h<!DOCTYPE html>
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>浦安めいすいくん総選挙～あなたの一票で未来が変わる～</title>
+    <title>浦安ご当地めいすいくん人気投票選挙</title>
     <link rel="stylesheet" href="css/style.css">
     <!-- Firebase SDK -->
     <script src="js/config.js"></script>
@@ -32,7 +32,7 @@ h<!DOCTYPE html>
     <div id="ambientOverlay"></div>
 
     <div class="title-bar">
-        🗳️ 浦安めいすいくん総選挙～明るい選挙がみらいを変える～ <img id="titleMeisuiImg" style="height:39px;vertical-align:middle;margin-left:4px;" alt="めいすいくん">
+        🗳️ 浦安ご当地めいすいくん人気投票選挙 <img id="titleMeisuiImg" style="height:39px;vertical-align:middle;margin-left:4px;" alt="めいすいくん">
     </div>
 
     <!-- Year Display — 非表示（タイムラインバーに統合） -->
@@ -209,7 +209,7 @@ h<!DOCTYPE html>
 
               <!-- バージョン情報（残りスペースを埋める） -->
               <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#aeaeb2;font-size:11px;padding:2px 0;">
-                めいすいくん総選挙<br>
+                めいすいくん人気投票選挙<br>
                 <span id="versionDisplay" style="font-size:12px;font-weight:600;color:#8e8e93;font-family:monospace;letter-spacing:0.5px;">v--------</span><br>
                 <span style="font-size:10px;">浦安市明るい選挙推進協議会<br>浦安市選挙管理委員会</span>
               </div>
@@ -1786,8 +1786,51 @@ h<!DOCTYPE html>
             return inside;
         }
 
-        // 浦安市域ポリゴン（1981年=全埋め立て完了後の最大範囲）
+        // 浦安市域ポリゴン（全年代の合計。各年代が独立エリアなので全てで判定）
+        const allEraPolygons = sortedEraYears.map(yr => eraLandPolygons[yr]);
+        function isInAnyEraLand(px, py) {
+            for (let i = 0; i < allEraPolygons.length; i++) {
+                if (isPointInPolygon(px, py, allEraPolygons[i])) return true;
+            }
+            return false;
+        }
+        // 後方互換（旧名）
         const urayasuLandPolygon = eraLandPolygons[1981] || [];
+
+        // 指定座標が陸地になった最も古い年代を返す（埋め立て前＝Infinity）
+        function getLandAvailableYear(px, py) {
+            for (let i = 0; i < sortedEraYears.length; i++) {
+                const yr = sortedEraYears[i];
+                if (isPointInPolygon(px, py, eraLandPolygons[yr])) return yr;
+            }
+            return Infinity; // どの年代のポリゴンにも含まれない
+        }
+
+        // 現在年までの全陸地ポリゴン配列を返す（キャッシュ付き）
+        // 各年代が独立エリアなので、現在年以下の全ポリゴンで判定する
+        let _cachedLandYear = -1;
+        let _cachedLandPolys = null;
+        function getCurrentLandPolygons() {
+            const yr = getCurrentYear();
+            if (yr === _cachedLandYear && _cachedLandPolys) return _cachedLandPolys;
+            _cachedLandYear = yr;
+            _cachedLandPolys = [];
+            for (let i = 0; i < sortedEraYears.length; i++) {
+                if (sortedEraYears[i] <= yr) {
+                    _cachedLandPolys.push(eraLandPolygons[sortedEraYears[i]]);
+                }
+            }
+            return _cachedLandPolys;
+        }
+
+        // 指定座標が現在年の陸地かどうか判定
+        function isOnCurrentLand(px, py) {
+            const polys = getCurrentLandPolygons();
+            for (let i = 0; i < polys.length; i++) {
+                if (isPointInPolygon(px, py, polys[i])) return true;
+            }
+            return false;
+        }
 
         // 固定座標オブジェクトの位置（fixed-positions.jsonと同じ値をデフォルトに設定）
         const fixedPos = {
@@ -1850,11 +1893,11 @@ h<!DOCTYPE html>
                 // ゾーンポリゴン内チェック
                 if (!isPointInZone(x, y, zonePolygon)) continue;
 
-                // 地形チェック（浦安市域ポリゴン）
+                // 地形チェック（全年代の陸地ポリゴンで判定）
                 if (terrain === 'land') {
-                    if (!isPointInPolygon(x, y, urayasuLandPolygon)) continue;
+                    if (!isInAnyEraLand(x, y)) continue;
                 } else if (terrain === 'sea') {
-                    if (isPointInPolygon(x, y, urayasuLandPolygon)) continue;
+                    if (isInAnyEraLand(x, y)) continue;
                 }
                 // 'any' または terrain未指定の場合はチェックなし
 
@@ -1946,6 +1989,24 @@ h<!DOCTYPE html>
             boatPositions       = generatePositions(5005, 20, seaZonePolygon,  'sea');
             asariClamPositions  = generatePositions(7007, 40, seaZonePolygon,  'sea');
             noriFramePositions  = generatePositions(8008, 30, seaZonePolygon,  'sea');
+
+            // 陸地ポジションに「その地点が陸地になった年」を後付け（埋め立て前の海に描画しないため）
+            // rng()の呼び出し順を変えないよう、生成後に付与する
+            try {
+                [ginkgoPositions, azaleaPositions, fishMarketPositions, beachPositions].forEach(arr => {
+                    arr.forEach(p => {
+                        try { p.availableYear = getLandAvailableYear(p.x, p.y); }
+                        catch(e) { p.availableYear = 0; }
+                    });
+                });
+                // 埋め立て前の陸地ポジションを先頭に並べ替え（古い陸地を優先的に使う）
+                [ginkgoPositions, azaleaPositions, fishMarketPositions, beachPositions].forEach(arr => {
+                    arr.sort((a, b) => (a.availableYear || 0) - (b.availableYear || 0));
+                });
+            } catch(e) {
+                console.warn('availableYear設定エラー（無視して続行）:', e);
+            }
+
             // キャラ別マッピングを常に最新に更新
             charPositionArrays.meisui      = ginkgoPositions;
             charPositionArrays.tsutsuji    = azaleaPositions;
@@ -2013,6 +2074,9 @@ h<!DOCTYPE html>
         function drawVoteEffects(ctx, now) {
             const COASTLINE_Y = 780;
             const WATER_START_Y = 800;
+            // 現在年の陸地ポリゴン（海上描画フィルタ用。毎フレーム1回だけ取得）
+            // 現在年の陸地判定用（毎フレーム1回キャッシュ更新）
+            getCurrentLandPolygons();
 
             // 新オブジェクトアニメーション期限チェック(1.5秒で終了)
             const ANIM_DURATION = 1500;
@@ -2071,10 +2135,11 @@ h<!DOCTYPE html>
             if (vM > 0) {
                 // (color overlay removed - using real map image)
 
-                // 大きなイチョウの木
+                // 大きなイチョウの木（まだ海の場所はスキップ）
                 const count = Math.min(vM * 2, ginkgoPositions.length);
                 for (let i = 0; i < count; i++) {
                     const p = ginkgoPositions[i];
+                    if (!isOnCurrentLand(p.x, p.y)) continue;
                     let s = p.size;
                     // 新オブジェクトバウンス（最後の2つ）
                     const isNew = newObjectAnim && newObjectAnim.charType === 'meisui' && i >= count - 2;
@@ -2118,10 +2183,11 @@ h<!DOCTYPE html>
             if (vT > 0) {
                 // (color overlay removed - using real map image)
 
-                // 大きなツツジの花壇
+                // 大きなツツジの花壇（まだ海の場所はスキップ）
                 const count = Math.min(vT * 2, azaleaPositions.length);
                 for (let i = 0; i < count; i++) {
                     const p = azaleaPositions[i];
+                    if (!isOnCurrentLand(p.x, p.y)) continue;
                     const isNew = newObjectAnim && newObjectAnim.charType === 'tsutsuji' && i >= count - 2;
                     if (isNew) { const b = calcBounce(now - newObjectAnim.startTime, ANIM_DURATION); ctx.save(); ctx.translate(p.x,p.y); ctx.scale(b,b); ctx.translate(-p.x,-p.y); }
                     drawLargeAzalea(ctx, p.x, p.y, p.seed, p.size);
@@ -2152,10 +2218,11 @@ h<!DOCTYPE html>
             if (vV > 0) {
                 // (beach gradient and sea color overlays removed - using real map image)
 
-                // ビーチ施設
+                // ビーチ施設（まだ海の場所はスキップ）
                 const count = Math.min(vV * 2, beachPositions.length);
                 for (let i = 0; i < count; i++) {
                     const p = beachPositions[i];
+                    if (!isOnCurrentLand(p.x, p.y)) continue;
                     const isNew = newObjectAnim && newObjectAnim.charType === 'meisui_chan' && i >= count - 2;
                     if (isNew) { const b = calcBounce(now - newObjectAnim.startTime, ANIM_DURATION); ctx.save(); ctx.translate(p.x,p.y); ctx.scale(b,b); ctx.translate(-p.x,-p.y); }
                     drawBeachFacility(ctx, p.x, p.y, p.seed, i, now);
@@ -2244,10 +2311,11 @@ h<!DOCTYPE html>
                 // 商業エリアの活気オーバーレイ
                 const bustleIntensity = Math.min(vR / 15, 1);
 
-                // 商業要素
+                // 商業要素（まだ海の場所はスキップ）
                 const count = Math.min(vR * 2, fishMarketPositions.length);
                 for (let i = 0; i < count; i++) {
                     const p = fishMarketPositions[i];
+                    if (!isOnCurrentLand(p.x, p.y)) continue;
                     const isNew = newObjectAnim && newObjectAnim.charType === 'ryoushi' && i >= count - 2;
                     if (isNew) { const b = calcBounce(now - newObjectAnim.startTime, ANIM_DURATION); ctx.save(); ctx.translate(p.x,p.y); ctx.scale(b,b); ctx.translate(-p.x,-p.y); }
                     drawCommerceElement(ctx, p.x, p.y, p.seed, i, now);
@@ -3734,7 +3802,7 @@ h<!DOCTYPE html>
 
             // For future years (after 2026), draw easter egg elements on top of map
             if (currentYear >= 2049) {
-                // 浦葛大橋（橋本体）
+                // 堀江大橋（橋本体）
                 // 橋の幅をstart/endの両端から上下に広げて描画
                 const bsx = fixedPos.kasai_bridge_start.x, bsy = fixedPos.kasai_bridge_start.y;
                 const bex = fixedPos.kasai_bridge_end.x,   bey = fixedPos.kasai_bridge_end.y;
@@ -3771,8 +3839,8 @@ h<!DOCTYPE html>
                 ctx.strokeStyle = 'rgba(255,255,255,0.8)';
                 ctx.lineWidth = 4;
                 ctx.textAlign = 'center';
-                ctx.strokeText('浦葛大橋', fixedPos.kasai_bridge.x, fixedPos.kasai_bridge.y - 6);
-                ctx.fillText('浦葛大橋', fixedPos.kasai_bridge.x, fixedPos.kasai_bridge.y - 6);
+                ctx.strokeText('堀江大橋', fixedPos.kasai_bridge.x, fixedPos.kasai_bridge.y - 6);
+                ctx.fillText('堀江大橋', fixedPos.kasai_bridge.x, fixedPos.kasai_bridge.y - 6);
             }
             if (currentYear >= 2069) {
                 // ロープウェイ（始点・終点は fixedPos で管理）
@@ -4063,7 +4131,15 @@ h<!DOCTYPE html>
                     // デバッグジャンプ分の年代イベントはスキップ
                     _lastEraEventStep = getYearSteps();
                     // デバッグで2100年に到達した場合もエンディングを起動
-                    if (getCurrentYear() >= END_YEAR && typeof showEnding === 'function' && !endingActive) {
+                    const reachedEnding = getCurrentYear() >= END_YEAR && typeof showEnding === 'function' && !endingActive;
+                    if (reachedEnding) {
+                        // エンディング到達時は建物通知を抑制（ポップアップ重複防止）
+                        endingActive = true;
+                    }
+                    // 建物・クロスキャライベントの判定を走らせる
+                    if (typeof checkBuildingUnlock === 'function') checkBuildingUnlock();
+                    if (reachedEnding) {
+                        endingActive = false; // showEndingが自分で設定するのでリセット
                         setTimeout(() => { if (!endingActive) showEnding(); }, 1200);
                     }
                 }, 100);
@@ -4944,20 +5020,20 @@ h<!DOCTYPE html>
                 justify-content:center;pointer-events:none;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
                 background:rgba(0,20,10,0.85);animation:fadeInUp 0.8s ease forwards;`;
             msgCard.innerHTML = `
-                <div style="font-size:56px;margin-bottom:20px;">🗳️</div>
-                <div style="font-size:32px;font-weight:900;color:#ffd700;margin-bottom:24px;
-                    text-align:center;line-height:1.5;
-                    text-shadow:0 0 20px rgba(255,215,0,0.6);">
+                <div style="font-size:80px;margin-bottom:24px;filter:drop-shadow(0 0 20px rgba(255,215,0,0.5));">🗳️</div>
+                <div style="font-size:52px;font-weight:900;color:#ffd700;margin-bottom:36px;
+                    text-align:center;line-height:1.5;letter-spacing:3px;
+                    text-shadow:0 0 30px rgba(255,215,0,0.6),0 4px 0 rgba(0,0,0,0.4);">
                     本物の選挙も<br>あなたの一票が<br>浦安を変える！
                 </div>
-                <div style="font-size:17px;color:rgba(255,255,255,0.82);text-align:center;
-                    line-height:1.9;max-width:500px;">
+                <div style="font-size:28px;color:rgba(255,255,255,0.92);text-align:center;
+                    line-height:2.0;max-width:600px;font-weight:bold;letter-spacing:1px;">
                     18歳になったら投票しよう！<br>
                     みんなの意見が集まるから<br>
                     街はよくなっていく。
                 </div>
-                <div style="margin-top:28px;font-size:13px;color:rgba(255,255,255,0.4);
-                    letter-spacing:2px;text-align:center;line-height:1.8;">浦安市明るい選挙推進協議会<br>浦安市選挙管理委員会</div>
+                <div style="margin-top:40px;font-size:18px;color:rgba(255,255,255,0.5);
+                    letter-spacing:3px;text-align:center;line-height:2.0;">浦安市明るい選挙推進協議会<br>浦安市選挙管理委員会</div>
             `;
             document.body.appendChild(msgCard);
 
@@ -5291,7 +5367,7 @@ h<!DOCTYPE html>
 
             const textDiv = document.createElement('div');
             textDiv.style.cssText = `position:absolute;left:5%;top:20%;z-index:5;transform:rotate(-8deg);opacity:0;animation:cutinTextPop 0.4s 0.35s cubic-bezier(0.34,1.56,0.64,1) forwards;`;
-            textDiv.innerHTML = `<div style="font-size:28px;font-weight:bold;color:white;letter-spacing:6px;text-shadow:0 0 20px ${charColor},0 0 40px ${charColor},2px 2px 0 #000;margin-bottom:16px;">${idiom.ruby}</div><div style="font-size:80px;font-weight:900;color:${charColor};text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,0 0 50px ${charColor},0 0 80px ${charColor};letter-spacing:16px;margin-bottom:16px;">${idiom.kanji}</div><div style="font-size:24px;font-weight:bold;color:white;text-shadow:2px 2px 0 #000,0 0 15px ${charColor};">${idiom.desc}</div>`;
+            textDiv.innerHTML = `<div style="font-size:38px;font-weight:bold;color:white;letter-spacing:8px;text-shadow:0 0 20px ${charColor},0 0 40px ${charColor},2px 2px 0 #000;margin-bottom:28px;">${idiom.ruby}</div><div style="font-size:110px;font-weight:900;color:${charColor};text-shadow:5px 5px 0 #000,-3px -3px 0 #000,3px -3px 0 #000,-3px 3px 0 #000,0 0 50px ${charColor},0 0 80px ${charColor};letter-spacing:22px;margin-bottom:32px;">${idiom.kanji}</div><div style="font-size:34px;font-weight:bold;color:white;text-shadow:2px 2px 0 #000,0 0 15px ${charColor};letter-spacing:3px;">${idiom.desc}</div>`;
             overlay.appendChild(textDiv);
 
             // Step 6: Border glow (frame flashing)
@@ -5590,8 +5666,8 @@ h<!DOCTYPE html>
         // バージョン表示（v修正日.修正回数）
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
-        const BUILD_DATE = '20260329';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 17;          // 修正回数（この会話での変更セッション数）
+        const BUILD_DATE = '20260330';  // 最終修正日（YYYYMMDD）
+        const BUILD_REV  = 39;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
@@ -5690,6 +5766,11 @@ h<!DOCTYPE html>
                         background:none;border:2px solid #7e57c2;
                         padding:8px 24px;border-radius:20px;cursor:pointer;
                     ">📄 説明書を読む</button>
+                    <button onclick="this.closest('#tutorialOverlay').remove();window.open('urayasu-history.html','_blank');" style="
+                        font-size:13px;font-weight:bold;color:#1B4F72;
+                        background:none;border:2px solid #1B4F72;
+                        padding:8px 24px;border-radius:20px;cursor:pointer;
+                    ">📚 裏設定を読む</button>
                 </div>
             `;
             overlay.appendChild(panel);
@@ -5757,12 +5838,12 @@ h<!DOCTYPE html>
             panel.style.cssText = 'background:white;border-radius:20px;padding:30px;max-width:600px;width:92%;max-height:85vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);font-family:"BIZ UDGothic","Yu Gothic UI","Hiragino Sans","Meiryo",sans-serif;position:relative;';
             panel.innerHTML = `
                 <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
-                <h2 style="text-align:center;font-size:22px;margin:0 0 20px;color:#333;">📄 めいすいくん総選挙 説明書</h2>
+                <h2 style="text-align:center;font-size:22px;margin:0 0 20px;color:#333;">📄 めいすいくん人気投票選挙 説明書</h2>
 
                 <div style="background:#e8f5e9;border-radius:12px;padding:14px;margin-bottom:14px;">
                     <div style="font-size:16px;font-weight:bold;margin-bottom:8px;">🌏 ゲーム概要</div>
                     <div style="font-size:13px;color:#555;line-height:1.8;">
-                        「浦安めいすいくん総選挙」は、浦安市のマスコットキャラクター「めいすいくん」たちに投票して、仮想の浦安の街を発展させるゲームです。<br><br>
+                        「浦安ご当地めいすいくん人気投票選挙」は、浦安市のマスコットキャラクター「めいすいくん」たちに投票して、仮想の浦安の街を発展させるゲームです。<br><br>
                         投票するとマップ上に木や花、建物が増え、浦安の歴史（1889年〜2100年）をたどりながら街が成長していきます。<br><br>
                         選挙や投票の大切さを、遊びながら体験できます。
                     </div>

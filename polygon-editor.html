@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>ポリゴンエディター - めいすいくん</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#1a1a2e; color:#fff; font-family:'BIZ UDGothic','Yu Gothic UI',sans-serif; overflow:hidden; }
+
+#toolbar {
+    position:fixed; top:0; left:0; right:0; height:50px; z-index:100;
+    background:rgba(0,0,0,0.9); display:flex; align-items:center; gap:8px; padding:0 12px;
+    border-bottom:2px solid #333;
+}
+#toolbar button {
+    padding:6px 14px; border:2px solid; border-radius:8px; font-size:13px;
+    font-weight:bold; cursor:pointer; background:transparent; color:#fff;
+    transition:all 0.2s;
+}
+#toolbar button:hover { transform:scale(1.05); }
+#toolbar button.active { color:#000 !important; }
+
+.layer-btn[data-layer="1889"] { border-color:#FF0000; }
+.layer-btn[data-layer="1889"].active { background:#FF0000; }
+.layer-btn[data-layer="1968"] { border-color:#FF8800; }
+.layer-btn[data-layer="1968"].active { background:#FF8800; }
+.layer-btn[data-layer="1971"] { border-color:#FFCC00; }
+.layer-btn[data-layer="1971"].active { background:#FFCC00; }
+.layer-btn[data-layer="1975"] { border-color:#00CC00; }
+.layer-btn[data-layer="1975"].active { background:#00CC00; }
+.layer-btn[data-layer="1981"] { border-color:#0088FF; }
+.layer-btn[data-layer="1981"].active { background:#0088FF; }
+.layer-btn[data-layer="zone_land"] { border-color:#FFFFFF; }
+.layer-btn[data-layer="zone_land"].active { background:#FFFFFF; }
+
+#undoBtn { border-color:#FF6B6B; color:#FF6B6B; }
+#clearBtn { border-color:#FF4444; color:#FF4444; }
+#exportBtn { border-color:#4CAF50; color:#4CAF50; font-size:14px; }
+
+#info {
+    position:fixed; bottom:0; left:0; right:0; height:36px; z-index:100;
+    background:rgba(0,0,0,0.9); display:flex; align-items:center; padding:0 12px;
+    font-size:12px; color:#aaa; gap:20px;
+    border-top:2px solid #333;
+}
+#coords { color:#ffd700; font-weight:bold; font-size:13px; }
+#pointCount { color:#4CAF50; }
+
+#canvasWrap {
+    position:fixed; top:50px; left:0; right:0; bottom:36px;
+    overflow:auto; cursor:crosshair;
+}
+canvas { display:block; }
+
+#exportModal {
+    display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    z-index:200; background:rgba(0,0,0,0.8);
+    justify-content:center; align-items:center;
+}
+#exportModal.show { display:flex; }
+#exportContent {
+    background:#222; border-radius:16px; padding:24px; max-width:800px; width:90%;
+    max-height:80vh; overflow-y:auto;
+}
+#exportContent h2 { color:#ffd700; margin-bottom:12px; }
+#exportContent textarea {
+    width:100%; height:400px; background:#111; color:#0f0; border:1px solid #444;
+    border-radius:8px; padding:12px; font-family:monospace; font-size:12px;
+}
+#exportContent button {
+    margin-top:12px; padding:10px 24px; background:#4CAF50; color:#fff;
+    border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:bold;
+}
+#exportContent .close-btn {
+    background:#666; margin-left:8px;
+}
+</style>
+</head>
+<body>
+
+<div id="toolbar">
+    <button class="layer-btn active" data-layer="1889">🔴 1889 元町</button>
+    <button class="layer-btn" data-layer="1968">🟠 1968 東野・富岡</button>
+    <button class="layer-btn" data-layer="1971">🟡 1971 海楽・美浜</button>
+    <button class="layer-btn" data-layer="1975">🟢 1975 舞浜</button>
+    <button class="layer-btn" data-layer="1981">🔵 1981 新町全域</button>
+    <button class="layer-btn" data-layer="zone_land">⬜ zone_land</button>
+    <span style="flex:1;"></span>
+    <button id="undoBtn" title="最後の点を取り消し">↩ 戻す</button>
+    <button id="clearBtn" title="現在のレイヤーをクリア">🗑 クリア</button>
+    <button id="exportBtn">📋 書き出し</button>
+</div>
+
+<div id="canvasWrap">
+    <canvas id="canvas"></canvas>
+</div>
+
+<div id="info">
+    <span>マウス座標: <span id="coords">-</span></span>
+    <span>ポイント数: <span id="pointCount">0</span></span>
+    <span>操作: クリックで点を追加 / 右クリックで最後の点を削除 / レイヤーボタンで切り替え</span>
+</div>
+
+<div id="exportModal">
+    <div id="exportContent">
+        <h2>📋 ポリゴンデータ書き出し</h2>
+        <p style="color:#aaa;margin-bottom:12px;">このデータをコピーして、config.jsとfixed-positions.jsonに反映してください。</p>
+        <textarea id="exportText" readonly></textarea>
+        <button onclick="copyExport()">📋 コピー</button>
+        <button class="close-btn" onclick="document.getElementById('exportModal').classList.remove('show')">閉じる</button>
+    </div>
+</div>
+
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+const MAP_W = 1920, MAP_H = 1080;
+
+// マップ画像
+const mapImg = new Image();
+mapImg.src = 'map_realb.png';
+
+// レイヤー定義
+const layers = {
+    '1889':      { color: '#FF0000', fill: 'rgba(255,0,0,0.2)',     points: [], label: '1889 元町' },
+    '1968':      { color: '#FF8800', fill: 'rgba(255,136,0,0.15)',   points: [], label: '1968 東野・富岡' },
+    '1971':      { color: '#FFCC00', fill: 'rgba(255,204,0,0.12)',   points: [], label: '1971 海楽・美浜' },
+    '1975':      { color: '#00CC00', fill: 'rgba(0,204,0,0.12)',     points: [], label: '1975 舞浜' },
+    '1981':      { color: '#0088FF', fill: 'rgba(0,136,255,0.12)',   points: [], label: '1981 新町全域' },
+    'zone_land': { color: '#FFFFFF', fill: 'rgba(255,255,255,0.08)', points: [], label: 'zone_land' },
+};
+
+let activeLayer = '1889';
+let scale = 1;
+
+// 既存データを読み込み
+function loadExisting() {
+    // eraLandPolygons（[[x,y],...] 形式）
+    const era = {
+        1889: [[540,100],[660,80],[720,100],[740,200],[730,350],[700,450],[650,500],[580,480],[520,400],[500,300],[510,200]],
+        1968: [[540,100],[660,80],[750,90],[850,120],[880,250],[870,400],[830,500],[750,550],[650,520],[580,480],[520,400],[500,300],[510,200]],
+        1971: [[540,100],[660,80],[800,80],[950,120],[970,300],[950,450],[900,550],[800,580],[700,560],[600,500],[520,400],[500,300],[510,200]],
+        1975: [[490,100],[660,80],[800,80],[950,120],[970,300],[950,450],[900,580],[800,620],[650,650],[530,600],[480,500],[470,350],[480,200]],
+        1981: [[490,100],[660,80],[850,60],[1050,80],[1150,150],[1620,640],[1206,935],[1131,858],[1092,835],[976,743],[950,915],[883,974],[666,906],[663,775],[717,676],[650,700],[530,650],[480,550],[470,400],[480,200]],
+    };
+    Object.entries(era).forEach(([yr, pts]) => {
+        layers[yr].points = pts.map(p => ({x: p[0], y: p[1]}));
+    });
+
+    // zone_land（fixed-positions.jsonから）
+    fetch('fixed-positions.json').then(r=>r.json()).then(data => {
+        if (data.zone_land) {
+            layers['zone_land'].points = data.zone_land.map(p => ({x: p.x, y: p.y}));
+        }
+        draw();
+    }).catch(() => draw());
+}
+
+function initCanvas() {
+    const wrap = document.getElementById('canvasWrap');
+    const wrapW = wrap.clientWidth;
+    const wrapH = wrap.clientHeight;
+    scale = Math.min(wrapW / MAP_W, wrapH / MAP_H);
+    // 少し大きめに表示（スクロールで全体を見られるように）
+    scale = Math.max(scale, 0.9);
+    canvas.width = MAP_W * scale;
+    canvas.height = MAP_H * scale;
+    draw();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // マップ画像
+    if (mapImg.complete) {
+        ctx.drawImage(mapImg, 0, 0, canvas.width, canvas.height);
+        // 少し暗くして見やすく
+        ctx.fillStyle = 'rgba(0,0,0,0.25)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // 全レイヤーを描画（アクティブレイヤーを最前面に）
+    const order = Object.keys(layers).filter(k => k !== activeLayer);
+    order.push(activeLayer);
+
+    order.forEach(key => {
+        const layer = layers[key];
+        const pts = layer.points;
+        if (pts.length === 0) return;
+        const isActive = key === activeLayer;
+
+        // ポリゴン塗り
+        if (pts.length >= 3) {
+            ctx.beginPath();
+            ctx.moveTo(pts[0].x * scale, pts[0].y * scale);
+            for (let i = 1; i < pts.length; i++) {
+                ctx.lineTo(pts[i].x * scale, pts[i].y * scale);
+            }
+            ctx.closePath();
+            ctx.fillStyle = layer.fill;
+            ctx.fill();
+        }
+
+        // 線
+        ctx.beginPath();
+        ctx.moveTo(pts[0].x * scale, pts[0].y * scale);
+        for (let i = 1; i < pts.length; i++) {
+            ctx.lineTo(pts[i].x * scale, pts[i].y * scale);
+        }
+        if (pts.length >= 3) ctx.closePath();
+        ctx.strokeStyle = layer.color;
+        ctx.lineWidth = isActive ? 3 : 1.5;
+        ctx.globalAlpha = isActive ? 1 : 0.5;
+        if (key === 'zone_land') {
+            ctx.setLineDash([6, 4]);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.globalAlpha = 1;
+
+        // 点
+        pts.forEach((p, i) => {
+            const px = p.x * scale, py = p.y * scale;
+            const r = isActive ? 6 : 3;
+            ctx.beginPath();
+            ctx.arc(px, py, r, 0, Math.PI * 2);
+            ctx.fillStyle = layer.color;
+            ctx.globalAlpha = isActive ? 1 : 0.4;
+            ctx.fill();
+            ctx.globalAlpha = 1;
+
+            // アクティブレイヤーは番号表示
+            if (isActive) {
+                ctx.fillStyle = '#000';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.fillText(i, px, py + 3);
+            }
+        });
+
+        // ラベル
+        if (pts.length > 0) {
+            const lx = pts[0].x * scale;
+            const ly = pts[0].y * scale - 12;
+            ctx.font = `bold ${isActive ? 14 : 11}px sans-serif`;
+            ctx.fillStyle = layer.color;
+            ctx.globalAlpha = isActive ? 1 : 0.6;
+            ctx.textAlign = 'left';
+            ctx.fillText(layer.label, lx + 8, ly);
+            ctx.globalAlpha = 1;
+        }
+    });
+}
+
+// クリックで点を追加
+canvas.addEventListener('click', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = Math.round((e.clientX - rect.left) / scale);
+    const my = Math.round((e.clientY - rect.top) / scale);
+    layers[activeLayer].points.push({x: mx, y: my});
+    updatePointCount();
+    draw();
+});
+
+// 右クリックで最後の点を削除
+canvas.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    const pts = layers[activeLayer].points;
+    if (pts.length > 0) {
+        pts.pop();
+        updatePointCount();
+        draw();
+    }
+});
+
+// マウス座標表示
+canvas.addEventListener('mousemove', (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const mx = Math.round((e.clientX - rect.left) / scale);
+    const my = Math.round((e.clientY - rect.top) / scale);
+    document.getElementById('coords').textContent = `(${mx}, ${my})`;
+});
+
+// レイヤー切り替え
+document.querySelectorAll('.layer-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.layer-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activeLayer = btn.dataset.layer;
+        updatePointCount();
+        draw();
+    });
+});
+
+// 戻すボタン
+document.getElementById('undoBtn').addEventListener('click', () => {
+    const pts = layers[activeLayer].points;
+    if (pts.length > 0) { pts.pop(); updatePointCount(); draw(); }
+});
+
+// クリアボタン
+document.getElementById('clearBtn').addEventListener('click', () => {
+    if (confirm(`「${layers[activeLayer].label}」の全ポイントを削除しますか？`)) {
+        layers[activeLayer].points = [];
+        updatePointCount();
+        draw();
+    }
+});
+
+// 書き出し
+document.getElementById('exportBtn').addEventListener('click', () => {
+    let output = '';
+
+    // eraLandPolygons用（config.js形式）
+    output += '// ===== config.js の eraLandPolygons に貼り付け =====\n';
+    output += 'const eraLandPolygons = {\n';
+    ['1889','1968','1971','1975','1981'].forEach(yr => {
+        const pts = layers[yr].points;
+        const label = layers[yr].label;
+        output += `    // ${label}\n`;
+        output += `    ${yr}: [\n`;
+        pts.forEach((p, i) => {
+            output += `        [${p.x}, ${p.y}]${i < pts.length - 1 ? ',' : ''}\n`;
+        });
+        output += `    ],\n`;
+    });
+    output += '};\n\n';
+
+    // zone_land用（fixed-positions.json形式）
+    output += '// ===== fixed-positions.json の "zone_land" に貼り付け =====\n';
+    output += '"zone_land": [\n';
+    const zl = layers['zone_land'].points;
+    zl.forEach((p, i) => {
+        output += `    {"x": ${p.x}, "y": ${p.y}}${i < zl.length - 1 ? ',' : ''}\n`;
+    });
+    output += ']\n';
+
+    document.getElementById('exportText').value = output;
+    document.getElementById('exportModal').classList.add('show');
+});
+
+function copyExport() {
+    const ta = document.getElementById('exportText');
+    ta.select();
+    document.execCommand('copy');
+    alert('コピーしました！');
+}
+
+function updatePointCount() {
+    document.getElementById('pointCount').textContent = layers[activeLayer].points.length;
+}
+
+// 初期化
+mapImg.onload = () => {
+    initCanvas();
+    loadExisting();
+};
+window.addEventListener('resize', initCanvas);
+
+// マップ画像がなければ代替
+mapImg.onerror = () => {
+    mapImg.src = 'map_real.png';
+};
+</script>
+</body>
+</html>
