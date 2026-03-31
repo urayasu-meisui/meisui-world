@@ -35,6 +35,15 @@ h<!DOCTYPE html>
         🗳️ 浦安ご当地めいすいくん人気投票選挙 <img id="titleMeisuiImg" style="height:39px;vertical-align:middle;margin-left:4px;" alt="めいすいくん">
     </div>
 
+    <!-- 年代表示（タイトル直下） -->
+    <div id="eraDisplayTop" style="position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:190;
+        font-size:26px;font-weight:900;color:#ffd700;
+        text-shadow:0 0 12px rgba(255,215,0,0.6),0 2px 4px rgba(0,0,0,0.8);
+        font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
+        pointer-events:none;white-space:nowrap;letter-spacing:2px;
+        padding:2px 16px;background:rgba(0,0,20,0.5);border-radius:0 0 12px 12px;">
+    </div>
+
     <!-- Year Display — 非表示（タイムラインバーに統合） -->
     <div id="yearDisplay" style="display:none;">
         <div id="yearText">1889年</div>
@@ -42,6 +51,64 @@ h<!DOCTYPE html>
     </div>
 
     <canvas id="canvas"></canvas>
+
+    <!-- デバッグパネル（MAP右側に表示） -->
+    <div id="debugPanel" style="
+        display:none;
+        position:fixed;top:70px;right:12px;z-index:300;
+        flex-direction:column;gap:6px;
+        background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);
+        border:2px solid #ffd700;border-radius:16px;
+        padding:14px;width:200px;
+        font-family:'BIZ UDGothic','Yu Gothic UI',sans-serif;
+    ">
+        <div style="font-size:12px;font-weight:bold;color:#ffd700;text-align:center;margin-bottom:4px;">🛠 デバッグパネル</div>
+
+        <!-- 年代進行 -->
+        <button onclick="debugAddVotes(3);" style="
+            padding:8px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:bold;
+            background:linear-gradient(135deg,#ff8c00,#ffd700);color:#000;
+        ">⏩ +10年進める</button>
+        <button onclick="debugAddVotes(15);" style="
+            padding:8px;border:none;border-radius:10px;cursor:pointer;font-size:13px;font-weight:bold;
+            background:linear-gradient(135deg,#ff6600,#ff8c00);color:#fff;
+        ">⏩ +50年進める</button>
+
+        <div style="height:1px;background:#555;margin:4px 0;"></div>
+        <div style="font-size:10px;color:#aaa;text-align:center;">キャラ別投票</div>
+
+        <!-- キャラ別投票ボタン -->
+        <button onclick="debugVoteChar('meisui');" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:bold;
+            background:#ffd700;color:#000;
+        ">🌳 イチョウ +1票</button>
+        <button onclick="debugVoteChar('tsutsuji');" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:bold;
+            background:#e040fb;color:#fff;
+        ">🌸 ツツジ +1票</button>
+        <button onclick="debugVoteChar('meisui_chan');" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:bold;
+            background:#ff6b6b;color:#fff;
+        ">🏖 ビーナス +1票</button>
+        <button onclick="debugVoteChar('bekabune');" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:bold;
+            background:#42a5f5;color:#fff;
+        ">🌊 海 +1票</button>
+        <button onclick="debugVoteChar('asari');" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:bold;
+            background:#ff8a65;color:#fff;
+        ">🏮 屋形船 +1票</button>
+        <button onclick="debugVoteChar('ryoushi');" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:12px;font-weight:bold;
+            background:#66bb6a;color:#fff;
+        ">🐟 漁師 +1票</button>
+
+        <div style="height:1px;background:#555;margin:4px 0;"></div>
+        <button onclick="toggleDebugPanel();" style="
+            padding:6px;border:none;border-radius:8px;cursor:pointer;font-size:11px;
+            background:#444;color:#aaa;
+        ">✕ 閉じる</button>
+    </div>
 
     <!-- CHANGE 4: Minimap removed -->
 
@@ -169,13 +236,8 @@ h<!DOCTYPE html>
               <!-- セクション：デバッグ -->
               <div style="font-size:10px;font-weight:600;color:#6c6c70;padding:0 6px 4px;text-transform:uppercase;letter-spacing:0.5px;">デバッグ・テスト</div>
               <div style="background:#fff;border-radius:12px;overflow:hidden;margin-bottom:8px;">
-                <button onclick="debugAddVotes(3);closeSettings();" class="ios-cell ios-cell-sm">
-                  <span>⏩ ＋10年進める</span>
-                  <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#c7c7cc" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5-5 5"/></svg>
-                </button>
-                <div style="height:0.5px;background:#e5e5ea;margin-left:16px;"></div>
-                <button onclick="debugAddVotes(15);closeSettings();" class="ios-cell ios-cell-sm">
-                  <span>⏩ ＋50年進める</span>
+                <button onclick="toggleDebugPanel();" class="ios-cell ios-cell-sm">
+                  <span>🛠 デバッグパネルを開く</span>
                   <svg width="7" height="12" viewBox="0 0 7 12" fill="none" stroke="#c7c7cc" stroke-width="2" stroke-linecap="round"><path d="M1 1l5 5-5 5"/></svg>
                 </button>
               </div>
@@ -4113,7 +4175,6 @@ h<!DOCTYPE html>
         }
 
         function debugAddVotes(count) {
-            if (!confirm('デバッグ: ' + count + '票を一括追加しますか？')) return;
             const chars = CHAR_TYPES;
             // イベント発火を抑制してフリーズを防ぐ
             isInitialLoad = true;
@@ -4147,6 +4208,25 @@ h<!DOCTYPE html>
                 isInitialLoad = false;
                 console.error('Debug vote failed:', err);
             });
+        }
+
+        // デバッグ: 特定キャラに1票追加
+        function debugVoteChar(charType) {
+            votesRef.transaction(current => {
+                if (!current) current = {};
+                current[charType] = (current[charType] || 0) + 1;
+                return current;
+            }).catch(err => console.error('Debug char vote failed:', err));
+        }
+
+        // デバッグパネル表示/非表示
+        let _debugPanelVisible = false;
+        function toggleDebugPanel() {
+            const panel = document.getElementById('debugPanel');
+            if (!panel) return;
+            _debugPanelVisible = !_debugPanelVisible;
+            panel.style.display = _debugPanelVisible ? 'flex' : 'none';
+            closeSettings();
         }
 
         // Zoom disabled — fixed screen
@@ -4279,13 +4359,12 @@ h<!DOCTYPE html>
             if (filled) filled.style.width = pct + '%';
             if (marker) marker.style.left = pct + '%';
             const yearEnd = getCurrentYearEnd();
-            if (yearEl) {
-                if (year >= END_YEAR) {
-                    yearEl.textContent = END_YEAR + '年';
-                } else {
-                    yearEl.textContent = year + '-' + yearEnd + '年';
-                }
-            }
+            const yearText = year >= END_YEAR ? END_YEAR + '年' : year + '-' + yearEnd + '年';
+            if (yearEl) yearEl.textContent = yearText;
+
+            // タイトル直下の年代表示も更新
+            const eraTop = document.getElementById('eraDisplayTop');
+            if (eraTop) eraTop.textContent = yearText;
 
             // この年代の出来事をマーキー表示
             if (nextEl) {
@@ -5667,7 +5746,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260330';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 39;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 42;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');

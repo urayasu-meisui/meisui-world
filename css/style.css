@@ -1157,11 +1157,12 @@
             left: 0;
             right: 0;
             z-index: 200;
-            height: 38px;
+            height: 34px;
             background: rgba(0, 0, 20, 0.05);
             backdrop-filter: blur(2px);
             display: flex;
             align-items: center;
+            justify-content: center;
             padding: 0 16px;
             gap: 10px;
             font-family: "BIZ UDGothic", "Yu Gothic UI", "Hiragino Sans", "Meiryo", sans-serif;
@@ -1200,13 +1201,7 @@
             left: 0%;
         }
         .tl-year {
-            font-size: 22px;
-            font-weight: 900;
-            color: #ffd700;
-            white-space: nowrap;
-            flex-shrink: 0;
-            text-shadow: 0 0 10px rgba(255,215,0,0.6), 0 1px 4px rgba(0,0,0,0.7);
-            margin-left: 4px;
+            display: none;
         }
         .tl-next {
             font-size: 18px;
