@@ -41,7 +41,7 @@ h<!DOCTYPE html>
         text-shadow:0 0 12px rgba(255,215,0,0.6),0 2px 4px rgba(0,0,0,0.8);
         font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;
         pointer-events:none;white-space:nowrap;letter-spacing:2px;
-        padding:2px 16px;background:rgba(0,0,20,0.5);border-radius:0 0 12px 12px;">
+        padding:2px 16px;background:linear-gradient(135deg, rgba(20,60,100,0.35), rgba(10,40,80,0.30));backdrop-filter:blur(5px);border-radius:0 0 12px 12px;">
     </div>
 
     <!-- Year Display — 非表示（タイムラインバーに統合） -->
@@ -4830,6 +4830,23 @@ h<!DOCTYPE html>
             endingActive = true;
             console.log('🎆 ENDING START WL:', getWorldLine());
 
+            // ★ 裏エンディング判定：1キャラが全投票の80%以上を占めた場合
+            const cycleV = {};
+            let cycleTotal = 0;
+            CHAR_TYPES.forEach(t => {
+                cycleV[t] = Math.max(0, (votes[t] || 0) - (cycleStartPerChar[t] || 0));
+                cycleTotal += cycleV[t];
+            });
+            if (cycleTotal > 0) {
+                const maxChar = CHAR_TYPES.reduce((a, b) => cycleV[a] >= cycleV[b] ? a : b);
+                const ratio = cycleV[maxChar] / cycleTotal;
+                if (ratio >= 0.8) {
+                    console.log('🌟 裏エンディング発動！', maxChar, Math.round(ratio * 100) + '%');
+                    // 裏エンディングページへ遷移
+                    window.open('ending-credits.html', '_blank');
+                }
+            }
+
             // 旧EDタイマーを全キャンセル＋旧オーバーレイ要素を削除
             _edTimers.forEach(id => clearTimeout(id));
             _edTimers.length = 0;
@@ -5746,7 +5763,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260330';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 42;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 43;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');

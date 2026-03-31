@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>めいすいワールド - エンディング</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+    width:100%; height:100vh; overflow:hidden;
+    background:#0a0a14; position:relative;
+    font-family:'Noto Serif JP','Hiragino Mincho ProN','BIZ UDGothic',serif;
+}
+
+.particle {
+    position:fixed; border-radius:50%; pointer-events:none; z-index:1;
+    animation: pfloat var(--dur) ease-in-out var(--delay) infinite;
+}
+@keyframes pfloat {
+    0%,100% { transform:translateY(0) scale(1); opacity:var(--op); }
+    50% { transform:translateY(-25px) scale(1.3); opacity:calc(var(--op) * 1.5); }
+}
+
+.grad-top {
+    position:fixed;top:0;left:0;right:0;height:25vh;
+    background:linear-gradient(to bottom,#0a0a14 0%,transparent 100%);
+    z-index:10;pointer-events:none;
+}
+.grad-bottom {
+    position:fixed;bottom:0;left:0;right:0;height:25vh;
+    background:linear-gradient(to top,#0a0a14 0%,transparent 100%);
+    z-index:10;pointer-events:none;
+}
+
+#titleScreen {
+    position:absolute;inset:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;z-index:20;cursor:pointer;
+}
+#titleText {
+    color:#FFD700;font-size:clamp(28px,6vw,48px);font-weight:700;
+    letter-spacing:0.3em;animation:titleReveal 2.5s ease-out forwards;
+    margin-bottom:16px;text-shadow:0 0 30px rgba(255,215,0,0.4);
+}
+#titleSub {
+    color:rgba(255,255,255,0.4);font-size:clamp(11px,2vw,15px);
+    letter-spacing:0.15em;margin-bottom:60px;
+    animation:fadeIn 2s 1s ease forwards; opacity:0;
+}
+#tapText {
+    color:rgba(255,255,255,0.4);font-size:clamp(12px,2.5vw,16px);
+    letter-spacing:0.2em;animation:breathe 3s ease-in-out infinite;
+}
+@keyframes titleReveal {
+    from { opacity:0; letter-spacing:1.5em; filter:blur(8px); }
+    to { opacity:1; letter-spacing:0.3em; filter:blur(0); }
+}
+@keyframes breathe { 0%,100% { opacity:0.3; } 50% { opacity:0.7; } }
+@keyframes fadeIn { to { opacity:1; } }
+@keyframes fadeInUp {
+    from { opacity:0; transform:translateY(30px); }
+    to { opacity:1; transform:translateY(0); }
+}
+@keyframes glow {
+    0%,100% { text-shadow:0 0 20px rgba(255,215,0,0.3); }
+    50% { text-shadow:0 0 50px rgba(255,215,0,0.6),0 0 100px rgba(255,215,0,0.2); }
+}
+@keyframes starTwinkle {
+    0%,100% { opacity:0.2; transform:scale(1); }
+    50% { opacity:1; transform:scale(1.5); }
+}
+
+#mainContent { display:none; }
+
+/* スクロール全体 */
+#scrollWrap {
+    position:fixed;inset:0;display:flex;justify-content:center;
+    z-index:3;pointer-events:none;overflow:hidden;
+}
+#scrollInner {
+    width:min(88%,560px); position:relative;
+}
+
+/* テキスト行 */
+.ln { text-align:center; margin-bottom:6px; }
+.ln-title {
+    color:#FFD700;font-size:clamp(22px,5vw,36px);font-weight:700;
+    letter-spacing:0.25em;margin:40px 0 20px;
+    animation:glow 4s ease-in-out infinite;
+}
+.ln-section {
+    color:rgba(255,215,0,0.65);font-size:clamp(15px,3.2vw,22px);font-weight:600;
+    letter-spacing:0.15em;margin:36px 0 16px;
+}
+.ln-normal {
+    color:rgba(255,255,255,0.82);font-size:clamp(14px,3vw,18px);font-weight:300;
+    line-height:2.0;letter-spacing:0.06em;
+}
+.ln-accent {
+    color:#ffd700;font-size:clamp(15px,3.2vw,19px);font-weight:600;
+    line-height:2.0;letter-spacing:0.08em;
+}
+.ln-small {
+    color:rgba(255,255,255,0.45);font-size:clamp(11px,2.2vw,14px);font-weight:300;
+    line-height:2.0;letter-spacing:0.05em;
+}
+.ln-empty { height:40px; }
+.ln-big-empty { height:80px; }
+.ln-huge-empty { height:140px; }
+
+/* 歩くキャラ（テキスト内に配置） */
+.walking-char {
+    display:flex;justify-content:center;margin:30px 0;
+}
+
+/* コントロール */
+#controls {
+    position:fixed;bottom:16px;right:16px;z-index:30;display:flex;gap:8px;
+    opacity:0;transition:opacity 1s;
+}
+#controls.show { opacity:1; }
+#controls button {
+    background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);
+    color:rgba(255,255,255,0.6);border-radius:8px;padding:8px 16px;
+    font-size:12px;cursor:pointer;backdrop-filter:blur(4px);
+    font-family:'Noto Serif JP',serif;transition:all 0.3s;
+}
+#controls button:hover { background:rgba(255,255,255,0.15);color:rgba(255,255,255,0.9); }
+
+#progressBar {
+    position:fixed;bottom:0;left:0;right:0;height:2px;
+    background:rgba(255,255,255,0.08);z-index:30;
+}
+#progressFill {
+    height:100%;width:0%;
+    background:linear-gradient(90deg,#FFD700,#FFA500);
+    transition:width 0.1s linear;
+}
+#backBtn {
+    position:fixed;top:12px;left:16px;z-index:30;
+    padding:6px 16px;background:rgba(255,255,255,0.06);
+    border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);
+    border-radius:8px;font-size:11px;cursor:pointer;text-decoration:none;
+    font-family:'Noto Serif JP',serif;backdrop-filter:blur(4px);
+    opacity:0;transition:opacity 1s;
+}
+#backBtn:hover { color:rgba(255,255,255,0.8);background:rgba(255,255,255,0.12); }
+
+/* 星 */
+.star {
+    position:fixed;border-radius:50%;background:#fff;pointer-events:none;z-index:0;
+    animation:starTwinkle var(--dur) ease-in-out var(--delay) infinite;
+}
+</style>
+</head>
+<body>
+
+<div class="grad-top"></div>
+<div class="grad-bottom"></div>
+<div id="particles"></div>
+<div id="stars"></div>
+
+<a id="backBtn" href="world.html">&larr; ゲームに戻る</a>
+
+<div id="titleScreen" onclick="startCredits()">
+    <div id="titleText">めいすいワールド</div>
+    <div id="titleSub">浦安ご当地めいすいくん人気投票選挙</div>
+    <div id="tapText">タップしてはじめる</div>
+</div>
+
+<div id="mainContent">
+    <div id="scrollWrap">
+        <div id="scrollInner"></div>
+    </div>
+    <div id="controls">
+        <button id="pauseBtn" onclick="togglePause()">⏸</button>
+        <button onclick="resetCredits()">↺</button>
+    </div>
+    <div id="progressBar"><div id="progressFill"></div></div>
+</div>
+
+<script>
+// テキストデータ（type: title/section/normal/accent/small/empty/big/huge/char）
+const LINES = [
+    {t:'huge'}, {t:'huge'},
+    {t:'title', v:'めいすいワールドへようこそ'},
+    {t:'big'},
+    {t:'normal', v:'あなたが選んだ一票が'},
+    {t:'normal', v:'この街の未来をつくりました'},
+    {t:'huge'}, {t:'huge'},
+
+    {t:'section', v:'—— ものがたり ——'},
+    {t:'big'},
+    {t:'normal', v:'むかしむかし'},
+    {t:'normal', v:'東京湾のほとりに'},
+    {t:'normal', v:'小さな漁村がありました'},
+    {t:'big'},
+    {t:'accent', v:'堀江・猫実・当代島'},
+    {t:'empty'},
+    {t:'normal', v:'三つの村が寄り添い'},
+    {t:'normal', v:'人々は海とともに暮らしていました'},
+    {t:'big'},
+    {t:'char'},
+    {t:'big'},
+    {t:'normal', v:'べか舟で海苔を採り'},
+    {t:'normal', v:'あさりを獲り'},
+    {t:'normal', v:'穏やかな日々を過ごしていました'},
+    {t:'big'},
+    {t:'small', v:'境川には千数百艘のべか舟が並び'},
+    {t:'small', v:'女たちは「むき手」として貝をむき'},
+    {t:'small', v:'佃煮屋が20軒以上も軒を連ねていました'},
+    {t:'big'},
+    {t:'normal', v:'1928年の夏'},
+    {t:'normal', v:'ひとりの作家が浦安にやってきました'},
+    {t:'empty'},
+    {t:'accent', v:'山本周五郎'},
+    {t:'empty'},
+    {t:'normal', v:'彼はこの町を「浦粕」と名付け'},
+    {t:'normal', v:'名作「青べか物語」を書きました'},
+    {t:'empty'},
+    {t:'small', v:'住民は「誇張だ」と怒りましたが'},
+    {t:'small', v:'今では郷土の誇りになっています'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 黒い水 ——'},
+    {t:'big'},
+    {t:'normal', v:'1958年'},
+    {t:'normal', v:'工場の排水が海を黒く染めました'},
+    {t:'big'},
+    {t:'normal', v:'魚が死に'},
+    {t:'normal', v:'海苔が腐り'},
+    {t:'normal', v:'漁師たちの生活が奪われました'},
+    {t:'big'},
+    {t:'accent', v:'漁民800人が国会へ陳情'},
+    {t:'empty'},
+    {t:'normal', v:'この事件が'},
+    {t:'normal', v:'日本の公害対策の原点になりました'},
+    {t:'huge'},
+    {t:'char'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 海から陸へ ——'},
+    {t:'big'},
+    {t:'normal', v:'漁師たちは海に別れを告げました'},
+    {t:'big'},
+    {t:'accent', v:'1971年 漁業権 全面放棄'},
+    {t:'empty'},
+    {t:'normal', v:'300年続いた漁師町の歴史に'},
+    {t:'normal', v:'幕が下りた日'},
+    {t:'big'},
+    {t:'normal', v:'補償金で「にわか長者」になった人もいました'},
+    {t:'small', v:'新築ラッシュ、車の購入'},
+    {t:'small', v:'でも補償金をすべて失った人も少なくなかった'},
+    {t:'big'},
+    {t:'normal', v:'でもそこから'},
+    {t:'normal', v:'新しい物語がはじまりました'},
+    {t:'big'},
+    {t:'normal', v:'埋め立てによって'},
+    {t:'accent', v:'街の面積は4倍に'},
+    {t:'big'},
+    {t:'small', v:'東野 富岡 海楽 美浜'},
+    {t:'small', v:'舞浜 日の出 明海 高洲 千鳥'},
+    {t:'big'},
+    {t:'normal', v:'新しい土地に'},
+    {t:'normal', v:'新しい人々が集まり'},
+    {t:'normal', v:'浦安は生まれ変わりました'},
+    {t:'huge'},
+    {t:'char'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 夢の王国 ——'},
+    {t:'big'},
+    {t:'normal', v:'船橋ヘルスセンターの成功者'},
+    {t:'normal', v:'丹沢善利は夢を見ました'},
+    {t:'big'},
+    {t:'normal', v:'京成電鉄 三井不動産 朝日土地興業'},
+    {t:'normal', v:'三つの会社が手を組み'},
+    {t:'big'},
+    {t:'accent', v:'1960年 オリエンタルランド設立'},
+    {t:'empty'},
+    {t:'small', v:'社名は丹沢が命名「東洋の楽園」'},
+    {t:'big'},
+    {t:'normal', v:'1983年4月15日'},
+    {t:'accent', v:'東京ディズニーランド 開園'},
+    {t:'empty'},
+    {t:'normal', v:'開園当日の来場者 26,000人'},
+    {t:'big'},
+    {t:'small', v:'丹沢はその前に経営難で会社を手放していました'},
+    {t:'small', v:'楽園の名付け親は 果実を味わうことなく'},
+    {t:'small', v:'歴史の舞台を去りました'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 舞浜のひみつ ——'},
+    {t:'big'},
+    {t:'normal', v:'「舞浜」の由来は'},
+    {t:'normal', v:'マイアミビーチではありませんでした'},
+    {t:'big'},
+    {t:'accent', v:'2019年に公式否定'},
+    {t:'empty'},
+    {t:'normal', v:'正しくは昭和天皇の御製に基づく'},
+    {t:'normal', v:'神楽舞「浦安の舞」が由来'},
+    {t:'big'},
+    {t:'small', v:'浦安市も長年公式サイトに'},
+    {t:'small', v:'「マイアミビーチにちなんで」と書いていました'},
+    {t:'huge'},
+    {t:'char'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 浦安三社祭 ——'},
+    {t:'big'},
+    {t:'normal', v:'4年に1度'},
+    {t:'normal', v:'100基の神輿が街を揺らす'},
+    {t:'big'},
+    {t:'accent', v:'まえだー！ まえだー！'},
+    {t:'big'},
+    {t:'normal', v:'地すり 揉み 差し 放り'},
+    {t:'normal', v:'浦安だけの担ぎ方'},
+    {t:'big'},
+    {t:'small', v:'かつては寄付が少ない家に'},
+    {t:'small', v:'神輿を突入させて店を壊すほどの暴れ祭りでした'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 浦安ご当地めいすいくん ——'},
+    {t:'big'},
+    {t:'accent', v:'イチョウめいすいくん'},
+    {t:'normal', v:'黄金の並木道をつくった'},
+    {t:'big'},
+    {t:'accent', v:'ツツジめいちゃん'},
+    {t:'normal', v:'花でまちを彩った'},
+    {t:'big'},
+    {t:'accent', v:'ビーナスめいちゃん'},
+    {t:'normal', v:'海辺に夢のリゾートをつくった'},
+    {t:'big'},
+    {t:'accent', v:'浦安の海めいすいくん'},
+    {t:'normal', v:'三番瀬の自然を守った'},
+    {t:'big'},
+    {t:'accent', v:'屋形船めいすいくん'},
+    {t:'normal', v:'おまつりの伝統を受け継いだ'},
+    {t:'big'},
+    {t:'accent', v:'漁師めいすいくん'},
+    {t:'normal', v:'港のにぎわいを取り戻した'},
+    {t:'huge'},
+    {t:'char'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 浦安のことば ——'},
+    {t:'big'},
+    {t:'accent', v:'「はええとこ投票しねと'},
+    {t:'accent', v:'　干上がっちゃに」'},
+    {t:'big'},
+    {t:'accent', v:'「おいは祭りが好きだよ'},
+    {t:'accent', v:'　まえだー！」'},
+    {t:'big'},
+    {t:'accent', v:'「ごっそんなんべ」'},
+    {t:'small', v:'（ごちそうさま の浦安弁）'},
+    {t:'big'},
+    {t:'small', v:'堀江・猫実・当代島'},
+    {t:'small', v:'わずか数百メートルしか離れていないのに'},
+    {t:'small', v:'方言が違っていました'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 数字で見る浦安 ——'},
+    {t:'big'},
+    {t:'normal', v:'平均所得 776万円（全国7位）'},
+    {t:'normal', v:'財政力指数 1.48（全国トップ級）'},
+    {t:'normal', v:'市職員平均給与 全国1位'},
+    {t:'normal', v:'住みたい街 千葉県1位'},
+    {t:'normal', v:'待機児童 ゼロ'},
+    {t:'big'},
+    {t:'accent', v:'浦安市のOLC株 時価約394億円'},
+    {t:'big'},
+    {t:'small', v:'でもディズニーへの税収依存は実は約1割'},
+    {t:'small', v:'財政力の源泉は高所得市民の個人市民税でした'},
+    {t:'huge'},
+
+    {t:'section', v:'—— めいすいワールドの記録 ——'},
+    {t:'big'},
+    {t:'normal', v:'たくさんの投票'},
+    {t:'normal', v:'たくさんの建物'},
+    {t:'normal', v:'数えきれない木と花'},
+    {t:'normal', v:'たくさんの海の生き物'},
+    {t:'big'},
+    {t:'normal', v:'モルック大会も開催されました'},
+    {t:'normal', v:'三社祭も復活しました'},
+    {t:'normal', v:'温泉も湧きました'},
+    {t:'big'},
+    {t:'normal', v:'すべてはあなたの一票から'},
+    {t:'accent', v:'生まれました'},
+    {t:'huge'},
+    {t:'char'},
+    {t:'huge'},
+
+    {t:'section', v:'—— 制作 ——'},
+    {t:'big'},
+    {t:'normal', v:'企画'},
+    {t:'accent', v:'浦安市明るい選挙推進協議会'},
+    {t:'accent', v:'浦安市選挙管理委員会'},
+    {t:'big'},
+    {t:'normal', v:'プログラム'},
+    {t:'accent', v:'めいすいワールド制作チーム'},
+    {t:'big'},
+    {t:'normal', v:'キャラクターデザイン'},
+    {t:'accent', v:'めいすいくんファミリー'},
+    {t:'huge'},
+
+    {t:'section', v:'—— Special Thanks ——'},
+    {t:'big'},
+    {t:'normal', v:'浦安市のみなさま'},
+    {t:'normal', v:'市民まつり実行委員会'},
+    {t:'normal', v:'遊んでくれたすべての人'},
+    {t:'big'},
+    {t:'normal', v:'そしてあなたへ'},
+    {t:'huge'},
+    {t:'char'},
+    {t:'huge'}, {t:'huge'},
+
+    {t:'accent', v:'ありがとう、浦安。'},
+    {t:'accent', v:'ありがとう、めいすいワールド。'},
+    {t:'huge'},
+    {t:'title', v:'あなたの一票が'},
+    {t:'title', v:'未来をつくる。'},
+    {t:'huge'}, {t:'huge'}, {t:'huge'},
+    {t:'title', v:'— Fin —'},
+    {t:'huge'}, {t:'huge'}, {t:'huge'}, {t:'huge'},
+];
+
+// 歩くキャラSVG
+let walkFrame = 0;
+function charSVG() {
+    const l = [[-3,3],[-6,6],[-3,3],[0,0]][walkFrame];
+    const a = [[4,-4],[6,-6],[4,-4],[0,0]][walkFrame];
+    const b = [0,-2,0,-1][walkFrame];
+    const c = '#FFD700';
+    return `<svg width="80" height="130" viewBox="0 0 120 180">
+        <ellipse cx="60" cy="175" rx="25" ry="5" fill="rgba(255,255,255,0.08)"/>
+        <g transform="translate(0,${b})">
+            <line x1="55" y1="120" x2="${55+l[0]}" y2="165" stroke="${c}" stroke-width="6" stroke-linecap="round"/>
+            <line x1="65" y1="120" x2="${65+l[1]}" y2="165" stroke="${c}" stroke-width="6" stroke-linecap="round"/>
+            <rect x="42" y="70" width="36" height="55" rx="8" fill="${c}" opacity="0.9"/>
+            <line x1="42" y1="80" x2="${30+a[0]}" y2="115" stroke="${c}" stroke-width="5" stroke-linecap="round"/>
+            <line x1="78" y1="80" x2="${90+a[1]}" y2="115" stroke="${c}" stroke-width="5" stroke-linecap="round"/>
+            <circle cx="60" cy="52" r="22" fill="${c}" opacity="0.95"/>
+            <polygon points="45,32 50,18 55,28 60,12 65,28 70,18 75,32" fill="#FFF" opacity="0.85"/>
+            <circle cx="53" cy="50" r="3" fill="#1a1a2e"/>
+            <circle cx="67" cy="50" r="3" fill="#1a1a2e"/>
+            <path d="M52,60 Q60,68 68,60" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round"/>
+        </g>
+    </svg>`;
+}
+
+// 初期化
+function init() {
+    // 星
+    const starsEl = document.getElementById('stars');
+    for (let i = 0; i < 60; i++) {
+        const s = document.createElement('div');
+        s.className = 'star';
+        const sz = Math.random() * 2 + 0.5;
+        s.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;
+            width:${sz}px;height:${sz}px;--dur:${2+Math.random()*4}s;--delay:${Math.random()*3}s;`;
+        starsEl.appendChild(s);
+    }
+
+    // パーティクル
+    const pEl = document.getElementById('particles');
+    for (let i = 0; i < 25; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const sz = Math.random() * 3 + 1;
+        const op = Math.random() * 0.3 + 0.1;
+        p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;
+            width:${sz}px;height:${sz}px;--op:${op};
+            background:rgba(255,215,0,${op});--dur:${6+Math.random()*8}s;--delay:${Math.random()*5}s;`;
+        pEl.appendChild(p);
+    }
+
+    // テキスト構築
+    const inner = document.getElementById('scrollInner');
+    // 上部スペース
+    const topPad = document.createElement('div');
+    topPad.style.height = '110vh';
+    inner.appendChild(topPad);
+
+    LINES.forEach(line => {
+        const el = document.createElement('div');
+        el.className = 'ln';
+        if (line.t === 'empty') { el.className = 'ln-empty'; }
+        else if (line.t === 'big') { el.className = 'ln-big-empty'; }
+        else if (line.t === 'huge') { el.className = 'ln-huge-empty'; }
+        else if (line.t === 'title') { el.className = 'ln ln-title'; el.textContent = line.v; }
+        else if (line.t === 'section') { el.className = 'ln ln-section'; el.textContent = line.v; }
+        else if (line.t === 'accent') { el.className = 'ln ln-accent'; el.textContent = line.v; }
+        else if (line.t === 'small') { el.className = 'ln ln-small'; el.textContent = line.v; }
+        else if (line.t === 'char') {
+            el.className = 'walking-char';
+            el.setAttribute('data-walkchar', '1');
+        }
+        else { el.className = 'ln ln-normal'; el.textContent = line.v; }
+        inner.appendChild(el);
+    });
+
+    // 下部スペース
+    const botPad = document.createElement('div');
+    botPad.style.height = '60vh';
+    inner.appendChild(botPad);
+
+    // キャラアニメーション
+    setInterval(() => {
+        walkFrame = (walkFrame + 1) % 4;
+        document.querySelectorAll('[data-walkchar]').forEach(el => {
+            el.innerHTML = charSVG();
+        });
+    }, 250);
+    document.querySelectorAll('[data-walkchar]').forEach(el => { el.innerHTML = charSVG(); });
+}
+
+// スクロール
+const SCROLL_SPEED = 35;
+let totalH = 0;
+let scrollPos = 0;
+let playing = false;
+let animId = null;
+let startT = null;
+
+function startCredits() {
+    document.getElementById('titleScreen').style.display = 'none';
+    document.getElementById('mainContent').style.display = 'block';
+
+    totalH = document.getElementById('scrollInner').scrollHeight - window.innerHeight;
+
+    setTimeout(() => {
+        document.getElementById('controls').classList.add('show');
+        document.getElementById('backBtn').style.opacity = '1';
+    }, 2000);
+
+    setTimeout(() => {
+        playing = true;
+        startT = performance.now();
+        animId = requestAnimationFrame(tick);
+    }, 1500);
+}
+
+function tick(now) {
+    if (!playing) return;
+    const elapsed = (now - startT) / 1000;
+    scrollPos = Math.min(elapsed * SCROLL_SPEED, totalH);
+
+    document.getElementById('scrollInner').style.transform = `translateY(${-scrollPos}px)`;
+    document.getElementById('progressFill').style.width = `${(scrollPos/totalH)*100}%`;
+
+    if (scrollPos < totalH) {
+        animId = requestAnimationFrame(tick);
+    } else {
+        playing = false;
+        document.getElementById('pauseBtn').textContent = '▶';
+    }
+}
+
+function togglePause() {
+    if (playing) {
+        playing = false;
+        if (animId) cancelAnimationFrame(animId);
+        document.getElementById('pauseBtn').textContent = '▶';
+    } else {
+        playing = true;
+        startT = performance.now() - (scrollPos / SCROLL_SPEED) * 1000;
+        animId = requestAnimationFrame(tick);
+        document.getElementById('pauseBtn').textContent = '⏸';
+    }
+}
+
+function resetCredits() {
+    scrollPos = 0;
+    playing = false;
+    if (animId) cancelAnimationFrame(animId);
+    document.getElementById('titleScreen').style.display = 'flex';
+    document.getElementById('mainContent').style.display = 'none';
+    document.getElementById('scrollInner').style.transform = 'translateY(0)';
+    document.getElementById('progressFill').style.width = '0%';
+    document.getElementById('pauseBtn').textContent = '⏸';
+    document.getElementById('backBtn').style.opacity = '0';
+    document.getElementById('controls').classList.remove('show');
+}
+
+init();
+</script>
+</body>
+</html>
