@@ -7,240 +7,258 @@
   <script src="js/config.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;600;700&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    * { margin:0; padding:0; box-sizing:border-box; }
 
     body {
-      font-family: "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", sans-serif;
-      background: linear-gradient(135deg, #e8f5e9 0%, #f1f8e9 100%);
-      height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      user-select: none;
-      -webkit-user-select: none;
+      font-family:'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif;
+      background:#F5F0E8;
+      height:100vh;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      user-select:none;
+      -webkit-user-select:none;
     }
 
-    /* ヘッダー */
-    .header {
-      text-align: center;
-      padding: 6px 16px 4px;
-      flex-shrink: 0;
+    /* 紙テクスチャ風のノイズ（CSS only） */
+    body::before {
+      content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+      background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
     }
-    .title {
-      font-size: 1.4em;
-      font-weight: 900;
-      color: #2e7d32;
-    }
-    .subtitle {
-      font-size: 0.95em;
-      color: #666;
-      margin-top: 2px;
-    }
+
+    .header { display:none; }
 
     /* 接続状態 */
-    .connection-status {
-      position: fixed;
-      top: 8px;
-      right: 12px;
-      z-index: 100;
-    }
-    .status-dot {
-      display: inline-block;
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #4caf50;
-    }
-    .status-dot.offline {
-      background: #f44336;
+    .connection-status { position:fixed;top:10px;right:12px;z-index:100; }
+    .status-dot { display:inline-block;width:8px;height:8px;border-radius:50%;background:#4caf50; }
+    .status-dot.offline { background:#f44336; }
+
+    /* ===== 指示テキスト ===== */
+    .instruction {
+      text-align:center;padding:10px 0 6px;flex-shrink:0;
+      font-family:'Noto Sans JP',sans-serif;font-size:22px;font-weight:700;
+      color:#2D2D2D;letter-spacing:2px;z-index:1;position:relative;
     }
 
-    /* キャラグリッド — 常に3列2行で画面いっぱいに */
+    /* ===== キャラグリッド ===== */
     .grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(2, 1fr);
-      gap: 8px;
-      padding: 4px 8px 15px;
-      flex: 1;
-      min-height: 0;
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-template-rows:repeat(2,1fr);
+      gap:10px;
+      padding:6px 14px 10px;
+      flex:1;min-height:0;
+      position:relative;z-index:1;
     }
 
-    /* キャラカード */
+    /* ===== キャラカード（投票用紙風） ===== */
     .char-card {
-      background: white;
-      border-radius: 12px;
-      padding: 6px 4px;
-      text-align: center;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      cursor: pointer;
-      transition: transform 0.15s, box-shadow 0.15s;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 3px solid transparent;
-      -webkit-tap-highlight-color: transparent;
-      overflow: hidden;
+      background:#fff;
+      border-radius:6px;
+      border:1.5px solid #D4C9B8;
+      padding:6px 4px 8px;
+      text-align:center;
+      box-shadow:0 1px 4px rgba(0,0,0,0.06);
+      cursor:pointer;
+      transition:all 0.2s;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      -webkit-tap-highlight-color:transparent;
+      overflow:hidden;
+      position:relative;
     }
     .char-card:active {
-      transform: scale(0.95);
+      transform:scale(0.97);
+      box-shadow:0 0 0 3px #C41E3A44;
+    }
+    .char-card.selected {
+      border-color:#C41E3A;
+      background:rgba(196,30,58,0.04);
     }
     .char-card img {
-      width: 80%;
-      flex: 1;
-      min-height: 0;
-      object-fit: contain;
-      pointer-events: none;
-    }
-    .char-name {
-      font-weight: 900;
-      margin-top: 4px;
-      line-height: 1.2;
-      flex-shrink: 0;
-      font-size: 1.3em;
-      white-space: nowrap;
+      width:100%;flex:1;min-height:0;
+      object-fit:contain;pointer-events:none;
     }
 
-    /* 確認ダイアログ */
+    /* 名前（カード下に） */
+    .char-name {
+      font-weight:900;line-height:1;
+      font-size:1.05em;white-space:nowrap;color:#2D2D2D;
+      font-family:'Noto Sans JP',sans-serif;
+      margin-top:2px;flex-shrink:0;
+    }
+
+    /* チェックマーク（キャラ右下に大きく） */
+    .vote-circle {
+      position:absolute;bottom:24px;right:6px;
+      width:40px;height:40px;border-radius:50%;
+      border:3px solid rgba(255,255,255,0.7);
+      display:flex;align-items:center;justify-content:center;
+      transition:all 0.25s;
+      font-size:0;background:rgba(255,255,255,0.2);
+      backdrop-filter:blur(4px);
+      box-shadow:0 2px 8px rgba(0,0,0,0.15);
+    }
+    .char-card.selected .vote-circle {
+      background:#C41E3A;border-color:#C41E3A;
+      font-size:22px;color:#fff;
+      box-shadow:0 2px 12px rgba(196,30,58,0.5);
+      transform:scale(1.15);
+    }
+
+    /* ===== フッター ===== */
+    .footer {
+      text-align:center;padding:6px 0;flex-shrink:0;
+      border-top:1px solid #D4C9B8;
+      font-size:10px;color:#999;letter-spacing:1px;
+      position:relative;z-index:1;
+      font-family:'Noto Sans JP',sans-serif;
+    }
+
+    /* ===== 確認ダイアログ（投票所風） ===== */
     .confirm-overlay {
-      position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 400; display: flex; align-items: center; justify-content: center;
-      background: rgba(0,0,0,0.5);
-      animation: thankIn 0.2s ease-out;
+      position:fixed;inset:0;z-index:400;
+      display:flex;align-items:center;justify-content:center;
+      background:rgba(0,0,0,0.45);
+      animation:fadeIn 0.2s ease-out;
     }
     .confirm-card {
-      background: white; border-radius: 30px; padding: 40px 48px;
-      text-align: center; max-width: 600px; width: 85%;
-      box-shadow: 0 16px 60px rgba(0,0,0,0.3);
+      background:#FFFDF8;border-radius:12px;padding:32px 40px;
+      text-align:center;max-width:520px;width:85%;
+      box-shadow:0 12px 48px rgba(0,0,0,0.25);
+      border:2px solid #D4C9B8;
     }
     .confirm-card img {
-      width: 240px; height: auto; margin-bottom: 20px;
+      width:180px;height:auto;margin-bottom:16px;
     }
     .confirm-name {
-      font-size: 2.4em; font-weight: 900; margin-bottom: 10px;
+      font-size:2em;font-weight:900;margin-bottom:6px;
     }
     .confirm-msg {
-      font-size: 2em; color: #555; margin-bottom: 30px;
+      font-size:1.6em;color:#666;margin-bottom:24px;
+      font-family:'Noto Serif JP',serif;
     }
     .confirm-btns {
-      display: flex; gap: 20px; justify-content: center;
+      display:flex;gap:16px;justify-content:center;
     }
     .confirm-btns button {
-      font-size: 2em; font-weight: bold; padding: 16px 48px;
-      border-radius: 40px; border: none; cursor: pointer;
-      font-family: inherit;
+      font-size:1.6em;font-weight:bold;padding:14px 40px;
+      border-radius:8px;border:none;cursor:pointer;
+      font-family:'Noto Sans JP',sans-serif;
+      transition:transform 0.1s;
     }
+    .confirm-btns button:active { transform:scale(0.95); }
     .confirm-yes {
-      background: linear-gradient(135deg, #42a5f5, #1565c0); color: white;
-      box-shadow: 0 4px 12px rgba(21,101,192,0.4);
+      background:#C41E3A;color:#fff;
+      box-shadow:0 3px 10px rgba(196,30,58,0.3);
     }
     .confirm-no {
-      background: #e0e0e0; color: #666;
+      background:#E8E0D4;color:#666;
     }
 
-    /* 感謝オーバーレイ */
+    /* ===== 感謝オーバーレイ ===== */
     .thank-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      z-index: 500;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      animation: thankIn 0.3s ease-out;
-      pointer-events: all;
+      position:fixed;inset:0;z-index:500;
+      display:flex;flex-direction:column;
+      align-items:center;justify-content:center;
+      animation:fadeIn 0.3s ease-out;
+      pointer-events:all;
     }
     .thank-overlay img {
-      width: 400px;
-      height: 400px;
-      object-fit: contain;
-      margin-bottom: 24px;
+      width:360px;height:360px;object-fit:contain;margin-bottom:20px;
     }
     .thank-text {
-      font-size: 4em;
-      font-weight: 900;
-      color: white;
-      text-shadow: 0 4px 16px rgba(0,0,0,0.3);
-      text-align: center;
-      line-height: 1.5;
+      font-size:3.6em;font-weight:900;color:#fff;
+      text-shadow:0 4px 16px rgba(0,0,0,0.3);
+      text-align:center;line-height:1.5;
+      font-family:'Noto Sans JP',sans-serif;
     }
     .thank-next {
-      font-size: 2.4em;
-      color: rgba(255,255,255,0.85);
-      margin-top: 30px;
-      animation: pulse 1.5s ease-in-out infinite;
+      font-size:2.6em;font-weight:900;color:#fff;
+      margin-top:28px;animation:blink 0.8s ease-in-out infinite;
+      font-family:'Noto Sans JP',sans-serif;
+      text-shadow:0 0 20px rgba(255,255,255,0.6),0 2px 8px rgba(0,0,0,0.3);
+      letter-spacing:3px;
+    }
+    @keyframes blink {
+      0%,100% { opacity:1; transform:scale(1); }
+      50% { opacity:0.3; transform:scale(0.97); }
     }
 
-    @keyframes thankIn {
-      from { opacity: 0; transform: scale(0.9); }
-      to { opacity: 1; transform: scale(1); }
+    @keyframes fadeIn {
+      from { opacity:0; }
+      to { opacity:1; }
     }
     @keyframes pulse {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; }
+      0%,100% { opacity:0.5; }
+      50% { opacity:1; }
     }
 
-    /* 投票用紙カットインアニメーション */
+    /* ===== 投票用紙カットイン ===== */
     @keyframes ballotBoxAppear {
-      0%   { transform: translateX(-50%) scale(0); }
-      65%  { transform: translateX(-50%) scale(1.12); }
-      100% { transform: translateX(-50%) scale(1); }
+      0%   { transform:translateX(-50%) scale(0); }
+      65%  { transform:translateX(-50%) scale(1.12); }
+      100% { transform:translateX(-50%) scale(1); }
     }
     @keyframes ballotBoxShake {
-      0%,100% { transform: translateX(-50%) scale(1) rotate(0deg); }
-      20%  { transform: translateX(calc(-50% - 24px)) scale(1.06) rotate(-5deg); }
-      40%  { transform: translateX(calc(-50% + 24px)) scale(1.06) rotate(5deg); }
-      60%  { transform: translateX(calc(-50% - 12px)) scale(1.02) rotate(-2deg); }
-      80%  { transform: translateX(calc(-50% + 12px)) scale(1.02) rotate(2deg); }
+      0%,100% { transform:translateX(-50%) scale(1) rotate(0deg); }
+      20%  { transform:translateX(calc(-50% - 24px)) scale(1.06) rotate(-5deg); }
+      40%  { transform:translateX(calc(-50% + 24px)) scale(1.06) rotate(5deg); }
+      60%  { transform:translateX(calc(-50% - 12px)) scale(1.02) rotate(-2deg); }
+      80%  { transform:translateX(calc(-50% + 12px)) scale(1.02) rotate(2deg); }
     }
     @keyframes ballotPaperFall {
-      0%   { transform: translateX(-50%) translateY(-660px) rotate(-8deg); opacity: 0; }
-      12%  { opacity: 1; }
-      64%  { transform: translateX(-50%) translateY(360px) rotate(-1deg); opacity: 1; }
-      80%  { transform: translateX(-50%) translateY(414px) scaleY(0.45) rotate(0deg); opacity: 0.7; }
-      93%  { transform: translateX(-50%) translateY(444px) scaleY(0.08) rotate(0deg); opacity: 0.2; }
-      100% { transform: translateX(-50%) translateY(456px) scaleY(0) rotate(0deg); opacity: 0; }
+      0%   { transform:translateX(-50%) translateY(-660px) rotate(-8deg); opacity:0; }
+      12%  { opacity:1; }
+      64%  { transform:translateX(-50%) translateY(360px) rotate(-1deg); opacity:1; }
+      80%  { transform:translateX(-50%) translateY(414px) scaleY(0.45) rotate(0deg); opacity:0.7; }
+      93%  { transform:translateX(-50%) translateY(444px) scaleY(0.08) rotate(0deg); opacity:0.2; }
+      100% { transform:translateX(-50%) translateY(456px) scaleY(0) rotate(0deg); opacity:0; }
     }
     @keyframes ballotDoneText {
-      0%   { transform: translateX(-50%) scale(0); opacity: 0; }
-      60%  { transform: translateX(-50%) scale(1.18); opacity: 1; }
-      100% { transform: translateX(-50%) scale(1); opacity: 1; }
+      0%   { transform:translateX(-50%) scale(0); opacity:0; }
+      60%  { transform:translateX(-50%) scale(1.18); opacity:1; }
+      100% { transform:translateX(-50%) scale(1); opacity:1; }
     }
 
-    /* 管理者用リセットボタン（デフォルト非表示） */
-    .admin-footer {
-      display: none;
-      position: fixed;
-      bottom: 8px;
-      right: 8px;
-      z-index: 100;
-    }
+    /* 管理者用リセットボタン */
+    .admin-footer { display:none;position:fixed;bottom:8px;right:8px;z-index:100; }
     .reset-btn {
-      background: #78909c;
-      color: white;
-      border: none;
-      padding: 8px 14px;
-      border-radius: 6px;
-      font-size: 0.8em;
-      cursor: pointer;
-      opacity: 0.6;
+      background:#78909c;color:white;border:none;
+      padding:8px 14px;border-radius:6px;font-size:0.8em;cursor:pointer;opacity:0.6;
     }
   </style>
 </head>
 <body>
+
+  <!-- ヘッダー -->
   <div class="header">
-    <div class="title">🗳️ すきなキャラをえらんでね！</div>
-    <div class="subtitle">タップして投票しよう</div>
+    <div class="header-left">
+      <span class="header-icon">🗳️</span>
+      <span class="header-title">投 票 用 紙</span>
+    </div>
+    <div class="header-right">浦安ご当地めいすいくん人気投票選挙</div>
   </div>
 
+  <!-- 接続状態 -->
   <div class="connection-status">
     <span class="status-dot" id="statusDot"></span>
   </div>
 
+  <!-- 指示 -->
+  <div class="instruction">🗳️ 好きなキャラクターをタップしてね</div>
+
+  <!-- グリッド -->
   <div class="grid" id="grid"></div>
 
+  <!-- フッター -->
+  <div class="footer">浦安市明るい選挙推進協議会 ／ 浦安市選挙管理委員会</div>
+
+  <!-- 管理者 -->
   <div class="admin-footer" id="adminFooter">
     <button class="reset-btn" id="resetBtn">リセット</button>
   </div>
@@ -258,10 +276,9 @@
     });
     const db = firebase.database();
 
-    let voting = false; // 連打防止フラグ
-    let currentVotes = {}; // リアルタイム投票数
+    let voting = false;
+    let currentVotes = {};
 
-    // 次のマイルストーンを算出
     function getNextMilestone(charType) {
       const v = currentVotes[charType] || 0;
       const effect = charEffects[charType];
@@ -271,49 +288,68 @@
           return { remaining: effect.thresholds[i] - v, label: effect.levels[i] };
         }
       }
-      return null; // 最高レベル
+      return null;
     }
 
-    // 予告テキスト → 削除済み
-    function updatePreviews() { /* no-op */ }
+    function updatePreviews() {}
 
-    // キャラカードを生成（config.jsのCHAR_TYPES/charMetadata/charImagesを使用）
+    // キャラカード生成（投票用紙風）
     function renderGrid() {
       const grid = document.getElementById('grid');
+      const policies = {
+        meisui: '環境・緑化',
+        tsutsuji: '子育て・教育',
+        meisui_chan: '観光・まちづくり',
+        bekabune: '環境保全・三番瀬',
+        asari: '文化・伝統継承',
+        ryoushi: '産業振興・商業',
+      };
+      const shortNames = {
+        meisui: 'イチョウめいすいくん',
+        tsutsuji: 'ツツジめいちゃん',
+        meisui_chan: 'ビーナスめいちゃん',
+        bekabune: '浦安の海めいすいくん',
+        asari: '屋形船めいすいくん',
+        ryoushi: '漁師めいすいくん',
+      };
+
       CHAR_TYPES.forEach(type => {
         const meta = charMetadata[type];
         const img = charImages[type];
 
         const card = document.createElement('div');
         card.className = 'char-card';
-        card.style.borderColor = meta.color + '40';
+        card.dataset.type = type;
 
+        // キャラ画像
         const imgEl = document.createElement('img');
         imgEl.src = img.src;
         imgEl.alt = meta.name;
         card.appendChild(imgEl);
 
-        // 名前を1行で大きく表示
-        const shortNames = {
-            meisui: 'イチョウめいすいくん',
-            tsutsuji: 'ツツジめいちゃん',
-            meisui_chan: 'ビーナスめいちゃん',
-            bekabune: '浦安の海めいすいくん',
-            asari: '屋形船めいすいくん',
-            ryoushi: '漁師めいすいくん',
-        };
+        // 名前
         const nameEl = document.createElement('div');
         nameEl.className = 'char-name';
-        nameEl.style.color = meta.color;
         nameEl.textContent = shortNames[type] || meta.name;
         card.appendChild(nameEl);
 
-        card.addEventListener('click', () => vote(type));
+        // 投票丸印
+        const circle = document.createElement('div');
+        circle.className = 'vote-circle';
+        circle.textContent = '✓';
+        card.appendChild(circle);
+
+        card.addEventListener('click', () => {
+          // 選択状態のアニメーション
+          document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+          card.classList.add('selected');
+          setTimeout(() => vote(type), 300);
+        });
         grid.appendChild(card);
       });
     }
 
-    // 確認ダイアログを表示してから投票
+    // 確認ダイアログ（投票所風）
     function vote(type) {
       if (voting) return;
       const meta = charMetadata[type];
@@ -327,8 +363,8 @@
           <div class="confirm-name" style="color:${meta.color};">${meta.name}</div>
           <div class="confirm-msg">に投票しますか？</div>
           <div class="confirm-btns">
-            <button class="confirm-no" id="confirmNo">いいえ</button>
-            <button class="confirm-yes" id="confirmYes">はい</button>
+            <button class="confirm-no" id="confirmNo">やめる</button>
+            <button class="confirm-yes" id="confirmYes">投票する</button>
           </div>
         </div>
       `;
@@ -336,6 +372,7 @@
 
       overlay.querySelector('#confirmNo').addEventListener('click', () => {
         overlay.remove();
+        document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
       });
       overlay.querySelector('#confirmYes').addEventListener('click', () => {
         overlay.remove();
@@ -343,67 +380,45 @@
       });
     }
 
-    // 実際の投票処理
+    // 投票処理
     function doVote(type) {
       if (voting) return;
       voting = true;
-
       const voteRef = db.ref(`votes/${type}`);
       voteRef.transaction(current => (current || 0) + 1)
         .then(result => {
           if (result.committed) {
-            // 大画面側に通知（update()で1回のネットワークトリップにまとめる）
-            // lastVoteChar に |タイムスタンプ を付けることで
-            // 同じキャラへの連続投票でも on('value') が必ず発火する
             db.ref('stats').update({
-                lastVoteChar: type + '|' + Date.now(),
-                lastVoteTime: Date.now()
-            }).catch(err => {
-                // 通知失敗してもカウントは記録済みなので画面はそのまま進める
-                console.warn('⚠️ stats通知に失敗（投票自体は記録済み）:', err);
-            });
+              lastVoteChar: type + '|' + Date.now(),
+              lastVoteTime: Date.now()
+            }).catch(err => console.warn('stats通知失敗:', err));
             showThankYou(type);
           } else {
-            // 投票が競合などで反映されなかった場合はユーザーに伝える
             voting = false;
-            const msg = document.createElement('div');
-            msg.textContent = '⚠️ うまく投票できませんでした。もう一度タップしてね！';
-            msg.style.cssText = `
-              position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
-              background:rgba(180,0,0,0.9);color:#fff;padding:16px 28px;
-              border-radius:14px;font-size:16px;font-weight:bold;
-              text-align:center;z-index:9000;pointer-events:none;
-              animation:fadeInUp 0.3s ease;
-            `;
-            document.body.appendChild(msg);
-            setTimeout(() => msg.remove(), 3000);
           }
         })
         .catch(err => {
           console.error('投票失敗:', err);
           voting = false;
-          alert('投票できませんでした。もう一度やってみてね。');
         });
     }
 
-    // 投票用紙が投票箱に入るカットイン
+    // 投票用紙カットイン
     function showBallotCutin(type, meta) {
       const charColor = meta.color;
       const charName = meta.name;
 
       const cutin = document.createElement('div');
       cutin.style.cssText = `
-        position:fixed;top:0;left:0;width:100%;height:100%;z-index:600;
+        position:fixed;inset:0;z-index:600;
         pointer-events:none;background:rgba(10,10,30,0.88);
         display:flex;align-items:center;justify-content:center;
       `;
 
       const container = document.createElement('div');
-      container.style.cssText = `
-        position:relative;width:780px;height:1200px;
-      `;
+      container.style.cssText = 'position:relative;width:780px;height:1200px;';
 
-      // 投票箱（SVG）
+      // 投票箱
       const boxEl = document.createElement('div');
       boxEl.style.cssText = `
         position:absolute;bottom:20px;left:50%;
@@ -414,13 +429,13 @@
       `;
       boxEl.innerHTML = `
         <svg width="450" height="510" viewBox="0 0 150 170" style="filter:drop-shadow(0 12px 36px rgba(0,0,0,0.6))">
-          <rect x="8" y="52" width="134" height="110" rx="10" fill="#1565c0" stroke="rgba(255,255,255,0.45)" stroke-width="2"/>
-          <rect x="8" y="52" width="134" height="26" rx="10" fill="rgba(255,255,255,0.12)"/>
-          <rect x="4" y="36" width="142" height="22" rx="6" fill="#1e88e5" stroke="rgba(255,255,255,0.4)" stroke-width="2"/>
-          <rect x="42" y="40" width="66" height="9" rx="4" fill="#0d47a1"/>
-          <rect x="22" y="90" width="106" height="38" rx="6" fill="rgba(255,255,255,0.13)"/>
+          <rect x="8" y="52" width="134" height="110" rx="10" fill="#1B5E20" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <rect x="8" y="52" width="134" height="26" rx="10" fill="rgba(255,255,255,0.1)"/>
+          <rect x="4" y="36" width="142" height="22" rx="6" fill="#2E7D32" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+          <rect x="42" y="40" width="66" height="9" rx="4" fill="#1B5E20"/>
+          <rect x="22" y="90" width="106" height="38" rx="6" fill="rgba(255,255,255,0.1)"/>
           <text x="75" y="107" text-anchor="middle" fill="white" font-size="11" font-weight="bold" font-family="sans-serif">めいすいくん</text>
-          <text x="75" y="122" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="10" font-family="sans-serif">総 選 挙</text>
+          <text x="75" y="122" text-anchor="middle" fill="rgba(255,255,255,0.85)" font-size="10" font-family="sans-serif">人気投票選挙</text>
           <rect x="15" y="154" width="120" height="4" rx="2" fill="rgba(0,0,0,0.2)"/>
         </svg>
       `;
@@ -432,27 +447,28 @@
         transform:translateX(-50%) translateY(-660px) rotate(-8deg);
         transform-origin:top center;
         width:474px;
-        background:white;border:4px solid #ddd;border-radius:12px;
+        background:#FFFDF8;border:3px solid #D4C9B8;border-radius:8px;
         padding:36px 30px;text-align:center;
         box-shadow:0 12px 48px rgba(0,0,0,0.45);
-        font-family:"Hiragino Sans","Meiryo",sans-serif;
+        font-family:'Noto Serif JP','Hiragino Sans',serif;
         animation:ballotPaperFall 1.25s 0.35s ease-in forwards;
       `;
       paper.innerHTML = `
-        <div style="font-size:27px;color:#aaa;letter-spacing:3px;margin-bottom:15px;padding-bottom:12px;border-bottom:2px dashed #eee;">めいすいくん人気投票選挙</div>
-        <div style="font-size:27px;color:#bbb;margin-bottom:27px;">投 票 用 紙</div>
-        <div style="font-size:57px;font-weight:900;color:${charColor};border:5px solid ${charColor};border-radius:12px;padding:21px 12px;">
-          ✔ ${charName}
+        <div style="font-size:22px;color:#999;letter-spacing:4px;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #E5DDD0;">浦安ご当地めいすいくん人気投票選挙</div>
+        <div style="font-size:24px;color:#999;margin-bottom:24px;letter-spacing:6px;">投 票 用 紙</div>
+        <div style="font-size:52px;font-weight:900;color:${charColor};border:4px solid ${charColor};border-radius:8px;padding:18px 12px;position:relative;">
+          <span style="position:absolute;top:-14px;left:12px;font-size:36px;color:#C41E3A;">○</span>
+          ${charName}
         </div>
       `;
 
-      // 「入りました！」テキスト
+      // 完了テキスト
       const doneText = document.createElement('div');
       doneText.style.cssText = `
         position:absolute;bottom:615px;left:50%;
         transform:translateX(-50%) scale(0);
-        white-space:nowrap;font-size:66px;font-weight:900;color:white;
-        font-family:"Hiragino Sans","Meiryo",sans-serif;
+        white-space:nowrap;font-size:60px;font-weight:900;color:#fff;
+        font-family:'Noto Sans JP',sans-serif;
         text-shadow:0 0 18px ${charColor},2px 2px 0 #000;
         animation:ballotDoneText 0.4s 1.8s cubic-bezier(0.34,1.56,0.64,1) forwards;
       `;
@@ -464,58 +480,51 @@
       cutin.appendChild(container);
       document.body.appendChild(cutin);
 
-      // 2.3秒後にフェードアウト → 感謝画面へ
       setTimeout(() => {
         cutin.style.transition = 'opacity 0.35s';
         cutin.style.opacity = '0';
         setTimeout(() => cutin.remove(), 350);
-      }, 2300);
+      }, 3300);
     }
 
-    // 感謝画面を表示（投票用紙カットイン後に表示）
+    // 感謝画面
     function showThankYou(type) {
       const meta = charMetadata[type];
       const img = charImages[type];
-
-      // まず投票用紙カットインを再生
       showBallotCutin(type, meta);
 
-      // カットイン終了後（2.3s）に感謝オーバーレイを表示
       setTimeout(() => {
         const overlay = document.createElement('div');
         overlay.className = 'thank-overlay';
         overlay.style.background = `linear-gradient(135deg, ${meta.color}dd, ${meta.color}88)`;
-
         overlay.innerHTML = `
           <img src="${img.src}" alt="${meta.name}">
           <div class="thank-text">
             ${meta.name}に<br>投票しました！<br>ありがとう！🗳️
           </div>
-          <div class="thank-next">つぎの人に わたしてね →</div>
+          <div class="thank-next">つぎのひとと こうたいしてね</div>
         `;
         document.body.appendChild(overlay);
 
-        // 2秒後に自動で投票画面に戻る
         setTimeout(() => {
           overlay.style.transition = 'opacity 0.3s';
           overlay.style.opacity = '0';
           setTimeout(() => {
             overlay.remove();
             voting = false;
+            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
           }, 300);
-        }, 2000);
-      }, 2300);
+        }, 3500);
+      }, 3300);
     }
 
-    // 接続状態の監視
+    // 接続状態
     db.ref('.info/connected').on('value', snap => {
       const dot = document.getElementById('statusDot');
-      if (dot) {
-        dot.className = snap.val() ? 'status-dot' : 'status-dot offline';
-      }
+      if (dot) dot.className = snap.val() ? 'status-dot' : 'status-dot offline';
     });
 
-    // 管理者モード（?admin=1）
+    // 管理者モード
     function setupAdmin() {
       if (new URLSearchParams(location.search).get('admin') !== '1') return;
       const footer = document.getElementById('adminFooter');
@@ -532,11 +541,8 @@
       });
     }
 
-    // 初期化
     renderGrid();
     setupAdmin();
-
-    // 投票数をリアルタイム監視して予告表示を更新
     db.ref('votes').on('value', snap => {
       currentVotes = snap.val() || {};
       updatePreviews();
