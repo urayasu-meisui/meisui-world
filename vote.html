@@ -313,7 +313,9 @@
         ryoushi: '漁師めいすいくん',
       };
 
-      CHAR_TYPES.forEach(type => {
+      // キャラ順をシャッフル（ページ読み込みごとにランダム）
+      const shuffled = [...CHAR_TYPES].sort(() => Math.random() - 0.5);
+      shuffled.forEach(type => {
         const meta = charMetadata[type];
         const img = charImages[type];
 
@@ -512,7 +514,10 @@
           setTimeout(() => {
             overlay.remove();
             voting = false;
-            document.querySelectorAll('.char-card').forEach(c => c.classList.remove('selected'));
+            // キャラの順番をシャッフルして再描画
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            renderGrid();
           }, 300);
         }, 3500);
       }, 3300);
