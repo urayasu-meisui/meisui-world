@@ -3899,7 +3899,7 @@ h<!DOCTYPE html>
 
                     ctx.save();
                     ctx.translate(bcx, bcy);
-                    ctx.rotate(bridgeAngle - Math.PI / 4); // 画像がアイソメで斜め45度なので補正
+                    ctx.rotate(bridgeAngle - Math.PI / 4 + 6 * Math.PI / 180); // アイソメ補正 + 6度右下に傾ける
                     ctx.drawImage(brImg, -bridgeW / 2, -bridgeH / 2, bridgeW, bridgeH);
                     ctx.restore();
                 }
