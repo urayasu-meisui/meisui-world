@@ -981,26 +981,8 @@ h<!DOCTYPE html>
 
         // 指定キャラのエリアにカメラをズーム
         function zoomToCharArea(charType) {
-            if (camera.animState !== 'idle') return;
-
-            // sparkleAreasはdrawVoteEffects内で定義されているので、ここでも同じ座標を使う
-            const zoomTargets = {
-                meisui: { x: 620, y: 250 },
-                tsutsuji: { x: 500, y: 300 },
-                meisui_chan: { x: 1000, y: 400 },
-                bekabune: { x: 1100, y: 600 },
-                asari: { x: 840, y: 830 },
-                ryoushi: { x: 720, y: 670 },
-            };
-
-            const target = zoomTargets[charType];
-            if (!target) return;
-
-            camera.focusX = target.x;
-            camera.focusY = target.y;
-            camera.animProgress = 0;
-            camera.animState = 'zoom_in';
-            camera.animTimer = 0;
+            // ズーム演出は無効化（謎の動きを避ける）
+            return;
         }
         function fitMapToScreen() {
             // Stretch to fill: X and Y scale independently
@@ -6101,7 +6083,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 52;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 53;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
