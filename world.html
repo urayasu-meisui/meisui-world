@@ -35,6 +35,8 @@ h<!DOCTYPE html>
     <div class="title-bar">
         🗳️ 浦安ご当地めいすいくん人気投票選挙 <img id="titleMeisuiImg" style="height:39px;vertical-align:middle;margin-left:4px;" alt="めいすいくん">
     </div>
+    <!-- 黒い右上の帯：総投票数を大きく表示（タイトルバーと同じフォント・大きさ） -->
+    <div id="totalVotesBanner">総投票数 <span id="totalVotesDisplayMain">0</span>票</div>
 
     <!-- 年代表示（タイトル直下） -->
     <div id="eraDisplayTop" style="position:fixed;top:36px;left:50%;transform:translateX(-50%);z-index:190;
@@ -182,6 +184,12 @@ h<!DOCTYPE html>
           <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:6px 10px 5px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
             <div style="font-weight:900;font-size:14px;letter-spacing:2px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">📊 投票速報</div>
             <div style="font-weight:900;font-size:14px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;white-space:nowrap;">総投票数 <span id="totalVotesDisplay">0</span>票 <span id="advanceCounter" style="font-size:12px;margin-left:4px;color:#ffd740;">●●●</span></div>
+          </div>
+          <!-- 本日／昨日の投票者数バー -->
+          <div style="background:linear-gradient(135deg,#0277bd,#01579b);padding:6px 10px 5px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-around;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;font-weight:900;">
+            <div style="font-size:13px;white-space:nowrap;">📅 本日 <span id="dayHeaderToday" style="font-size:18px;color:#ffeb3b;">0</span><span style="font-size:11px;">票</span></div>
+            <div style="width:1px;height:18px;background:rgba(255,255,255,0.35);"></div>
+            <div style="font-size:13px;white-space:nowrap;">📆 昨日 <span id="dayHeaderYesterday" style="font-size:18px;color:#fff;">0</span><span style="font-size:11px;">票</span></div>
           </div>
 
           <!-- ランキング本体 -->
@@ -4485,6 +4493,9 @@ h<!DOCTYPE html>
         // isInitialLoad は js/firebase.js で定義済み
         // バッチカウント用：前回の各キャラ票数を保存
         let _prevVoteCounts = Object.fromEntries(CHAR_TYPES.map(t => [t, 0]));
+        // 最後の投票タイムスタンプ（盛り上げ用：1分以上空いたら次の票で強制カットイン）
+        let _lastVoteAt = 0;
+        const SILENT_TIMEOUT_MS = 60 * 1000; // 1分
 
         function handleVoteSnapshot(snapshot) {
             const data = snapshot.val() || {};
@@ -4498,6 +4509,7 @@ h<!DOCTYPE html>
             if (isInitialLoad) {
                 isInitialLoad = false;
                 _prevVoteCounts = { ...votes };
+                _lastVoteAt = Date.now(); // 初回ロード時のタイマー初期化
                 silentBuildingSync();
                 return;
             }
@@ -4507,6 +4519,11 @@ h<!DOCTYPE html>
             // Date.now()の衝突や同一値スキップに依存しないため
             // lastVoteCharリスナーよりも確実
             // ============================================
+            // 1分以上前回投票から経過していたら、次の投票は強制カットイン
+            const _now = Date.now();
+            const _silentForceTrigger = _lastVoteAt > 0 && (_now - _lastVoteAt) >= SILENT_TIMEOUT_MS;
+            let _forceFiredThisBatch = false; // このバッチで一度発火したらフラグON
+
             CHAR_TYPES.forEach(t => {
                 const prev = _prevVoteCounts[t] || 0;
                 const curr = votes[t] || 0;
@@ -4516,8 +4533,15 @@ h<!DOCTYPE html>
                 for (let i = 0; i < diff; i++) {
                     if (typeof _cutinBatchCount === 'undefined') break;
                     _cutinBatchCount[t] = (_cutinBatchCount[t] || 0) + 1;
-                    if (_cutinBatchCount[t] >= CUTIN_BATCH) {
+                    // 通常：3票溜まったら発火 / 強制：1分以上空いた最初の1票で発火
+                    const _normalTrigger = _cutinBatchCount[t] >= CUTIN_BATCH;
+                    const _forceTrigger = _silentForceTrigger && !_forceFiredThisBatch && i === 0;
+                    if (_normalTrigger || _forceTrigger) {
                         _cutinBatchCount[t] = 0;
+                        if (_forceTrigger) {
+                            _forceFiredThisBatch = true;
+                            console.log('🎉 1分タイムアウト → 強制カットイン:', t);
+                        }
                         // カットイン発火（処理中ならキュー待機）
                         if (typeof _remoteVoteQueue !== 'undefined') {
                             if (window.voteInProgress || _remoteVoteActive) {
@@ -4532,6 +4556,7 @@ h<!DOCTYPE html>
                 }
             });
             _prevVoteCounts = { ...votes };
+            _lastVoteAt = _now; // タイマー更新
 
             // バーグラフのバッチドット更新
             if (typeof _updateBatchCounterUI === 'function') _updateBatchCounterUI();
@@ -5407,21 +5432,40 @@ h<!DOCTYPE html>
         // 日別得票数
         let _dailyStartTotal = 0;
         let _dailyDate = '';
+        let _yesterdayCount = 0;
         firebaseDb.ref('stats/dailyVotes').on('value', snap => {
             const data = snap.val() || {};
             _dailyStartTotal = data.startTotal || 0;
             _dailyDate = data.date || '';
+            // 表示更新
+            const todayEl = document.getElementById('dayHeaderToday');
+            if (todayEl) todayEl.textContent = getDailyVoteCount();
         }, err => {
             console.error('❌ stats/dailyVotes リスナーエラー:', err);
+        });
+        firebaseDb.ref('stats/yesterdayCount').on('value', snap => {
+            _yesterdayCount = snap.val() || 0;
+            const yEl = document.getElementById('dayHeaderYesterday');
+            if (yEl) yEl.textContent = _yesterdayCount;
+        }, err => {
+            console.error('❌ stats/yesterdayCount リスナーエラー:', err);
         });
 
         function getDailyVoteCount() {
             return Math.max(0, totalVotes - _dailyStartTotal);
         }
 
+        function getYesterdayVoteCount() {
+            return _yesterdayCount;
+        }
+
         function resetDailyVotes() {
-            if (!confirm('本日の得票数をリセットしますか？')) return;
+            if (!confirm('本日の得票数をリセットしますか？\n（現在の本日数を「昨日」に保存します）')) return;
             const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            const todaySoFar = getDailyVoteCount();
+            // 現在の本日数を昨日として保存
+            firebaseDb.ref('stats/yesterdayCount').set(todaySoFar);
+            // 本日カウンタを今からリセット
             firebaseDb.ref('stats/dailyVotes').set({
                 date: today,
                 startTotal: totalVotes,
@@ -5771,6 +5815,14 @@ h<!DOCTYPE html>
             // 総投票数ヘッダー更新（全世界線通算 — 時間が巻き戻っても継続加算）
             const tvEl = document.getElementById('totalVotesDisplay');
             if (tvEl) tvEl.textContent = totalVotes;
+            // タイトルバー右側の総投票数（人気投票選挙と同じフォント・大きさ）
+            const tvMainEl = document.getElementById('totalVotesDisplayMain');
+            if (tvMainEl) tvMainEl.textContent = totalVotes;
+            // 本日／昨日の投票者数バー
+            const todayEl = document.getElementById('dayHeaderToday');
+            if (todayEl) todayEl.textContent = getDailyVoteCount();
+            const yEl = document.getElementById('dayHeaderYesterday');
+            if (yEl) yEl.textContent = getYesterdayVoteCount();
 
             // 3カウンター更新（●=溜まり済み ○=未）
             const acEl = document.getElementById('advanceCounter');
@@ -5990,7 +6042,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 45;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 48;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
@@ -6280,14 +6332,27 @@ h<!DOCTYPE html>
             html += '<div style="font-size:13px;color:#666;margin-top:4px;">' + r.desc + '</div>';
             html += '</div>';
 
-            // 本日の得票数
+            // 本日／昨日の投票者数
             const dailyCount = getDailyVoteCount();
+            const yesterdayCount = getYesterdayVoteCount();
             const dailyDateStr = _dailyDate || '未設定';
-            html += '<div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:12px;padding:14px 16px;margin-bottom:14px;text-align:center;">';
-            html += '<div style="font-size:13px;color:#1565c0;font-weight:bold;margin-bottom:6px;">📅 本日の得票数</div>';
-            html += '<div style="font-size:36px;font-weight:900;color:#0d47a1;">' + dailyCount + '<span style="font-size:16px;font-weight:normal;color:#1565c0;">票</span></div>';
-            html += '<div style="font-size:10px;color:#90a4ae;margin-top:4px;">集計開始: ' + dailyDateStr + '</div>';
-            html += '<button onclick="resetDailyVotes();openRankPopup();" style="margin-top:8px;font-size:11px;color:#fff;background:#42a5f5;border:none;padding:6px 16px;border-radius:16px;cursor:pointer;font-weight:bold;font-family:inherit;">🔄 日別リセット</button>';
+            html += '<div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:12px;padding:14px 16px;margin-bottom:14px;">';
+            html += '<div style="display:flex;gap:14px;justify-content:space-around;text-align:center;">';
+            // 本日
+            html += '<div style="flex:1;">';
+            html += '<div style="font-size:12px;color:#1565c0;font-weight:bold;margin-bottom:4px;">📅 本日の投票者数</div>';
+            html += '<div style="font-size:32px;font-weight:900;color:#0d47a1;line-height:1;">' + dailyCount + '<span style="font-size:14px;font-weight:normal;color:#1565c0;">票</span></div>';
+            html += '</div>';
+            // 仕切り
+            html += '<div style="width:1px;background:rgba(0,0,0,0.1);"></div>';
+            // 昨日
+            html += '<div style="flex:1;">';
+            html += '<div style="font-size:12px;color:#7b1fa2;font-weight:bold;margin-bottom:4px;">📆 昨日の投票者数</div>';
+            html += '<div style="font-size:32px;font-weight:900;color:#4a148c;line-height:1;">' + yesterdayCount + '<span style="font-size:14px;font-weight:normal;color:#7b1fa2;">票</span></div>';
+            html += '</div>';
+            html += '</div>';
+            html += '<div style="font-size:10px;color:#90a4ae;margin-top:6px;text-align:center;">集計開始: ' + dailyDateStr + '</div>';
+            html += '<div style="text-align:center;"><button onclick="resetDailyVotes();openRankPopup();" style="margin-top:8px;font-size:11px;color:#fff;background:#42a5f5;border:none;padding:6px 16px;border-radius:16px;cursor:pointer;font-weight:bold;font-family:inherit;">🔄 日切替（本日→昨日）</button></div>';
             html += '</div>';
 
             // 総投票数プログレスバー
