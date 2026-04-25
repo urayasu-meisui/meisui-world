@@ -181,19 +181,19 @@ h<!DOCTYPE html>
           </div>
 
           <!-- 投票速報ヘッダー（縦10%細め） -->
-          <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:6px 10px 5px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
+          <div style="background:linear-gradient(135deg,#1a237e,#283593);padding:3px 10px 3px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;">
             <div style="font-weight:900;font-size:14px;letter-spacing:2px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">📊 投票速報</div>
             <div style="font-weight:900;font-size:14px;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;white-space:nowrap;">総投票数 <span id="totalVotesDisplay">0</span>票 <span id="advanceCounter" style="font-size:12px;margin-left:4px;color:#ffd740;">●●●</span></div>
           </div>
           <!-- 本日／昨日の投票者数バー -->
-          <div style="background:linear-gradient(135deg,#0277bd,#01579b);padding:6px 10px 5px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-around;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;font-weight:900;">
+          <div style="background:linear-gradient(135deg,#0277bd,#01579b);padding:3px 10px 3px;color:#fff;flex-shrink:0;display:flex;align-items:center;justify-content:space-around;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;font-weight:900;">
             <div style="font-size:13px;white-space:nowrap;">📅 本日 <span id="dayHeaderToday" style="font-size:18px;color:#ffeb3b;">0</span><span style="font-size:11px;">票</span></div>
             <div style="width:1px;height:18px;background:rgba(255,255,255,0.35);"></div>
             <div style="font-size:13px;white-space:nowrap;">📆 昨日 <span id="dayHeaderYesterday" style="font-size:18px;color:#fff;">0</span><span style="font-size:11px;">票</span></div>
           </div>
 
           <!-- ランキング本体 -->
-          <div id="barGraph" style="padding:14px 10px 13px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;background:#ffffff;">
+          <div id="barGraph" style="padding:15px 10px 11px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;background:#ffffff;">
             <div id="barGraphBars"></div>
           </div>
 
@@ -6119,7 +6119,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 50;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 51;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
