@@ -193,7 +193,7 @@ h<!DOCTYPE html>
           </div>
 
           <!-- ランキング本体 -->
-          <div id="barGraph" style="padding:10px 10px 6px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;background:#ffffff;">
+          <div id="barGraph" style="padding:14px 10px 13px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column;justify-content:center;background:#ffffff;">
             <div id="barGraphBars"></div>
           </div>
 
@@ -6119,7 +6119,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 49;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 50;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
@@ -6548,26 +6548,39 @@ h<!DOCTYPE html>
                     return;
                 }
                 let hHtml = '';
-                // 今日の0:00以降の記録のみ表示
+                // 本日と昨日の0:00以降の記録を表示
                 const todayStart = new Date();
                 todayStart.setHours(0, 0, 0, 0);
                 const todayMs = todayStart.getTime();
+                const yesterdayStart = new Date(todayStart);
+                yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+                const yesterdayMs = yesterdayStart.getTime();
                 const allEntries = Object.values(history).sort((a, b) => b.worldLine - a.worldLine);
-                const entries = allEntries.filter(rec => rec.timestamp >= todayMs);
+                const entries = allEntries.filter(rec => rec.timestamp >= yesterdayMs);
                 if (entries.length === 0) {
-                    container.innerHTML = '<div style="color:#bbb;text-align:center;padding:8px;">今日の記録はまだありません</div>';
+                    container.innerHTML = '<div style="color:#bbb;text-align:center;padding:8px;">本日・昨日の記録はまだありません</div>';
                     return;
                 }
-                // 今日の中での世界線番号（新しい順に1,2,3...）
-                const todaySorted = [...entries].sort((a, b) => a.timestamp - b.timestamp);
+                // 日別に世界線番号を振り直し（時間昇順で1,2,3...）
+                const todayEntries = entries.filter(rec => rec.timestamp >= todayMs).sort((a, b) => a.timestamp - b.timestamp);
+                const yesterdayEntries = entries.filter(rec => rec.timestamp < todayMs).sort((a, b) => a.timestamp - b.timestamp);
                 const todayWlMap = {};
-                todaySorted.forEach((rec, i) => { todayWlMap[rec.worldLine] = i + 1; });
+                const yesterdayWlMap = {};
+                todayEntries.forEach((rec, i) => { todayWlMap[rec.worldLine] = i + 1; });
+                yesterdayEntries.forEach((rec, i) => { yesterdayWlMap[rec.worldLine] = i + 1; });
                 const todayDateStr = (todayStart.getMonth() + 1) + '/' + todayStart.getDate();
+                const yesterdayDateStr = (yesterdayStart.getMonth() + 1) + '/' + yesterdayStart.getDate();
                 entries.forEach(rec => {
-                    const dayWl = todayWlMap[rec.worldLine] || rec.worldLine;
-                    hHtml += '<div style="background:#f8f8ff;border:1px solid #e0e0e0;border-radius:10px;padding:10px 12px;margin-bottom:8px;">';
+                    const isToday = rec.timestamp >= todayMs;
+                    const dayWl = isToday ? (todayWlMap[rec.worldLine] || rec.worldLine) : (yesterdayWlMap[rec.worldLine] || rec.worldLine);
+                    const dateStr = isToday ? todayDateStr : yesterdayDateStr;
+                    const dayLabel = isToday ? '本日' : '昨日';
+                    const labelColor = isToday ? '#667eea' : '#7b1fa2';
+                    const bgColor = isToday ? '#f8f8ff' : '#faf5ff';
+                    const borderColor = isToday ? '#e0e0e0' : '#e1bee7';
+                    hHtml += '<div style="background:' + bgColor + ';border:1px solid ' + borderColor + ';border-radius:10px;padding:10px 12px;margin-bottom:8px;">';
                     hHtml += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
-                    hHtml += '<span style="font-weight:bold;color:#667eea;">' + todayDateStr + ' 第' + dayWl + '世界線</span>';
+                    hHtml += '<span style="font-weight:bold;color:' + labelColor + ';">[' + dayLabel + '] ' + dateStr + ' 第' + dayWl + '世界線</span>';
                     const timeStr = new Date(rec.timestamp).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
                     hHtml += '<span style="font-size:11px;color:#aaa;">' + timeStr + '</span>';
                     hHtml += '</div>';
