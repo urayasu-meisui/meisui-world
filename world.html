@@ -5715,9 +5715,9 @@ h<!DOCTYPE html>
             const barsEl = document.getElementById('barGraphBars');
 
             // 逆転検知
-            // この世界線の票数（累計 - 世界線開始時）
+            // 全世界線通算の票数（時間が巻き戻っても継続加算）
             const cycleVotes = Object.fromEntries(
-                CHAR_TYPES.map(t => [t, Math.max(0, (votes[t] || 0) - (cycleStartPerChar[t] || 0))])
+                CHAR_TYPES.map(t => [t, votes[t] || 0])
             );
             const sorted = Object.entries(cycleVotes).sort((a, b) => b[1] - a[1]);
             const currentRanking = sorted.map(e => e[0]);
@@ -5768,10 +5768,9 @@ h<!DOCTYPE html>
 
             barsEl.innerHTML = html;
 
-            // 総投票数ヘッダー更新（この世界線の票数）
-            const cycleTotalVotes = getEffectiveVotes();
+            // 総投票数ヘッダー更新（全世界線通算 — 時間が巻き戻っても継続加算）
             const tvEl = document.getElementById('totalVotesDisplay');
-            if (tvEl) tvEl.textContent = cycleTotalVotes;
+            if (tvEl) tvEl.textContent = totalVotes;
 
             // 3カウンター更新（●=溜まり済み ○=未）
             const acEl = document.getElementById('advanceCounter');
@@ -5990,8 +5989,8 @@ h<!DOCTYPE html>
         // バージョン表示（v修正日.修正回数）
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
-        const BUILD_DATE = '20260330';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 43;          // 修正回数（この会話での変更セッション数）
+        const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
+        const BUILD_REV  = 45;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
