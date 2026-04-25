@@ -5695,27 +5695,9 @@ h<!DOCTYPE html>
         }
 
         function showVotedCertificate(charType) {
-            const charName = charMetadata[charType]?.name || '';
-
-            const content = document.createElement('div');
-            content.innerHTML = `
-                <div class="cert-card">
-                    <div class="cert-border">
-                        <div class="cert-title">✨ 選挙済証 ✨</div>
-                        <div class="cert-body">
-                            <p>あなたは</p>
-                            <p class="cert-char">${charName}</p>
-                            <p>に投票しました！</p>
-                            <p class="cert-thanks">ありがとう！🗳️</p>
-                            <p class="cert-total">現在の総投票数: ${getEffectiveVotes()}票</p>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            pm.show('card', content, { duration: 3000 });
-
-            // 投票モーダルを閉じる
+            // 大画面モニター側の投票済証ポップアップは非表示化
+            // （タブレット側のvote.htmlで投票用紙カットインを表示するため不要）
+            // 投票モーダルが開いていれば閉じる
             setTimeout(() => closeVoteModal(), 500);
         }
 
@@ -6119,7 +6101,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 51;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 52;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
