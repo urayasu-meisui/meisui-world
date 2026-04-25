@@ -305,6 +305,39 @@ h<!DOCTYPE html>
             </div>
           </div><!-- / settingsScreen -->
 
+          <!-- ── 街ランクスクリーン（スライドイン） ── -->
+          <div id="rankScreen" style="position:absolute;inset:0;background:#f2f2f7;z-index:31;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);display:none;flex-direction:column;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">
+            <!-- iOSナビゲーションバー -->
+            <div style="background:rgba(242,242,247,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:36px 14px 7px;display:flex;align-items:center;border-bottom:0.5px solid rgba(60,60,67,0.18);flex-shrink:0;">
+              <button onclick="closeRankScreen()" style="background:none;border:none;color:#007aff;font-size:15px;cursor:pointer;padding:4px 10px 4px 0;display:flex;align-items:center;gap:1px;font-family:inherit;">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="#007aff" stroke-width="2.2" stroke-linecap="round"><path d="M8 1L2 8l6 7"/></svg>
+                戻る
+              </button>
+              <span style="flex:1;text-align:center;font-weight:600;font-size:15px;color:#000;margin-right:54px;">🏆 街ランク</span>
+            </div>
+            <!-- スクロール可能コンテンツ -->
+            <div id="rankScreenContent" style="flex:1;overflow-y:auto;padding:10px 10px 14px;-webkit-overflow-scrolling:touch;"></div>
+            <!-- ホームバー -->
+            <div style="background:#f2f2f7;padding:5px 0 7px;display:flex;justify-content:center;flex-shrink:0;">
+              <div style="width:108px;height:4px;background:rgba(0,0,0,0.14);border-radius:2px;"></div>
+            </div>
+          </div><!-- / rankScreen -->
+
+          <!-- ── 遊び方スクリーン（スライドイン） ── -->
+          <div id="tutorialScreen" style="position:absolute;inset:0;background:#f2f2f7;z-index:31;transform:translateX(100%);transition:transform 0.32s cubic-bezier(0.4,0,0.2,1);display:none;flex-direction:column;font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;">
+            <div style="background:rgba(242,242,247,0.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);padding:36px 14px 7px;display:flex;align-items:center;border-bottom:0.5px solid rgba(60,60,67,0.18);flex-shrink:0;">
+              <button onclick="closeTutorialScreen()" style="background:none;border:none;color:#007aff;font-size:15px;cursor:pointer;padding:4px 10px 4px 0;display:flex;align-items:center;gap:1px;font-family:inherit;">
+                <svg width="10" height="16" viewBox="0 0 10 16" fill="none" stroke="#007aff" stroke-width="2.2" stroke-linecap="round"><path d="M8 1L2 8l6 7"/></svg>
+                戻る
+              </button>
+              <span style="flex:1;text-align:center;font-weight:600;font-size:15px;color:#000;margin-right:54px;">📖 遊び方</span>
+            </div>
+            <div id="tutorialScreenContent" style="flex:1;overflow-y:auto;padding:10px 10px 14px;-webkit-overflow-scrolling:touch;"></div>
+            <div style="background:#f2f2f7;padding:5px 0 7px;display:flex;justify-content:center;flex-shrink:0;">
+              <div style="width:108px;height:4px;background:rgba(0,0,0,0.14);border-radius:2px;"></div>
+            </div>
+          </div><!-- / tutorialScreen -->
+
         </div><!-- / phoneScreen -->
       </div><!-- / phoneFrame -->
     </div><!-- / leftPanel -->
@@ -5451,6 +5484,21 @@ h<!DOCTYPE html>
             console.error('❌ stats/yesterdayCount リスナーエラー:', err);
         });
 
+        // 昨日のキャラ別票数
+        let _yesterdayPerChar = {};
+        firebaseDb.ref('stats/yesterdayPerChar').on('value', snap => {
+            _yesterdayPerChar = snap.val() || {};
+        }, err => {
+            console.error('❌ stats/yesterdayPerChar リスナーエラー:', err);
+        });
+        // 本日始まり時点のキャラ別票数（本日のキャラ別増分計算用）
+        let _todayStartPerChar = {};
+        firebaseDb.ref('stats/todayStartPerChar').on('value', snap => {
+            _todayStartPerChar = snap.val() || {};
+        }, err => {
+            console.error('❌ stats/todayStartPerChar リスナーエラー:', err);
+        });
+
         function getDailyVoteCount() {
             return Math.max(0, totalVotes - _dailyStartTotal);
         }
@@ -5459,18 +5507,47 @@ h<!DOCTYPE html>
             return _yesterdayCount;
         }
 
+        function getYesterdayPerCharVotes() {
+            return _yesterdayPerChar || {};
+        }
+
+        function getTodayPerCharVotes() {
+            const out = {};
+            CHAR_TYPES.forEach(t => {
+                out[t] = Math.max(0, (votes[t] || 0) - (_todayStartPerChar[t] || 0));
+            });
+            return out;
+        }
+
+        // 本日のみリセット（昨日データは触らない）
+        function resetTodayOnly() {
+            if (!confirm('本日の投票者数のみをリセットしますか？\n（昨日のデータは保持されます）')) return;
+            const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+            firebaseDb.ref('stats/dailyVotes').set({
+                date: today,
+                startTotal: totalVotes,
+                count: 0
+            });
+            // 本日始まりキャラ別を現在値で更新（本日キャラ別が0になる）
+            firebaseDb.ref('stats/todayStartPerChar').set({ ...votes });
+        }
+
+        // 日切替（本日 → 昨日へ移動 + 本日リセット）
         function resetDailyVotes() {
-            if (!confirm('本日の得票数をリセットしますか？\n（現在の本日数を「昨日」に保存します）')) return;
+            if (!confirm('日切替：本日の投票数を「昨日」に移動し、本日数をリセットします。よろしいですか？')) return;
             const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
             const todaySoFar = getDailyVoteCount();
+            const todayPerChar = getTodayPerCharVotes();
             // 現在の本日数を昨日として保存
             firebaseDb.ref('stats/yesterdayCount').set(todaySoFar);
+            firebaseDb.ref('stats/yesterdayPerChar').set(todayPerChar);
             // 本日カウンタを今からリセット
             firebaseDb.ref('stats/dailyVotes').set({
                 date: today,
                 startTotal: totalVotes,
                 count: 0
             });
+            firebaseDb.ref('stats/todayStartPerChar').set({ ...votes });
         }
 
         function showNextWorldLineButton() {
@@ -6042,7 +6119,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 48;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 49;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
@@ -6057,99 +6134,72 @@ h<!DOCTYPE html>
         // チュートリアル（あそびかた）
         // ============================================
         function showTutorial() {
-            // 既存のチュートリアルがあれば閉じる
-            const existing = document.getElementById('tutorialOverlay');
-            if (existing) { existing.remove(); return; }
-
-            const overlay = document.createElement('div');
-            overlay.id = 'tutorialOverlay';
-            overlay.style.cssText = `
-                position:fixed;top:0;left:0;right:0;bottom:0;z-index:600;
-                display:flex;align-items:center;justify-content:center;
-                background:rgba(0,0,0,0.6);animation:eraEventPop 0.3s ease;
-            `;
-            overlay.onclick = (e) => { if (e.target === overlay) overlay.remove(); };
-
-            const panel = document.createElement('div');
-            panel.style.cssText = `
-                background:white;border-radius:20px;padding:30px;max-width:520px;width:90%;
-                max-height:80vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,0.3);
-                font-family:'BIZ UDGothic','Yu Gothic UI','Hiragino Sans','Meiryo',sans-serif;position:relative;
-            `;
-            panel.innerHTML = `
-                <button onclick="this.parentElement.parentElement.remove()" style="position:absolute;top:10px;right:15px;background:none;border:none;font-size:24px;cursor:pointer;color:#999;">✕</button>
-                <h2 style="text-align:center;font-size:24px;margin:0 0 20px;color:#333;">📖 遊び方</h2>
-
-                <div style="background:#fff3e0;border-radius:12px;padding:16px;margin-bottom:14px;">
-                    <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">🗳️ ステップ１：投票しよう</div>
-                    <div style="font-size:14px;color:#555;line-height:1.8;">
+            // スマホ内の遊び方スクリーンへ挿入してスライドイン
+            const screen = document.getElementById('tutorialScreen');
+            const content = document.getElementById('tutorialScreenContent');
+            if (!screen || !content) return;
+            content.innerHTML = `
+                <div style="background:#fff3e0;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                    <div style="font-size:14px;font-weight:bold;margin-bottom:6px;">🗳️ ステップ１：投票しよう</div>
+                    <div style="font-size:11px;color:#555;line-height:1.6;">
                         投票用のタブレットから<br>
                         すきなキャラクターに投票しよう！<br>
                         <span style="color:#e65100;font-weight:bold;">だれに入れたかはヒミツだよ</span>
                     </div>
                 </div>
-
-                <div style="background:#e8f5e9;border-radius:12px;padding:16px;margin-bottom:14px;">
-                    <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">🌳 ステップ２：街が変わる！</div>
-                    <div style="font-size:14px;color:#555;line-height:1.8;">
+                <div style="background:#e8f5e9;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                    <div style="font-size:14px;font-weight:bold;margin-bottom:6px;">🌳 ステップ２：街が変わる！</div>
+                    <div style="font-size:11px;color:#555;line-height:1.6;">
                         投票すると街に変化がおきるよ！<br>
                         🌳 木が増えたり 🌺 花が咲いたり<br>
-                        🐟 魚市場ができたり 🏮 おまつりが始まったり<br>
+                        🐟  魚市場ができたり 🏮 おまつりが始まったり<br>
                         <span style="color:#2e7d32;font-weight:bold;">キャラクターごとに効果がちがう！</span>
                     </div>
                 </div>
-
-                <div style="background:#fce4ec;border-radius:12px;padding:16px;margin-bottom:14px;">
-                    <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">⏰ ステップ３：時代がすすむ</div>
-                    <div style="font-size:14px;color:#555;line-height:1.8;">
+                <div style="background:#fce4ec;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                    <div style="font-size:14px;font-weight:bold;margin-bottom:6px;">⏰ ステップ３：時代がすすむ</div>
+                    <div style="font-size:11px;color:#555;line-height:1.6;">
                         3票 = 10年！ 投票で浦安の歴史をたどるよ<br>
                         1889年（むかし）→ 2100年（みらい）<br>
                         <span style="color:#c62828;font-weight:bold;">海が埋め立てられて街が大きくなる！</span>
                     </div>
                 </div>
-
-                <div style="background:#f3e5f5;border-radius:12px;padding:16px;margin-bottom:14px;">
-                    <div style="font-size:18px;font-weight:bold;margin-bottom:8px;">🌀 ステップ４：世界線</div>
-                    <div style="font-size:14px;color:#555;line-height:1.8;">
+                <div style="background:#f3e5f5;border-radius:10px;padding:10px 12px;margin-bottom:10px;">
+                    <div style="font-size:14px;font-weight:bold;margin-bottom:6px;">🌀 ステップ４：世界線</div>
+                    <div style="font-size:11px;color:#555;line-height:1.6;">
                         2100年に到達すると「次の世界線」へ！<br>
                         1889年に戻って何度でもあそべるよ<br>
                         <span style="color:#7b1fa2;font-weight:bold;">世界線ごとにランクが記録される！</span>
                     </div>
                 </div>
-
-                <div style="background:#f5f5f5;border-radius:12px;padding:14px 16px;margin-bottom:16px;border-left:4px solid #bdbdbd;">
-                    <div style="font-size:13px;font-weight:bold;color:#616161;margin-bottom:6px;">📝 ご注意</div>
-                    <div style="font-size:13px;color:#757575;line-height:1.8;">
+                <div style="background:#f5f5f5;border-radius:10px;padding:10px 12px;margin-bottom:10px;border-left:3px solid #bdbdbd;">
+                    <div style="font-size:11px;font-weight:bold;color:#616161;margin-bottom:4px;">📝 ご注意</div>
+                    <div style="font-size:11px;color:#757575;line-height:1.6;">
                         本物の選挙では、だれに投票したかは<br>
                         <span style="font-weight:bold;color:#424242;">絶対に分かりません（秘密投票）。</span><br>
-                        <br>
                         このゲームのキャラクターや物語は<br>
-                        <span style="font-weight:bold;color:#424242;">めいすいワールドのフィクション</span>です。<br>
-                        楽しみながら選挙に興味をもってね！
+                        <span style="font-weight:bold;color:#424242;">めいすいワールドのフィクション</span>です。
                     </div>
                 </div>
-
-                <div style="text-align:center;margin-top:16px;display:flex;flex-direction:column;align-items:center;gap:10px;">
-                    <button onclick="this.closest('#tutorialOverlay').remove()" style="
-                        font-size:18px;font-weight:bold;color:#fff;
+                <div style="text-align:center;margin-top:10px;display:flex;flex-direction:column;align-items:stretch;gap:6px;">
+                    <button onclick="closeTutorialScreen()" style="
+                        font-size:14px;font-weight:bold;color:#fff;
                         background:linear-gradient(135deg,#42a5f5,#7e57c2);
-                        border:none;padding:14px 50px;border-radius:30px;cursor:pointer;
-                        box-shadow:0 4px 15px rgba(66,165,245,0.4);
-                    ">わかった！</button>
-                    <button onclick="this.closest('#tutorialOverlay').remove();showManual();" style="
-                        font-size:13px;font-weight:bold;color:#7e57c2;
+                        border:none;padding:10px 16px;border-radius:18px;cursor:pointer;
+                        box-shadow:0 4px 12px rgba(66,165,245,0.35);font-family:inherit;">わかった！</button>
+                    <button onclick="showManual();" style="
+                        font-size:11px;font-weight:bold;color:#7e57c2;
                         background:none;border:2px solid #7e57c2;
-                        padding:8px 24px;border-radius:20px;cursor:pointer;
-                    ">📄 説明書を読む</button>
-                    <button onclick="this.closest('#tutorialOverlay').remove();window.open('urayasu-history.html','_blank');" style="
-                        font-size:13px;font-weight:bold;color:#1B4F72;
+                        padding:7px 12px;border-radius:18px;cursor:pointer;font-family:inherit;">📄 説明書を読む</button>
+                    <button onclick="window.open('urayasu-history.html','_blank');" style="
+                        font-size:11px;font-weight:bold;color:#1B4F72;
                         background:none;border:2px solid #1B4F72;
-                        padding:8px 24px;border-radius:20px;cursor:pointer;
-                    ">📚 裏設定を読む</button>
+                        padding:7px 12px;border-radius:18px;cursor:pointer;font-family:inherit;">📚 裏設定を読む</button>
                 </div>
             `;
-            overlay.appendChild(panel);
-            document.body.appendChild(overlay);
+            screen.style.display = 'flex';
+            screen.getBoundingClientRect();
+            screen.style.transform = 'translateX(0)';
         }
 
         // ============================================
@@ -6324,36 +6374,64 @@ h<!DOCTYPE html>
             let html = '';
 
             // ヘッダー
-            html += '<div style="text-align:center;margin-bottom:20px;">';
-            html += '<div style="font-size:16px;color:#888;margin-bottom:4px;">仮想うらやすの発展度</div>';
-            html += '<div style="font-size:48px;font-weight:900;color:' + r.color + ';letter-spacing:2px;text-shadow:0 2px 8px rgba(0,0,0,0.1);">ランク ' + r.rank + '</div>';
-            html += '<div style="font-size:22px;font-weight:bold;margin:6px 0;">' + r.title + '</div>';
-            html += '<div style="font-size:20px;">' + r.star + '</div>';
-            html += '<div style="font-size:13px;color:#666;margin-top:4px;">' + r.desc + '</div>';
+            html += '<div style="text-align:center;margin-bottom:14px;">';
+            html += '<div style="font-size:11px;color:#888;margin-bottom:2px;">仮想うらやすの発展度</div>';
+            html += '<div style="font-size:36px;font-weight:900;color:' + r.color + ';letter-spacing:2px;text-shadow:0 2px 8px rgba(0,0,0,0.1);line-height:1.1;">ランク ' + r.rank + '</div>';
+            html += '<div style="font-size:16px;font-weight:bold;margin:4px 0;">' + r.title + '</div>';
+            html += '<div style="font-size:16px;">' + r.star + '</div>';
+            html += '<div style="font-size:11px;color:#666;margin-top:3px;">' + r.desc + '</div>';
             html += '</div>';
 
             // 本日／昨日の投票者数
             const dailyCount = getDailyVoteCount();
             const yesterdayCount = getYesterdayVoteCount();
             const dailyDateStr = _dailyDate || '未設定';
-            html += '<div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:12px;padding:14px 16px;margin-bottom:14px;">';
-            html += '<div style="display:flex;gap:14px;justify-content:space-around;text-align:center;">';
+            html += '<div style="background:linear-gradient(135deg,#e3f2fd,#bbdefb);border-radius:10px;padding:10px 10px 8px;margin-bottom:10px;">';
+            html += '<div style="display:flex;gap:6px;justify-content:space-around;text-align:center;">';
             // 本日
             html += '<div style="flex:1;">';
-            html += '<div style="font-size:12px;color:#1565c0;font-weight:bold;margin-bottom:4px;">📅 本日の投票者数</div>';
-            html += '<div style="font-size:32px;font-weight:900;color:#0d47a1;line-height:1;">' + dailyCount + '<span style="font-size:14px;font-weight:normal;color:#1565c0;">票</span></div>';
+            html += '<div style="font-size:10px;color:#1565c0;font-weight:bold;margin-bottom:2px;">📅 本日</div>';
+            html += '<div style="font-size:24px;font-weight:900;color:#0d47a1;line-height:1;">' + dailyCount + '<span style="font-size:11px;font-weight:normal;color:#1565c0;">票</span></div>';
             html += '</div>';
-            // 仕切り
             html += '<div style="width:1px;background:rgba(0,0,0,0.1);"></div>';
             // 昨日
             html += '<div style="flex:1;">';
-            html += '<div style="font-size:12px;color:#7b1fa2;font-weight:bold;margin-bottom:4px;">📆 昨日の投票者数</div>';
-            html += '<div style="font-size:32px;font-weight:900;color:#4a148c;line-height:1;">' + yesterdayCount + '<span style="font-size:14px;font-weight:normal;color:#7b1fa2;">票</span></div>';
+            html += '<div style="font-size:10px;color:#7b1fa2;font-weight:bold;margin-bottom:2px;">📆 昨日</div>';
+            html += '<div style="font-size:24px;font-weight:900;color:#4a148c;line-height:1;">' + yesterdayCount + '<span style="font-size:11px;font-weight:normal;color:#7b1fa2;">票</span></div>';
             html += '</div>';
             html += '</div>';
-            html += '<div style="font-size:10px;color:#90a4ae;margin-top:6px;text-align:center;">集計開始: ' + dailyDateStr + '</div>';
-            html += '<div style="text-align:center;"><button onclick="resetDailyVotes();openRankPopup();" style="margin-top:8px;font-size:11px;color:#fff;background:#42a5f5;border:none;padding:6px 16px;border-radius:16px;cursor:pointer;font-weight:bold;font-family:inherit;">🔄 日切替（本日→昨日）</button></div>';
+            html += '<div style="font-size:9px;color:#90a4ae;margin-top:4px;text-align:center;">集計開始: ' + dailyDateStr + '</div>';
+            // 2つのリセットボタン
+            html += '<div style="display:flex;gap:6px;justify-content:center;margin-top:6px;">';
+            html += '<button onclick="resetTodayOnly();openRankPopup();" style="font-size:10px;color:#fff;background:#26a69a;border:none;padding:5px 10px;border-radius:14px;cursor:pointer;font-weight:bold;font-family:inherit;">📅 本日のみリセット</button>';
+            html += '<button onclick="resetDailyVotes();openRankPopup();" style="font-size:10px;color:#fff;background:#42a5f5;border:none;padding:5px 10px;border-radius:14px;cursor:pointer;font-weight:bold;font-family:inherit;">🔄 日切替</button>';
             html += '</div>';
+            html += '</div>';
+
+            // 昨日のキャラ別票数
+            const yPerChar = getYesterdayPerCharVotes();
+            const yHasData = Object.values(yPerChar).some(v => v > 0);
+            if (yHasData) {
+                html += '<div style="background:linear-gradient(135deg,#f3e5f5,#e1bee7);border-radius:10px;padding:10px;margin-bottom:10px;">';
+                html += '<div style="font-size:11px;color:#6a1b9a;font-weight:bold;margin-bottom:6px;text-align:center;">📆 昨日のキャラ別票数</div>';
+                const ySorted = CHAR_TYPES.map(t => ({ t, count: yPerChar[t] || 0 })).sort((a, b) => b.count - a.count);
+                const yMax = ySorted[0]?.count || 1;
+                ySorted.forEach(({ t, count }, idx) => {
+                    const m = charMetadata[t];
+                    if (!m) return;
+                    const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : (idx + 1) + '.';
+                    const pct = Math.round((count / yMax) * 100);
+                    html += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;">';
+                    html += '<span style="font-size:13px;width:18px;flex-shrink:0;">' + medal + '</span>';
+                    html += '<span style="font-size:11px;font-weight:bold;flex:1;color:#333;">' + m.name + '</span>';
+                    html += '<div style="background:#e0d5e8;border-radius:4px;height:6px;overflow:hidden;width:60px;flex-shrink:0;">';
+                    html += '<div style="background:' + m.color + ';height:100%;width:' + pct + '%;border-radius:4px;"></div>';
+                    html += '</div>';
+                    html += '<span style="font-size:11px;font-weight:900;color:' + m.color + ';min-width:34px;text-align:right;">' + count + '<span style="font-size:9px;font-weight:normal;color:#999;">票</span></span>';
+                    html += '</div>';
+                });
+                html += '</div>';
+            }
 
             // 総投票数プログレスバー
             html += '<div style="background:#f0f0f0;border-radius:10px;padding:12px 16px;margin-bottom:18px;">';
@@ -6448,8 +6526,18 @@ h<!DOCTYPE html>
             // フッター
             html += '<div style="text-align:center;margin-top:16px;font-size:12px;color:#aaa;">投票して浦安を発展させよう！</div>';
 
-            document.getElementById('rankContent').innerHTML = html;
-            document.getElementById('rankPopup').style.display = 'flex';
+            // スマホ内の街ランクスクリーンに挿入してスライドイン
+            const screen = document.getElementById('rankScreen');
+            const content = document.getElementById('rankScreenContent');
+            if (content) content.innerHTML = html;
+            // 旧ポップアップは無効化（互換性のため要素は残す）
+            const oldPopup = document.getElementById('rankPopup');
+            if (oldPopup) oldPopup.style.display = 'none';
+            if (screen) {
+                screen.style.display = 'flex';
+                screen.getBoundingClientRect();
+                screen.style.transform = 'translateX(0)';
+            }
 
             // Load world line history from Firebase
             firebaseDb.ref('stats/worldLineHistory').once('value').then(snap => {
@@ -6521,7 +6609,21 @@ h<!DOCTYPE html>
         }
 
         function closeRankPopup() {
-            document.getElementById('rankPopup').style.display = 'none';
+            const oldPopup = document.getElementById('rankPopup');
+            if (oldPopup) oldPopup.style.display = 'none';
+            closeRankScreen();
+        }
+        function closeRankScreen() {
+            const s = document.getElementById('rankScreen');
+            if (!s) return;
+            s.style.transform = 'translateX(100%)';
+            setTimeout(() => { s.style.display = 'none'; }, 340);
+        }
+        function closeTutorialScreen() {
+            const s = document.getElementById('tutorialScreen');
+            if (!s) return;
+            s.style.transform = 'translateX(100%)';
+            setTimeout(() => { s.style.display = 'none'; }, 340);
         }
 
         // Start animation
