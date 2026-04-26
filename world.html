@@ -2203,18 +2203,19 @@ h<!DOCTYPE html>
                 voteCelebrationParticles.splice(0, voteCelebrationParticles.length - 600);
             }
 
-            // 該当キャラを7秒間お祝い状態に（ピョンピョン跳ねて回って吹き出し）
+            // 該当キャラを12秒間お祝い状態に（即座に喋る・ピョンピョン跳ねて回って吹き出し）
+            // 他のキャラがお祝い中でも構わず同時並行で発火
             if (typeof characters !== 'undefined') {
                 const ch = characters.find(c => c.type === charType);
                 if (ch) {
                     ch.celebrating = true;
-                    ch.celebrateTimer = 7000; // 7秒
+                    ch.celebrateTimer = 12000; // 12秒（既存タイマーを上書きしてリセット）
                 }
             }
         }
 
         function _createCelebrationParticle(charType, x, y) {
-            const baseLife = 420; // 約7秒（60fps想定）
+            const baseLife = 720; // 約12秒（60fps想定）
             switch (charType) {
                 case 'meisui': // イチョウの葉が舞う
                     return {
@@ -6411,7 +6412,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 56;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 57;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
