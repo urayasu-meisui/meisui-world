@@ -622,6 +622,17 @@
               lastVoteChar: type + '|' + Date.now(),
               lastVoteTime: Date.now()
             }).catch(err => console.warn('stats通知失敗:', err));
+            // 時間別投票数の記録（街ランクのグラフ用）
+            try {
+              const now = new Date();
+              const dateKey = now.getFullYear() + '-' +
+                              String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                              String(now.getDate()).padStart(2, '0');
+              const hourKey = String(now.getHours()).padStart(2, '0');
+              db.ref('stats/hourlyVotes/' + dateKey + '/' + hourKey)
+                .transaction(c => (c || 0) + 1)
+                .catch(err => console.warn('hourlyVotes 記録失敗:', err));
+            } catch (e) { console.warn('hourly log error:', e); }
             document.getElementById('grid').classList.add('just-voted');
             setTimeout(() => document.getElementById('grid').classList.remove('just-voted'), 400);
             showThankYou(type);

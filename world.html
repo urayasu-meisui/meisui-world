@@ -4560,6 +4560,19 @@ h<!DOCTYPE html>
             localStorage.setItem('meisui_builtBuildings', '[]');
         }
 
+        // 時間別投票数を記録（日付/時間ごとのバケット）
+        function _logHourlyVote(count) {
+            count = count || 1;
+            const now = new Date();
+            const dateKey = now.getFullYear() + '-' +
+                            String(now.getMonth() + 1).padStart(2, '0') + '-' +
+                            String(now.getDate()).padStart(2, '0');
+            const hourKey = String(now.getHours()).padStart(2, '0');
+            firebaseDb.ref('stats/hourlyVotes/' + dateKey + '/' + hourKey)
+                .transaction(c => (c || 0) + count)
+                .catch(err => console.warn('hourlyVotes 記録失敗:', err));
+        }
+
         function debugAddVotes(count) {
             const chars = CHAR_TYPES;
             // イベント発火を抑制してフリーズを防ぐ
@@ -4572,6 +4585,8 @@ h<!DOCTYPE html>
                 }
                 return current;
             }).then(() => {
+                // 時間別記録
+                _logHourlyVote(count);
                 // 1フレーム後にフラグ戻す（表示更新は済んでいる）
                 setTimeout(() => {
                     isInitialLoad = false;
@@ -4617,7 +4632,11 @@ h<!DOCTYPE html>
             const addCount = isSecretEd ? 63 : 1;
             // キャラ単位でトランザクション
             votesRef.child(charType).transaction(current => (current || 0) + addCount)
-              .then(() => console.log('debugVoteChar OK:', charType, '+' + addCount))
+              .then(() => {
+                  console.log('debugVoteChar OK:', charType, '+' + addCount);
+                  // 時間別記録
+                  _logHourlyVote(addCount);
+              })
               .catch(err => console.error('Debug char vote failed:', err));
             if (isSecretEd) {
                 // フラグクリア＆裏EDへ遷移（DB書き込みを待たず確実に遷移）
@@ -4838,6 +4857,12 @@ h<!DOCTYPE html>
                 const curr = votes[t] || 0;
                 const diff = curr - prev;
                 if (diff <= 0) return;
+
+                // 票が入ったら即座にお祝い演出（12秒）
+                // vote.html / debug いずれの票源でも votes/* 増分で確実に発火
+                if (typeof triggerCharCelebration === 'function') {
+                    triggerCharCelebration(t);
+                }
 
                 for (let i = 0; i < diff; i++) {
                     if (typeof _cutinBatchCount === 'undefined') break;
@@ -5820,6 +5845,11 @@ h<!DOCTYPE html>
                 startTotal: restoredTotal,
                 count: 0
             });
+            // 本日の時間別データもクリア
+            const dateKey = new Date().getFullYear() + '-' +
+                            String(new Date().getMonth() + 1).padStart(2, '0') + '-' +
+                            String(new Date().getDate()).padStart(2, '0');
+            firebaseDb.ref('stats/hourlyVotes/' + dateKey).remove();
 
             // ローカル即時反映（Firebaseリスナー待たずに表示更新）
             votes = { ...restoredVotes };
@@ -6412,7 +6442,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 57;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 58;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
@@ -6812,6 +6842,10 @@ h<!DOCTYPE html>
             });
             html += '<div style="text-align:center;font-size:12px;color:#888;margin-top:8px;">建設: ' + builtCount + ' / ' + totalBuildingCount + '</div>';
 
+            // 時間別投票数グラフ（昨日／本日）
+            html += '<div style="font-size:14px;font-weight:bold;color:#555;margin:18px 0 10px;">📊 時間別投票数（1時間ごと）</div>';
+            html += '<div id="hourlyVotesContainer" style="font-size:12px;color:#888;">読み込み中...</div>';
+
             // 過去の世界線の記録
             html += '<div style="font-size:14px;font-weight:bold;color:#555;margin:18px 0 10px;">🌀 過去の世界線の記録</div>';
             html += '<div id="worldLineHistoryContainer" style="font-size:12px;color:#888;">読み込み中...</div>';
@@ -6831,6 +6865,69 @@ h<!DOCTYPE html>
                 screen.getBoundingClientRect();
                 screen.style.transform = 'translateX(0)';
             }
+
+            // 時間別投票数グラフを読み込み
+            firebaseDb.ref('stats/hourlyVotes').once('value').then(hSnap => {
+                const data = hSnap.val() || {};
+                const container = document.getElementById('hourlyVotesContainer');
+                if (!container) return;
+                // 日付キー作成
+                const fmt = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+                const today = new Date();
+                const yesterday = new Date(today);
+                yesterday.setDate(yesterday.getDate() - 1);
+                const tKey = fmt(today);
+                const yKey = fmt(yesterday);
+                const todayHours = data[tKey] || {};
+                const yesterdayHours = data[yKey] || {};
+                // 表示するhour範囲を決定（両日のmin/max）
+                const allHours = Object.keys({...todayHours, ...yesterdayHours}).map(h => parseInt(h, 10)).filter(h => !isNaN(h));
+                if (allHours.length === 0 && (Object.keys(todayHours).length === 0 && Object.keys(yesterdayHours).length === 0)) {
+                    container.innerHTML = '<div style="background:#fafafa;border-radius:8px;padding:14px;text-align:center;color:#999;font-size:11px;">まだ時間別データがありません<br>（投票が入ると1時間ごとに自動集計されます）</div>';
+                    return;
+                }
+                const minHour = allHours.length ? Math.min(...allHours) : 9;
+                const maxHour = allHours.length ? Math.max(...allHours) : 17;
+                // 全hoursでmaxを取得（バーのスケール）
+                const allCounts = [...Object.values(todayHours), ...Object.values(yesterdayHours)].map(v => v || 0);
+                const maxCount = Math.max(1, ...allCounts);
+
+                const monthDay = d => (d.getMonth()+1) + '/' + d.getDate();
+                const buildDay = (label, dateStr, hours, color, isToday) => {
+                    const total = Object.values(hours).reduce((s, v) => s + (v || 0), 0);
+                    let h = '<div style="background:' + (isToday ? '#e3f2fd' : '#f3e5f5') + ';border-radius:10px;padding:10px;margin-bottom:8px;">';
+                    h += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">';
+                    h += '<span style="font-size:11px;font-weight:bold;color:' + color + ';">' + label + ' (' + dateStr + ')</span>';
+                    h += '<span style="font-size:11px;color:#666;">合計 <b style="color:' + color + ';font-size:13px;">' + total + '</b>票</span>';
+                    h += '</div>';
+                    if (Object.keys(hours).length === 0) {
+                        h += '<div style="font-size:10px;color:#aaa;text-align:center;padding:6px 0;">時間別データなし</div>';
+                    } else {
+                        for (let hr = minHour; hr <= maxHour; hr++) {
+                            const k = String(hr).padStart(2, '0');
+                            const c = hours[k] || 0;
+                            const pct = (c / maxCount) * 100;
+                            h += '<div style="display:flex;align-items:center;gap:5px;font-size:10px;line-height:1;margin:1px 0;">';
+                            h += '<span style="width:34px;color:#666;flex-shrink:0;">' + hr + ':00</span>';
+                            h += '<div style="flex:1;background:#fff;border-radius:3px;height:11px;overflow:hidden;border:1px solid rgba(0,0,0,0.06);">';
+                            h += '<div style="background:' + color + ';height:100%;width:' + pct + '%;border-radius:3px;transition:width 0.4s;"></div>';
+                            h += '</div>';
+                            h += '<span style="width:30px;text-align:right;font-weight:bold;color:' + (c > 0 ? color : '#bbb') + ';flex-shrink:0;">' + c + '</span>';
+                            h += '</div>';
+                        }
+                    }
+                    h += '</div>';
+                    return h;
+                };
+
+                let graphHtml = '';
+                graphHtml += buildDay('📅 本日', monthDay(today), todayHours, '#1565c0', true);
+                graphHtml += buildDay('📆 昨日', monthDay(yesterday), yesterdayHours, '#7b1fa2', false);
+                container.innerHTML = graphHtml;
+            }).catch(err => {
+                const container = document.getElementById('hourlyVotesContainer');
+                if (container) container.innerHTML = '<div style="color:#ccc;text-align:center;padding:8px;">時間別データを読み込めませんでした</div>';
+            });
 
             // Load world line history from Firebase
             firebaseDb.ref('stats/worldLineHistory').once('value').then(snap => {
