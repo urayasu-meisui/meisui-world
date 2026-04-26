@@ -5801,17 +5801,45 @@ h<!DOCTYPE html>
             return out;
         }
 
-        // 本日のみリセット（昨日データは触らない）
+        // 本日のみリセット（本日追加された票を取り消し、昨日終了時点に戻す）
         function resetTodayOnly() {
-            if (!confirm('本日の投票者数のみをリセットしますか？\n（昨日のデータは保持されます）')) return;
+            if (!confirm('本日の投票分をリセットしますか？\n\n⚠️ 本日追加された票（テスト・本番含む）がすべて取り消され、昨日終了時点の数値に戻ります。\n（昨日のデータ・過去の世界線記録は保持されます）')) return;
             const today = new Date().toLocaleDateString('ja-JP', { year: 'numeric', month: '2-digit', day: '2-digit' });
+
+            // 本日始まり時点の値（= 昨日の最終）に戻す
+            const baseline = _todayStartPerChar || {};
+            const restoredVotes = {};
+            CHAR_TYPES.forEach(t => { restoredVotes[t] = baseline[t] || 0; });
+            const restoredTotal = Object.values(restoredVotes).reduce((a, b) => a + b, 0);
+
+            // Firebase: votes と dailyVotes を一括更新
+            firebaseDb.ref('votes').set(restoredVotes);
             firebaseDb.ref('stats/dailyVotes').set({
                 date: today,
-                startTotal: totalVotes,
+                startTotal: restoredTotal,
                 count: 0
             });
-            // 本日始まりキャラ別を現在値で更新（本日キャラ別が0になる）
-            firebaseDb.ref('stats/todayStartPerChar').set({ ...votes });
+
+            // ローカル即時反映（Firebaseリスナー待たずに表示更新）
+            votes = { ...restoredVotes };
+            totalVotes = restoredTotal;
+            _dailyStartTotal = restoredTotal;
+            if (typeof _prevVoteCounts !== 'undefined') _prevVoteCounts = { ...restoredVotes };
+
+            // 表示の即時更新
+            if (typeof updateBarGraph === 'function') updateBarGraph();
+            const tvEl = document.getElementById('totalVotesDisplay');
+            if (tvEl) tvEl.textContent = totalVotes;
+            const tvMain = document.getElementById('totalVotesDisplayMain');
+            if (tvMain) tvMain.textContent = totalVotes;
+            const todayEl = document.getElementById('dayHeaderToday');
+            if (todayEl) todayEl.textContent = '0';
+
+            // お祝い演出をクリア
+            voteCelebrationParticles = [];
+            if (typeof characters !== 'undefined') {
+                characters.forEach(c => { c.celebrating = false; c.celebrateTimer = 0; });
+            }
         }
 
         // 日切替（本日 → 昨日へ移動 + 本日リセット）
@@ -6383,7 +6411,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 55;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 56;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
