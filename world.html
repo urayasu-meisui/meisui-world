@@ -4954,7 +4954,7 @@ h<!DOCTYPE html>
             if (typeof updateBarGraph === 'function') updateBarGraph();
         }
 
-        // 1票ごとの軽量演出（パーティクル＋音のみ、カットインなし）
+        // 1票ごとの軽量演出（パーティクル＋音 + 7秒お祝い演出）
         function _playLightVoteEffect(charType) {
             playSound('vote');
             lastVotedCharType = charType;
@@ -4975,6 +4975,9 @@ h<!DOCTYPE html>
                     });
                 }
             }
+            // 1票ごとに「投票ありがとう！！」7秒間お祝い演出を発火
+            // （キャラ別パーティクル + 跳ねて回って吹き出し）
+            triggerCharCelebration(charType);
         }
 
         // キューの先頭を取り出して演出を実行する（再帰呼び出しで連鎖）
@@ -6380,7 +6383,7 @@ h<!DOCTYPE html>
         // ※ Claude が修正を行うたびに手動でインクリメントする定数
         // ============================================
         const BUILD_DATE = '20260425';  // 最終修正日（YYYYMMDD）
-        const BUILD_REV  = 54;          // 修正回数（この会話での変更セッション数）
+        const BUILD_REV  = 55;          // 修正回数（この会話での変更セッション数）
         (function _initVersion() {
             const ver = 'v' + BUILD_DATE + '.' + String(BUILD_REV).padStart(3, '0');
             const el = document.getElementById('versionDisplay');
